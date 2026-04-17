@@ -1,0 +1,279 @@
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --font-size: 16px;
+  /* Typography - Font Size variables */
+  --text-xxxs: 10.2px;
+  --text-xxs: 12px;
+  --text-xs: 13px;
+  --text-s: 14px;      /* 預設 */
+  --text-m: 16px;
+  --text-l: 18px;
+  --text-xl: 20px;
+  --text-xxl: 24px;
+  --text-xxxl: 32px;
+  /* Legacy typography variables (保持向後相容) */
+  --text-2xl: 32px;
+  --text-lg: 20px;
+  --text-base: 14px;   /* 預設 */
+  --text-sm: 11px;
+  /* Typography - Font Weight variables */
+  --font-weight-300: 300;   /* 預設 */
+  --font-weight-350: 350;
+  --font-weight-400: 400;
+  --font-weight-500: 500;
+  --font-weight-600: 600;
+  --font-weight-700: 700;
+  --font-weight-900: 900;
+  /* Legacy font weight variables (保持向後相容) */
+  --font-weight-light: 300;
+  --font-weight-normal: 300;   /* 更改為 300 作為預設 */
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+  /* Font Family variables */
+  --font-figtree: 'Figtree', sans-serif;
+  --font-inter: 'Inter', sans-serif;
+  --font-noto-sans-tc: 'Noto Sans TC', sans-serif;
+  --font-sf-pro: 'SF Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* The default background color for the application. */
+  --background: rgba(255, 255, 255, 1.00);
+  /* The default color for elements or text that appears on top of the background. */
+  --foreground: rgba(28, 28, 28, 1.00);
+  /* The background color for cards, modals, and other containers. */
+  --card: rgba(255, 255, 255, 1.00);
+  /* The default color for text or elements that appear on top of cards, modals and other background containers. */
+  --card-foreground: rgba(28, 28, 28, 1.00);
+  /* The background color for dropdowns and tooltips. */
+  --popover: rgba(255, 255, 255, 1.00);
+  /* The default color for text or elements that appear on top of dropdowns and tooltips. */
+  --popover-foreground: rgba(28, 28, 28, 1.00);
+  /* The primary color used for buttons, links, and other interactive elements. */
+  --primary: rgba(1, 87, 155, 1.00);
+  /* The default color for text or elements that appear on top of primary colored elements. */
+  --primary-foreground: rgba(255, 255, 255, 1.00);
+  /* The secondary color used for secondary(but NOT-DESTRUCTIVE) buttons and interactive elements. */
+  --secondary: rgba(87, 166, 189, 1.00);
+  /* The default color for text or elements that appear on top of secondary colored elements. */
+  --secondary-foreground: rgba(255, 255, 255, 1.00);
+  /* The muted color used for less prominent elements, such as disabled buttons or disabled text. */
+  --muted: rgba(0, 0, 0, 0);
+  /* The default color for text or elements that appear on top of muted colored elements. */
+  --muted-foreground: rgba(205, 205, 205, 1.00);
+  /* The accent color used for highlights, links, and other interactive elements. */
+  --accent: rgba(1, 87, 155, 1.00);
+  /* The default color for text or elements that appear on top of accent colored elements. */
+  --accent-foreground: rgba(255, 255, 255, 1.00);
+  /* The color used for background in destructive actions, such as delete buttons or error messages. */
+  --destructive: rgba(192, 0, 0, 1.00);
+  /* The default color for text or elements that appear on top of destructive colored elements. */
+  --destructive-foreground: rgba(255, 255, 255, 1.00);
+  /* The default border color for elements such as inputs, buttons, and other containers. */
+  --border: rgba(124, 128, 140, 1.00);
+  /* The default background color for input fields once the text has been filled. Should be either transparent or match the input-background. */
+  --input: rgba(255, 255, 255, 1.00);
+  /* The default background color for input fields, text areas, and other input elements. */
+  --input-background: rgba(255, 255, 255, 1.00);
+  /* The default font weight for medium text. */
+  --font-weight-medium: 500;
+  /* The default font weight for normal text. */
+  --font-weight-normal: 400;
+  /* The default font weight for light text. */
+  --font-weight-light: 300;
+  /* The default font weight for bold text. */
+  --font-weight-bold: 700;
+  /* The color for focus rings, outlines, and other focus indicators. */
+  --ring: rgba(1, 87, 155, 1.00);
+  /* Shadow for small elevations, such as cards or modals. */
+  --elevation-sm: 0px 0px 4px 0px rgba(1, 87, 155, 1.00);
+  /* The color for chart elements, such as a bar or line in a chart. */
+  --chart-1: rgba(1, 87, 155, 1.00);
+  /* The color for another chart element, such as a bar or line in a chart. */
+  --chart-2: rgba(87, 166, 189, 1.00);
+  /* The color for another chart element, such as a bar or line in a chart. */
+  --chart-3: rgba(126, 170, 130, 1.00);
+  /* The color for another chart element, such as a bar or line in a chart. */
+  --chart-4: rgba(86, 136, 83, 1.00);
+  /* The color for another chart element, such as a bar or line in a chart. */
+  --chart-5: rgba(192, 0, 0, 1.00);
+  /* The default border radius for elements such as buttons, tooltip, and other containers. */
+  --radius: 4px;
+  /* The border radius for card-like elements. */
+  --radius-card: 6px;
+  /* The border radius for drawer elements. */
+  --radius-drawer: 16px;
+  /* The background color for sidebars, navigation menus, and other persistent elements. */
+  --sidebar: rgba(86, 136, 83, 1.00);
+  /* The default color for text or elements that appear on top of sidebars, navigation menus, and other persistent elements. */
+  --sidebar-foreground: rgba(255, 255, 255, 1.00);
+  /* The primary color used for buttons, links, and other interactive elements in sidebars and navigation menus. */
+  --sidebar-primary: rgba(255, 255, 255, 1.00);
+  /* The default color for text or elements that appear on top of primary colored elements in sidebars and navigation menus. */
+  --sidebar-primary-foreground: rgba(86, 136, 83, 1.00);
+  /* The accent color used for highlights, links, and other interactive elements in sidebars and navigation menus. */
+  --sidebar-accent: rgba(126, 170, 130, 1.00);
+  /* The default color for text or elements that appear on top of accent colored elements in sidebars and navigation menus. */
+  --sidebar-accent-foreground: rgba(255, 255, 255, 1.00);
+  /* The default border color for elements in sidebars and navigation menus. */
+  --sidebar-border: rgba(126, 170, 130, 1.00);
+  /* The default color for focus rings, outlines, and other focus indicators in sidebars and navigation menus. */
+  --sidebar-ring: rgba(255, 255, 255, 1.00);
+}
+
+.dark {
+  --background: rgba(28, 28, 28, 1.00);
+  --foreground: rgba(255, 255, 255, 1.00);
+  --card: rgba(28, 28, 28, 1.00);
+  --card-foreground: rgba(255, 255, 255, 1.00);
+  --popover: rgba(28, 28, 28, 1.00);
+  --popover-foreground: rgba(255, 255, 255, 1.00);
+  --primary: rgba(255, 255, 255, 1.00);
+  --primary-foreground: rgba(28, 28, 28, 1.00);
+  --secondary: rgba(87, 166, 189, 1.00);
+  --secondary-foreground: rgba(255, 255, 255, 1.00);
+  --muted: rgba(0, 0, 0, 0);
+  --muted-foreground: rgba(205, 205, 205, 1.00);
+  --accent: rgba(1, 87, 155, 1.00);
+  --accent-foreground: rgba(255, 255, 255, 1.00);
+  --destructive: rgba(192, 0, 0, 1.00);
+  --destructive-foreground: rgba(255, 255, 255, 1.00);
+  --border: rgba(124, 128, 140, 1.00);
+  --input: rgba(28, 28, 28, 1.00);
+  --ring: rgba(1, 87, 155, 1.00);
+  --chart-1: rgba(1, 87, 155, 1.00);
+  --chart-2: rgba(87, 166, 189, 1.00);
+  --chart-3: rgba(126, 170, 130, 1.00);
+  --chart-4: rgba(86, 136, 83, 1.00);
+  --chart-5: rgba(192, 0, 0, 1.00);
+  --sidebar: rgba(86, 136, 83, 1.00);
+  --sidebar-foreground: rgba(255, 255, 255, 1.00);
+  --sidebar-primary: rgba(255, 255, 255, 1.00);
+  --sidebar-primary-foreground: rgba(86, 136, 83, 1.00);
+  --sidebar-accent: rgba(126, 170, 130, 1.00);
+  --sidebar-accent-foreground: rgba(255, 255, 255, 1.00);
+  --sidebar-border: rgba(126, 170, 130, 1.00);
+  --sidebar-ring: rgba(255, 255, 255, 1.00);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius-card);
+  --radius-xl: var(--radius-drawer);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+h1 {
+  font-family: var(--font-figtree);
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.5;
+}
+
+h2 {
+  font-family: var(--font-inter);
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.5;
+}
+
+h3 {
+  font-family: var(--font-noto-sans-tc);
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.5;
+}
+
+h4 {
+  font-family: var(--font-figtree);
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.5;
+}
+
+p {
+  font-family: var(--font-noto-sans-tc);
+  font-size: var(--text-s);
+  font-weight: var(--font-weight-300);
+  line-height: 1.5;
+}
+
+span {
+  font-family: var(--font-noto-sans-tc);
+  font-size: var(--text-s);
+  font-weight: var(--font-weight-300);
+  line-height: 1.5;
+}
+
+label {
+  font-family: var(--font-noto-sans-tc);
+  font-size: var(--text-s);
+  font-weight: var(--font-weight-300);
+  line-height: 1.5;
+}
+
+button {
+  font-family: var(--font-noto-sans-tc);
+  font-size: var(--text-s);
+  font-weight: var(--font-weight-500);
+  line-height: 1.5;
+}
+
+input {
+  font-family: var(--font-noto-sans-tc);
+  font-size: var(--text-s);
+  font-weight: var(--font-weight-300);
+  line-height: 1.5;
+}
+
+.text-small {
+  font-family: var(--font-sf-pro);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.5;
+}
+
+html {
+  font-size: var(--font-size);
+}

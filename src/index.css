@@ -1,0 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;700&family=Inter:wght@400;500&family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+@import 'tailwindcss' source(none);
+@import 'tw-animate-css';
+@import './styles/globals.css';
+@source './**/*.{js,ts,jsx,tsx}';
