@@ -1,5 +1,5 @@
 {
-  "name": "[Jeff] IT-admin_260316_new OM",
+  "name": "it-admin-cwg-tw-omg-proto",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -60,6 +60,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "preview": "vite preview"
   }
 }
