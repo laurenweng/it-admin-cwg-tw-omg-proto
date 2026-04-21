@@ -5,6 +5,7 @@ import { CwSidemenu, CwSidemenuItem } from "./components/CwSidemenu";
 import { MemberSearch } from "./components/MemberSearch";
 import { MemberDetail } from "./components/MemberDetail";
 import { NewPMOrderManagement } from "./components/NewPMOrderManagement";
+import { ERPCustomerSearch } from "./components/ERPCustomerSearch";
 import { DeleteCustomerApplication } from "./components/DeleteCustomerApplication";
 import { DeleteUserRecordQuery } from "./components/DeleteUserRecordQuery";
 import { DeleteUserRecordInfo } from "./components/DeleteUserRecordInfo";
@@ -38,7 +39,8 @@ const menuItems: CwSidemenuItem[] = [
     label: "訂單管理",
     icon: <ShoppingCart className="w-4 h-4" />,
     children: [
-      { id: "new-pm-order-management", label: "新訂單列表" }
+      { id: "new-pm-order-management", label: "新訂單列表" },
+      { id: "erp-customer-search", label: "ERP 客戶查詢" }
     ]
   },
   {
@@ -120,6 +122,8 @@ export default function App() {
         return <ComponentDemo />;
       case "new-pm-order-management":
         return <NewPMOrderManagement />;
+      case "erp-customer-search":
+        return <ERPCustomerSearch />;
       case "delete-customer-application":
         return <DeleteCustomerApplication />;
       case "delete-user-record-query":

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { RotateCcw, ChevronDown, ChevronUp, Filter, Info, Search, X } from "lucide-react";
 import { CwButton } from "./CwButton";
+import { CwRoundButton } from "./CwRoundButton";
 import { CwInput } from "./CwInput";
 import { CwPagination } from "./CwPagination";
 import { CwTitle } from "./CwTitle";
@@ -9,50 +10,63 @@ import { CwTable, CwTableColumn } from "./CwTable";
 import { CwSelect, CwSelectOption } from "./CwSelect";
 import { StatusTag } from "./StatusTag";
 import { PMOrderDetail } from "./PMOrderDetail";
+import { CreatePMOrder } from "./CreatePMOrder";
 import { CwDatePicker } from "./CwDatePicker";
 
 // ── 統一訂單資料型別 ──────────────────────────────────────
 interface UnifiedOrderData {
   id: string;
   type: ('service' | 'erp' | 'omg')[];
-  // 基礎（常駐）
-  sourceSystem: string;
-  orderDate: string;
-  sourceProduct: string;
-  paymentMethod: string;
-  paymentStatus: string;
-  orderStatus: string;
-  // 訂單明細
+  // 常駐欄位
+  legalEntity: string;
   orderNumber: string;
+  lineNo: string;
+  sourceOrderNumber: string;
+  processOrderNumber: string;
+  orderDate: string;
   orderStartDate: string;
   orderEndDate: string;
-  orderAmount: number;
-  // 未結案單
-  isUnresolved: string;
-  // 雜誌料號
-  magazineCode: string;
-  // 出貨客戶
-  shippingCustomerNumber: string;
-  shippingCustomerName: string;
-  shippingCustomerAddress: string;
-  shippingCustomerPhone: string;
-  // 付款客戶
-  paymentCustomerNumber: string;
-  paymentCustomerName: string;
-  paymentCustomerAddress: string;
-  paymentCustomerPhone: string;
-  // 訂單備註
-  orderNote: string;
-  // 方案相關
   planCode: string;
   planName: string;
-  // 知識庫相關
-  knowledgeStartDate: string;
-  knowledgeEndDate: string;
-  // 暫止相關
+  productCode: string;
+  productName: string;
+  quantity: number;
+  itemAmount: number;
+  orderAmount: number;
+  sourceSystem: string;
+  sourceCode: string;
+  salesPerson: string;
+  omgStatus: string;
+  serviceStatus: string;
+  orderNote: string;
   isPaused: string;
   pauseReason: string;
-  // 客戶資訊
+  publishShipping: string;
+  oldStartDate: string;
+  oldEndDate: string;
+  paymentCustomerNumber: string;
+  paymentCustomerName: string;
+  shippingCustomerNumber: string;
+  shippingCustomerName: string;
+  recipient: string;
+  shippingCustomerAddress: string;
+  postalCode: string;
+  shippingCountry: string;
+  shippingMethod: string;
+  shippingMobile: string;
+  shippingEmail: string;
+  paymentMethod: string;
+  paymentStatus: string;
+  // backward compat for PMOrderDetail
+  orderStatus: string;
+  sourceProduct: string;
+  isUnresolved: string;
+  magazineCode: string;
+  knowledgeStartDate: string;
+  knowledgeEndDate: string;
+  paymentCustomerAddress: string;
+  paymentCustomerPhone: string;
+  shippingCustomerPhone: string;
   customerName: string;
   customerMobile: string;
   customerPhone: string;
@@ -135,72 +149,87 @@ const mockPromotionCodes: PromotionCodeData[] = [
 const mockServiceOrders: UnifiedOrderData[] = [
   {
     id: 's1', type: ['service'],
-    sourceSystem: '天下', orderDate: '2025-01-15', sourceProduct: '天下雜誌年訂方案',
-    paymentMethod: '信用卡', paymentStatus: '已付款', orderStatus: '止寄',
-    orderNumber: 'CW2025010001', orderStartDate: '2025-01-15', orderEndDate: '2026-01-14', orderAmount: 2980,
-    isUnresolved: 'N', magazineCode: 'GCV0001',
-    shippingCustomerNumber: 'C001234', shippingCustomerName: '王小明', shippingCustomerAddress: '台北市中山區中山北路二段7號', shippingCustomerPhone: '02-25074855',
-    paymentCustomerNumber: 'C001234', paymentCustomerName: '王小明', paymentCustomerAddress: '台北市中山區中山北路二段7號', paymentCustomerPhone: '02-25074855',
-    orderNote: '',
+    legalEntity: '81 CW', orderNumber: 'CW2025010001', lineNo: '1', sourceOrderNumber: 'SVC001001', processOrderNumber: 'PRO001001',
+    sourceSystem: '天下', sourceCode: 'WEB01', orderDate: '2025-01-15', sourceProduct: '天下雜誌年訂方案',
+    orderStartDate: '2025-01-15', orderEndDate: '2026-01-14',
     planCode: 'YS2025', planName: '天下年訂方案2025',
-    knowledgeStartDate: '2025-01-15', knowledgeEndDate: '2026-01-14',
-    isPaused: 'N', pauseReason: '',
+    productCode: 'GCV-P001', productName: '天下雜誌年訂', quantity: 1, itemAmount: 2980, orderAmount: 2980,
+    salesPerson: '林業務', omgStatus: '', serviceStatus: 'I',
+    paymentMethod: '信用卡', paymentStatus: '已付款', orderStatus: '止寄', orderNote: '',
+    isPaused: 'N', pauseReason: '', publishShipping: '天下', oldStartDate: '', oldEndDate: '',
+    paymentCustomerNumber: 'C001234', paymentCustomerName: '王小明',
+    shippingCustomerNumber: 'C001234', shippingCustomerName: '王小明',
+    recipient: '王小明', shippingCustomerAddress: '台北市中山區中山北路二段7號', postalCode: '10452', shippingCountry: '台灣', shippingMethod: '1009-郵寄-指定宅配', shippingMobile: '0912-111-222', shippingEmail: 'wangxm@example.com',
+    isUnresolved: 'N', magazineCode: 'GCV0001', knowledgeStartDate: '2025-01-15', knowledgeEndDate: '2026-01-14',
+    paymentCustomerAddress: '台北市中山區中山北路二段7號', paymentCustomerPhone: '02-25074855', shippingCustomerPhone: '02-25074855',
     customerName: '王小明', customerMobile: '0912-111-222', customerPhone: '02-25074855', customerContact: '王小明', customerAddress: '台北市中山區中山北路二段7號', customerEmail: 'wangxm@example.com', customerTaxId: '',
   },
   {
     id: 's2', type: ['service'],
-    sourceSystem: '親子', orderDate: '2025-01-18', sourceProduct: '親子天下半年訂閱',
-    paymentMethod: 'ATM轉帳', paymentStatus: '待付款', orderStatus: '退訂',
-    orderNumber: 'PK2025010023', orderStartDate: '2025-01-18', orderEndDate: '2025-07-17', orderAmount: 1490,
-    isUnresolved: 'Y', magazineCode: 'PK0001',
-    shippingCustomerNumber: 'C002345', shippingCustomerName: '李大華', shippingCustomerAddress: '新北市板橋區文化路一段188號', shippingCustomerPhone: '02-29538888',
-    paymentCustomerNumber: 'C002345', paymentCustomerName: '李大華', paymentCustomerAddress: '新北市板橋區文化路一段188號', paymentCustomerPhone: '02-29538888',
-    orderNote: '客戶要求暫停收刊',
+    legalEntity: '82 CH', orderNumber: 'PK2025010023', lineNo: '1', sourceOrderNumber: 'SVC001023', processOrderNumber: 'PRO001023',
+    sourceSystem: '親子', sourceCode: 'WEB01', orderDate: '2025-01-18', sourceProduct: '親子天下半年訂閱',
+    orderStartDate: '2025-01-18', orderEndDate: '2025-07-17',
     planCode: 'HS2025', planName: '親子天下半年訂閱2025',
-    knowledgeStartDate: '', knowledgeEndDate: '',
-    isPaused: 'Y', pauseReason: '客戶申請暫停',
+    productCode: 'PK-P001', productName: '親子天下半年訂閱', quantity: 1, itemAmount: 1490, orderAmount: 1490,
+    salesPerson: '張業務', omgStatus: '', serviceStatus: 'C',
+    paymentMethod: 'ATM轉帳', paymentStatus: '待付款', orderStatus: '退訂', orderNote: '客戶要求暫停收刊',
+    isPaused: 'Y', pauseReason: '客戶申請暫停', publishShipping: '親子天下', oldStartDate: '', oldEndDate: '',
+    paymentCustomerNumber: 'C002345', paymentCustomerName: '李大華',
+    shippingCustomerNumber: 'C002345', shippingCustomerName: '李大華',
+    recipient: '李大華', shippingCustomerAddress: '新北市板橋區文化路一段188號', postalCode: '22046', shippingCountry: '台灣', shippingMethod: '1007-郵寄-掛號航空', shippingMobile: '0933-222-333', shippingEmail: 'lidh@example.com',
+    isUnresolved: 'Y', magazineCode: 'PK0001', knowledgeStartDate: '', knowledgeEndDate: '',
+    paymentCustomerAddress: '新北市板橋區文化路一段188號', paymentCustomerPhone: '02-29538888', shippingCustomerPhone: '02-29538888',
     customerName: '李大華', customerMobile: '0933-222-333', customerPhone: '02-29538888', customerContact: '李大華', customerAddress: '新北市板橋區文化路一段188號', customerEmail: 'lidh@example.com', customerTaxId: '',
   },
   {
     id: 's3', type: ['service'],
-    sourceSystem: '康健', orderDate: '2025-01-20', sourceProduct: '康健季訂方案',
-    paymentMethod: '信用卡', paymentStatus: '已付款', orderStatus: '止寄',
-    orderNumber: 'CH2025010045', orderStartDate: '2025-01-20', orderEndDate: '2025-04-19', orderAmount: 890,
-    isUnresolved: 'N', magazineCode: 'CH0001',
-    shippingCustomerNumber: 'C003456', shippingCustomerName: '陳美玲', shippingCustomerAddress: '台中市西屯區台灣大道三段99號', shippingCustomerPhone: '04-22580777',
-    paymentCustomerNumber: 'C003456', paymentCustomerName: '陳美玲', paymentCustomerAddress: '台中市西屯區台灣大道三段99號', paymentCustomerPhone: '04-22580777',
-    orderNote: '',
+    legalEntity: '88 CK', orderNumber: 'CH2025010045', lineNo: '1', sourceOrderNumber: 'SVC001045', processOrderNumber: 'PRO001045',
+    sourceSystem: '康健', sourceCode: 'WEB01', orderDate: '2025-01-20', sourceProduct: '康健季訂方案',
+    orderStartDate: '2025-01-20', orderEndDate: '2025-04-19',
     planCode: 'QS2025', planName: '康健季訂方案2025',
-    knowledgeStartDate: '2025-01-20', knowledgeEndDate: '2025-04-19',
-    isPaused: 'N', pauseReason: '',
+    productCode: 'CH-P001', productName: '康健季訂方案', quantity: 1, itemAmount: 890, orderAmount: 890,
+    salesPerson: '林業務', omgStatus: '', serviceStatus: 'I',
+    paymentMethod: '信用卡', paymentStatus: '已付款', orderStatus: '止寄', orderNote: '',
+    isPaused: 'N', pauseReason: '', publishShipping: '康健', oldStartDate: '', oldEndDate: '',
+    paymentCustomerNumber: 'C003456', paymentCustomerName: '陳美玲',
+    shippingCustomerNumber: 'C003456', shippingCustomerName: '陳美玲',
+    recipient: '陳美玲', shippingCustomerAddress: '台中市西屯區台灣大道三段99號', postalCode: '40756', shippingCountry: '台灣', shippingMethod: '1006-郵寄-掛號水陸', shippingMobile: '0955-333-444', shippingEmail: 'chenml@example.com',
+    isUnresolved: 'N', magazineCode: 'CH0001', knowledgeStartDate: '2025-01-20', knowledgeEndDate: '2025-04-19',
+    paymentCustomerAddress: '台中市西屯區台灣大道三段99號', paymentCustomerPhone: '04-22580777', shippingCustomerPhone: '04-22580777',
     customerName: '陳美玲', customerMobile: '0955-333-444', customerPhone: '04-22580777', customerContact: '陳美玲', customerAddress: '台中市西屯區台灣大道三段99號', customerEmail: 'chenml@example.com', customerTaxId: '',
   },
   {
     id: 's4', type: ['service'],
-    sourceSystem: '天下', orderDate: '2025-01-22', sourceProduct: '天下雜誌數位版',
-    paymentMethod: 'Line Pay', paymentStatus: '已付款', orderStatus: '正常',
-    orderNumber: 'CW2025010067', orderStartDate: '2025-01-22', orderEndDate: '2026-01-21', orderAmount: 1980,
-    isUnresolved: 'N', magazineCode: 'GCV0001',
-    shippingCustomerNumber: '', shippingCustomerName: '', shippingCustomerAddress: '', shippingCustomerPhone: '',
-    paymentCustomerNumber: 'C004567', paymentCustomerName: '張志遠', paymentCustomerAddress: '高雄市前鎮區中山三路6號', paymentCustomerPhone: '07-33335555',
-    orderNote: '數位版無需出貨',
+    legalEntity: '81 CW', orderNumber: 'CW2025010067', lineNo: '1', sourceOrderNumber: 'SVC001067', processOrderNumber: 'PRO001067',
+    sourceSystem: '天下', sourceCode: 'APP01', orderDate: '2025-01-22', sourceProduct: '天下雜誌數位版',
+    orderStartDate: '2025-01-22', orderEndDate: '2026-01-21',
     planCode: 'DY2025', planName: '天下數位年訂2025',
-    knowledgeStartDate: '2025-01-22', knowledgeEndDate: '2026-01-21',
-    isPaused: 'N', pauseReason: '',
+    productCode: 'GCV-D001', productName: '天下雜誌數位版', quantity: 1, itemAmount: 1980, orderAmount: 1980,
+    salesPerson: '王業務', omgStatus: '', serviceStatus: 'I',
+    paymentMethod: 'Line Pay', paymentStatus: '已付款', orderStatus: '正常', orderNote: '數位版無需出貨',
+    isPaused: 'N', pauseReason: '', publishShipping: '', oldStartDate: '', oldEndDate: '',
+    paymentCustomerNumber: 'C004567', paymentCustomerName: '張志遠',
+    shippingCustomerNumber: '', shippingCustomerName: '',
+    recipient: '', shippingCustomerAddress: '', postalCode: '', shippingCountry: '台灣', shippingMethod: '', shippingMobile: '0966-444-555', shippingEmail: 'zhangzr@example.com',
+    isUnresolved: 'N', magazineCode: 'GCV0001', knowledgeStartDate: '2025-01-22', knowledgeEndDate: '2026-01-21',
+    paymentCustomerAddress: '高雄市前鎮區中山三路6號', paymentCustomerPhone: '07-33335555', shippingCustomerPhone: '',
     customerName: '張志遠', customerMobile: '0966-444-555', customerPhone: '07-33335555', customerContact: '張志遠', customerAddress: '高雄市前鎮區中山三路6號', customerEmail: 'zhangzr@example.com', customerTaxId: '12345678',
   },
   {
     id: 's5', type: ['service'],
-    sourceSystem: '親子', orderDate: '2025-01-25', sourceProduct: '',
-    paymentMethod: '信用卡', paymentStatus: '未付款', orderStatus: '正常',
-    orderNumber: 'PK2025010089', orderStartDate: '', orderEndDate: '', orderAmount: 3500,
-    isUnresolved: 'Y', magazineCode: '',
-    shippingCustomerNumber: 'C005678', shippingCustomerName: '林淑芬', shippingCustomerAddress: '台南市東區裕農路198號', shippingCustomerPhone: '06-23456789',
-    paymentCustomerNumber: 'C005678', paymentCustomerName: '林淑芬', paymentCustomerAddress: '台南市東區裕農路198號', paymentCustomerPhone: '06-23456789',
-    orderNote: '作廢原因：重複下單',
+    legalEntity: '82 CH', orderNumber: 'PK2025010089', lineNo: '1', sourceOrderNumber: 'SVC001089', processOrderNumber: 'PRO001089',
+    sourceSystem: '親子', sourceCode: 'WEB01', orderDate: '2025-01-25', sourceProduct: '',
+    orderStartDate: '', orderEndDate: '',
     planCode: '', planName: '',
-    knowledgeStartDate: '', knowledgeEndDate: '',
-    isPaused: 'N', pauseReason: '',
+    productCode: '', productName: '', quantity: 0, itemAmount: 3500, orderAmount: 3500,
+    salesPerson: '陳業務', omgStatus: '', serviceStatus: 'E',
+    paymentMethod: '信用卡', paymentStatus: '未付款', orderStatus: '正常', orderNote: '作廢原因：重複下單',
+    isPaused: 'N', pauseReason: '', publishShipping: '親子天下', oldStartDate: '', oldEndDate: '',
+    paymentCustomerNumber: 'C005678', paymentCustomerName: '林淑芬',
+    shippingCustomerNumber: 'C005678', shippingCustomerName: '林淑芬',
+    recipient: '林淑芬', shippingCustomerAddress: '台南市東區裕農路198號', postalCode: '70158', shippingCountry: '台灣', shippingMethod: '1009-郵寄-指定宅配', shippingMobile: '0977-555-666', shippingEmail: 'linsf@example.com',
+    isUnresolved: 'Y', magazineCode: '', knowledgeStartDate: '', knowledgeEndDate: '',
+    paymentCustomerAddress: '台南市東區裕農路198號', paymentCustomerPhone: '06-23456789', shippingCustomerPhone: '06-23456789',
     customerName: '林淑芬', customerMobile: '0977-555-666', customerPhone: '06-23456789', customerContact: '林淑芬', customerAddress: '台南市東區裕農路198號', customerEmail: 'linsf@example.com', customerTaxId: '',
   },
 ];
@@ -208,184 +237,223 @@ const mockServiceOrders: UnifiedOrderData[] = [
 const mockErpOrders: UnifiedOrderData[] = [
   {
     id: 'e1', type: ['erp'],
-    sourceSystem: '天下', orderDate: '2025-05-12', sourceProduct: '天下雜誌1週',
-    paymentMethod: '信用卡', paymentStatus: '已付款', orderStatus: '正常',
-    orderNumber: '102862680', orderStartDate: '2025-05-14', orderEndDate: '2025-07-09', orderAmount: 380,
-    isUnresolved: 'N', magazineCode: 'GCV00001',
-    shippingCustomerNumber: '1679128', shippingCustomerName: 'JEFF', shippingCustomerAddress: '台北市大同區民權西路103號', shippingCustomerPhone: '0912-345-678',
-    paymentCustomerNumber: '1679128', paymentCustomerName: 'JEFF', paymentCustomerAddress: '台北市大同區民權西路103號', paymentCustomerPhone: '0912-345-678',
-    orderNote: '',
+    legalEntity: '81 CW', orderNumber: '102862680', lineNo: '1', sourceOrderNumber: '102862680-S', processOrderNumber: 'FLW862680',
+    sourceSystem: '天下', sourceCode: 'ERP01', orderDate: '2025-05-12', sourceProduct: '天下雜誌1週',
+    orderStartDate: '2025-05-14', orderEndDate: '2025-07-09',
     planCode: 'GCV-W', planName: '天下雜誌週訂方案',
-    knowledgeStartDate: '2025-05-14', knowledgeEndDate: '2025-07-09',
-    isPaused: 'N', pauseReason: '',
+    productCode: 'GCV00001', productName: '天下雜誌1週', quantity: 1, itemAmount: 380, orderAmount: 380,
+    salesPerson: '郭業務', omgStatus: '', serviceStatus: 'I',
+    paymentMethod: '信用卡', paymentStatus: '已付款', orderStatus: '正常', orderNote: '',
+    isPaused: 'N', pauseReason: '', publishShipping: '天下', oldStartDate: '', oldEndDate: '',
+    paymentCustomerNumber: '1679128', paymentCustomerName: 'JEFF',
+    shippingCustomerNumber: '1679128', shippingCustomerName: 'JEFF',
+    recipient: 'JEFF', shippingCustomerAddress: '台北市大同區民權西路103號', postalCode: '10356', shippingCountry: '台灣', shippingMethod: '1005-郵寄-一般航空', shippingMobile: '0912-345-678', shippingEmail: 'jeff@example.com',
+    isUnresolved: 'N', magazineCode: 'GCV00001', knowledgeStartDate: '2025-05-14', knowledgeEndDate: '2025-07-09',
+    paymentCustomerAddress: '台北市大同區民權西路103號', paymentCustomerPhone: '0912-345-678', shippingCustomerPhone: '0912-345-678',
     customerName: 'JEFF', customerMobile: '0912-345-678', customerPhone: '02-25551234', customerContact: 'JEFF', customerAddress: '台北市大同區民權西路103號', customerEmail: 'jeff@example.com', customerTaxId: '87654321',
   },
   {
     id: 'e2', type: ['erp'],
-    sourceSystem: '天下', orderDate: '2025-06-12', sourceProduct: '',
-    paymentMethod: '', paymentStatus: '', orderStatus: '正常',
-    orderNumber: '52070730', orderStartDate: '', orderEndDate: '', orderAmount: 0,
-    isUnresolved: 'Y', magazineCode: '',
-    shippingCustomerNumber: '1679128', shippingCustomerName: 'JEFF', shippingCustomerAddress: '', shippingCustomerPhone: '',
-    paymentCustomerNumber: '1679128', paymentCustomerName: 'JEFF', paymentCustomerAddress: '', paymentCustomerPhone: '',
-    orderNote: '資料建置中',
+    legalEntity: '81 CW', orderNumber: '52070730', lineNo: '1', sourceOrderNumber: '52070730-S', processOrderNumber: 'FLW070730',
+    sourceSystem: '天下', sourceCode: 'ERP01', orderDate: '2025-06-12', sourceProduct: '',
+    orderStartDate: '', orderEndDate: '',
     planCode: '', planName: '',
-    knowledgeStartDate: '', knowledgeEndDate: '',
-    isPaused: 'N', pauseReason: '',
+    productCode: '', productName: '', quantity: 0, itemAmount: 0, orderAmount: 0,
+    salesPerson: '', omgStatus: '', serviceStatus: 'P',
+    paymentMethod: '', paymentStatus: '', orderStatus: '正常', orderNote: '資料建置中',
+    isPaused: 'N', pauseReason: '', publishShipping: '', oldStartDate: '', oldEndDate: '',
+    paymentCustomerNumber: '1679128', paymentCustomerName: 'JEFF',
+    shippingCustomerNumber: '1679128', shippingCustomerName: 'JEFF',
+    recipient: 'JEFF', shippingCustomerAddress: '', postalCode: '', shippingCountry: '台灣', shippingMethod: '', shippingMobile: '0912-345-678', shippingEmail: 'jeff@example.com',
+    isUnresolved: 'Y', magazineCode: '', knowledgeStartDate: '', knowledgeEndDate: '',
+    paymentCustomerAddress: '', paymentCustomerPhone: '', shippingCustomerPhone: '',
     customerName: 'JEFF', customerMobile: '0912-345-678', customerPhone: '', customerContact: 'JEFF', customerAddress: '', customerEmail: 'jeff@example.com', customerTaxId: '',
   },
   {
     id: 'e3', type: ['erp'],
-    sourceSystem: '天下', orderDate: '2025-06-09', sourceProduct: '天下雜誌 (2萬1)',
-    paymentMethod: '信用卡', paymentStatus: '已付款', orderStatus: '復寄',
-    orderNumber: '102862724', orderStartDate: '2025-06-09', orderEndDate: '2026-06-08', orderAmount: 21000,
-    isUnresolved: 'N', magazineCode: 'KCAA00012',
-    shippingCustomerNumber: '1679128', shippingCustomerName: 'JEFF', shippingCustomerAddress: '台北市大同區民權西路103號', shippingCustomerPhone: '0912-345-678',
-    paymentCustomerNumber: '1679128', paymentCustomerName: 'JEFF', paymentCustomerAddress: '台北市大同區民權西路103號', paymentCustomerPhone: '0912-345-678',
-    orderNote: '',
+    legalEntity: '81 CW', orderNumber: '102862724', lineNo: '1', sourceOrderNumber: '102862724-S', processOrderNumber: 'FLW862724',
+    sourceSystem: '天下', sourceCode: 'ERP01', orderDate: '2025-06-09', sourceProduct: '天下雜誌 (2萬1)',
+    orderStartDate: '2025-06-09', orderEndDate: '2026-06-08',
     planCode: 'KCAA-Y', planName: '天下雜誌年訂(2萬1)',
-    knowledgeStartDate: '2025-06-09', knowledgeEndDate: '2026-06-08',
-    isPaused: 'N', pauseReason: '',
+    productCode: 'KCAA00012', productName: '天下雜誌 (2萬1)', quantity: 1, itemAmount: 21000, orderAmount: 21000,
+    salesPerson: '郭業務', omgStatus: '', serviceStatus: 'I',
+    paymentMethod: '信用卡', paymentStatus: '已付款', orderStatus: '復寄', orderNote: '',
+    isPaused: 'N', pauseReason: '', publishShipping: '天下', oldStartDate: '2024-06-09', oldEndDate: '2025-06-08',
+    paymentCustomerNumber: '1679128', paymentCustomerName: 'JEFF',
+    shippingCustomerNumber: '1679128', shippingCustomerName: 'JEFF',
+    recipient: 'JEFF', shippingCustomerAddress: '台北市大同區民權西路103號', postalCode: '10356', shippingCountry: '台灣', shippingMethod: '1009-郵寄-指定宅配', shippingMobile: '0912-345-678', shippingEmail: 'jeff@example.com',
+    isUnresolved: 'N', magazineCode: 'KCAA00012', knowledgeStartDate: '2025-06-09', knowledgeEndDate: '2026-06-08',
+    paymentCustomerAddress: '台北市大同區民權西路103號', paymentCustomerPhone: '0912-345-678', shippingCustomerPhone: '0912-345-678',
     customerName: 'JEFF', customerMobile: '0912-345-678', customerPhone: '02-25551234', customerContact: 'JEFF', customerAddress: '台北市大同區民權西路103號', customerEmail: 'jeff@example.com', customerTaxId: '87654321',
   },
   {
     id: 'e4', type: ['erp'],
-    sourceSystem: '天下', orderDate: '2025-06-09', sourceProduct: '',
-    paymentMethod: '信用卡', paymentStatus: '已付款', orderStatus: '止寄',
-    orderNumber: '102862724-2', orderStartDate: '2026-04-13', orderEndDate: '2027-04-28', orderAmount: 0,
-    isUnresolved: 'N', magazineCode: 'GCV00025',
-    shippingCustomerNumber: '1679128', shippingCustomerName: 'JEFF', shippingCustomerAddress: '台北市大同區民權西路103號', shippingCustomerPhone: '0912-345-678',
-    paymentCustomerNumber: '1679128', paymentCustomerName: 'JEFF', paymentCustomerAddress: '台北市大同區民權西路103號', paymentCustomerPhone: '0912-345-678',
-    orderNote: '',
+    legalEntity: '81 CW', orderNumber: '102862724-2', lineNo: '2', sourceOrderNumber: '102862724-S', processOrderNumber: 'FLW862724-2',
+    sourceSystem: '天下', sourceCode: 'ERP01', orderDate: '2025-06-09', sourceProduct: '',
+    orderStartDate: '2026-04-13', orderEndDate: '2027-04-28',
     planCode: 'GCV-Y2', planName: '天下雜誌年訂方案二',
-    knowledgeStartDate: '2026-04-13', knowledgeEndDate: '2027-04-28',
-    isPaused: 'N', pauseReason: '',
+    productCode: 'GCV00025', productName: '天下雜誌年訂', quantity: 1, itemAmount: 0, orderAmount: 0,
+    salesPerson: '郭業務', omgStatus: '', serviceStatus: 'I',
+    paymentMethod: '信用卡', paymentStatus: '已付款', orderStatus: '止寄', orderNote: '',
+    isPaused: 'N', pauseReason: '', publishShipping: '天下', oldStartDate: '', oldEndDate: '',
+    paymentCustomerNumber: '1679128', paymentCustomerName: 'JEFF',
+    shippingCustomerNumber: '1679128', shippingCustomerName: 'JEFF',
+    recipient: 'JEFF', shippingCustomerAddress: '台北市大同區民權西路103號', postalCode: '10356', shippingCountry: '台灣', shippingMethod: '1009-郵寄-指定宅配', shippingMobile: '0912-345-678', shippingEmail: 'jeff@example.com',
+    isUnresolved: 'N', magazineCode: 'GCV00025', knowledgeStartDate: '2026-04-13', knowledgeEndDate: '2027-04-28',
+    paymentCustomerAddress: '台北市大同區民權西路103號', paymentCustomerPhone: '0912-345-678', shippingCustomerPhone: '0912-345-678',
     customerName: 'JEFF', customerMobile: '0912-345-678', customerPhone: '02-25551234', customerContact: 'JEFF', customerAddress: '台北市大同區民權西路103號', customerEmail: 'jeff@example.com', customerTaxId: '87654321',
   },
   {
     id: 'e5', type: ['erp'],
-    sourceSystem: '親子', orderDate: '2025-02-14', sourceProduct: '親子天下月訂',
-    paymentMethod: '信用卡', paymentStatus: '已付款', orderStatus: '輸入',
-    orderNumber: '102862750', orderStartDate: '2025-02-14', orderEndDate: '2026-02-13', orderAmount: 5980,
-    isUnresolved: 'N', magazineCode: 'PK00001',
-    shippingCustomerNumber: '1679129', shippingCustomerName: '陳小芳', shippingCustomerAddress: '台中市中區自由路100號', shippingCustomerPhone: '04-22220123',
-    paymentCustomerNumber: '1679129', paymentCustomerName: '陳小芳', paymentCustomerAddress: '台中市中區自由路100號', paymentCustomerPhone: '04-22220123',
-    orderNote: '新增訂戶',
+    legalEntity: '82 CH', orderNumber: '102862750', lineNo: '1', sourceOrderNumber: '102862750-S', processOrderNumber: 'FLW862750',
+    sourceSystem: '親子', sourceCode: 'ERP01', orderDate: '2025-02-14', sourceProduct: '親子天下月訂',
+    orderStartDate: '2025-02-14', orderEndDate: '2026-02-13',
     planCode: 'PK-Y', planName: '親子天下年訂方案',
-    knowledgeStartDate: '2025-02-14', knowledgeEndDate: '2026-02-13',
-    isPaused: 'N', pauseReason: '',
+    productCode: 'PK00001', productName: '親子天下月訂', quantity: 1, itemAmount: 5980, orderAmount: 5980,
+    salesPerson: '陳業務', omgStatus: '', serviceStatus: 'E',
+    paymentMethod: '信用卡', paymentStatus: '已付款', orderStatus: '輸入', orderNote: '新增訂戶',
+    isPaused: 'N', pauseReason: '', publishShipping: '親子天下', oldStartDate: '', oldEndDate: '',
+    paymentCustomerNumber: '1679129', paymentCustomerName: '陳小芳',
+    shippingCustomerNumber: '1679129', shippingCustomerName: '陳小芳',
+    recipient: '陳小芳', shippingCustomerAddress: '台中市中區自由路100號', postalCode: '40042', shippingCountry: '台灣', shippingMethod: '1007-郵寄-掛號航空', shippingMobile: '0922-456-789', shippingEmail: 'chen.xf@example.com',
+    isUnresolved: 'N', magazineCode: 'PK00001', knowledgeStartDate: '2025-02-14', knowledgeEndDate: '2026-02-13',
+    paymentCustomerAddress: '台中市中區自由路100號', paymentCustomerPhone: '04-22220123', shippingCustomerPhone: '04-22220123',
     customerName: '陳小芳', customerMobile: '0922-456-789', customerPhone: '04-22220123', customerContact: '陳小芳', customerAddress: '台中市中區自由路100號', customerEmail: 'chen.xf@example.com', customerTaxId: '12345678',
   },
   {
     id: 'e6', type: ['erp'],
-    sourceSystem: '康健', orderDate: '2025-03-10', sourceProduct: '康健雜誌季訂',
-    paymentMethod: 'ATM轉帳', paymentStatus: '已付款', orderStatus: '復寄',
-    orderNumber: '102862770', orderStartDate: '2025-03-10', orderEndDate: '2025-06-09', orderAmount: 2490,
-    isUnresolved: 'N', magazineCode: 'CH00002',
-    shippingCustomerNumber: '1679130', shippingCustomerName: '林建宏', shippingCustomerAddress: '高雄市前鎮區中華四路8號', shippingCustomerPhone: '07-33334444',
-    paymentCustomerNumber: '1679130', paymentCustomerName: '林建宏', paymentCustomerAddress: '高雄市前鎮區中華四路8號', paymentCustomerPhone: '07-33334444',
-    orderNote: '已出貨',
+    legalEntity: '88 CK', orderNumber: '102862770', lineNo: '1', sourceOrderNumber: '102862770-S', processOrderNumber: 'FLW862770',
+    sourceSystem: '康健', sourceCode: 'ERP01', orderDate: '2025-03-10', sourceProduct: '康健雜誌季訂',
+    orderStartDate: '2025-03-10', orderEndDate: '2025-06-09',
     planCode: 'CH-Q', planName: '康健季訂方案',
-    knowledgeStartDate: '2025-03-10', knowledgeEndDate: '2025-06-09',
-    isPaused: 'N', pauseReason: '',
+    productCode: 'CH00002', productName: '康健雜誌季訂', quantity: 1, itemAmount: 2490, orderAmount: 2490,
+    salesPerson: '林業務', omgStatus: '', serviceStatus: 'I',
+    paymentMethod: 'ATM轉帳', paymentStatus: '已付款', orderStatus: '復寄', orderNote: '已出貨',
+    isPaused: 'N', pauseReason: '', publishShipping: '康健', oldStartDate: '', oldEndDate: '',
+    paymentCustomerNumber: '1679130', paymentCustomerName: '林建宏',
+    shippingCustomerNumber: '1679130', shippingCustomerName: '林建宏',
+    recipient: '林建宏', shippingCustomerAddress: '高雄市前鎮區中華四路8號', postalCode: '81252', shippingCountry: '台灣', shippingMethod: '1006-郵寄-掛號水陸', shippingMobile: '0933-567-890', shippingEmail: 'lin.jh@example.com',
+    isUnresolved: 'N', magazineCode: 'CH00002', knowledgeStartDate: '2025-03-10', knowledgeEndDate: '2025-06-09',
+    paymentCustomerAddress: '高雄市前鎮區中華四路8號', paymentCustomerPhone: '07-33334444', shippingCustomerPhone: '07-33334444',
     customerName: '林建宏', customerMobile: '0933-567-890', customerPhone: '07-33334444', customerContact: '林建宏', customerAddress: '高雄市前鎮區中華四路8號', customerEmail: 'lin.jh@example.com', customerTaxId: '98765432',
   },
   {
     id: 'e7', type: ['erp'],
-    sourceSystem: '天下', orderDate: '2025-04-05', sourceProduct: '天下雜誌月訂',
-    paymentMethod: '信用卡', paymentStatus: '未付款', orderStatus: '作廢',
-    orderNumber: '102862790', orderStartDate: '2025-04-05', orderEndDate: '2025-05-04', orderAmount: 480,
-    isUnresolved: 'Y', magazineCode: 'GCV00003',
-    shippingCustomerNumber: '1679131', shippingCustomerName: '黃麗娜', shippingCustomerAddress: '新竹市東區光復路88號', shippingCustomerPhone: '03-55557777',
-    paymentCustomerNumber: '1679131', paymentCustomerName: '黃麗娜', paymentCustomerAddress: '新竹市東區光復路88號', paymentCustomerPhone: '03-55557777',
-    orderNote: '客戶要求取消',
+    legalEntity: '81 CW', orderNumber: '102862790', lineNo: '1', sourceOrderNumber: '102862790-S', processOrderNumber: 'FLW862790',
+    sourceSystem: '天下', sourceCode: 'ERP01', orderDate: '2025-04-05', sourceProduct: '天下雜誌月訂',
+    orderStartDate: '2025-04-05', orderEndDate: '2025-05-04',
     planCode: '', planName: '',
-    knowledgeStartDate: '', knowledgeEndDate: '',
-    isPaused: 'N', pauseReason: '',
+    productCode: 'GCV00003', productName: '天下雜誌月訂', quantity: 1, itemAmount: 480, orderAmount: 480,
+    salesPerson: '陳業務', omgStatus: '', serviceStatus: 'C',
+    paymentMethod: '信用卡', paymentStatus: '未付款', orderStatus: '作廢', orderNote: '客戶要求取消',
+    isPaused: 'N', pauseReason: '', publishShipping: '天下', oldStartDate: '', oldEndDate: '',
+    paymentCustomerNumber: '1679131', paymentCustomerName: '黃麗娜',
+    shippingCustomerNumber: '1679131', shippingCustomerName: '黃麗娜',
+    recipient: '黃麗娜', shippingCustomerAddress: '新竹市東區光復路88號', postalCode: '30064', shippingCountry: '台灣', shippingMethod: '1005-郵寄-一般航空', shippingMobile: '0944-678-901', shippingEmail: 'huang.ln@example.com',
+    isUnresolved: 'Y', magazineCode: 'GCV00003', knowledgeStartDate: '', knowledgeEndDate: '',
+    paymentCustomerAddress: '新竹市東區光復路88號', paymentCustomerPhone: '03-55557777', shippingCustomerPhone: '03-55557777',
     customerName: '黃麗娜', customerMobile: '0944-678-901', customerPhone: '03-55557777', customerContact: '黃麗娜', customerAddress: '新竹市東區光復路88號', customerEmail: 'huang.ln@example.com', customerTaxId: '56789123',
   },
   {
     id: 'e8', type: ['erp'],
-    sourceSystem: '親子', orderDate: '2025-05-20', sourceProduct: '親子天下年訂',
-    paymentMethod: '信用卡', paymentStatus: '已付款', orderStatus: '正常',
-    orderNumber: '102862810', orderStartDate: '2025-05-20', orderEndDate: '2026-05-19', orderAmount: 6980,
-    isUnresolved: 'N', magazineCode: 'PK00002',
-    shippingCustomerNumber: '1679132', shippingCustomerName: '吳文傑', shippingCustomerAddress: '台南市南區文南路65號', shippingCustomerPhone: '06-26688888',
-    paymentCustomerNumber: '1679132', paymentCustomerName: '吳文傑', paymentCustomerAddress: '台南市南區文南路65號', paymentCustomerPhone: '06-26688888',
-    orderNote: '',
+    legalEntity: '82 CH', orderNumber: '102862810', lineNo: '1', sourceOrderNumber: '102862810-S', processOrderNumber: 'FLW862810',
+    sourceSystem: '親子', sourceCode: 'ERP01', orderDate: '2025-05-20', sourceProduct: '親子天下年訂',
+    orderStartDate: '2025-05-20', orderEndDate: '2026-05-19',
     planCode: 'PK-Y', planName: '親子天下年訂方案',
-    knowledgeStartDate: '2025-05-20', knowledgeEndDate: '2026-05-19',
-    isPaused: 'N', pauseReason: '',
+    productCode: 'PK00002', productName: '親子天下年訂', quantity: 1, itemAmount: 6980, orderAmount: 6980,
+    salesPerson: '林業務', omgStatus: '', serviceStatus: 'I',
+    paymentMethod: '信用卡', paymentStatus: '已付款', orderStatus: '正常', orderNote: '',
+    isPaused: 'N', pauseReason: '', publishShipping: '親子天下', oldStartDate: '', oldEndDate: '',
+    paymentCustomerNumber: '1679132', paymentCustomerName: '吳文傑',
+    shippingCustomerNumber: '1679132', shippingCustomerName: '吳文傑',
+    recipient: '吳文傑', shippingCustomerAddress: '台南市南區文南路65號', postalCode: '70270', shippingCountry: '台灣', shippingMethod: '1009-郵寄-指定宅配', shippingMobile: '0955-789-012', shippingEmail: 'wu.wj@example.com',
+    isUnresolved: 'N', magazineCode: 'PK00002', knowledgeStartDate: '2025-05-20', knowledgeEndDate: '2026-05-19',
+    paymentCustomerAddress: '台南市南區文南路65號', paymentCustomerPhone: '06-26688888', shippingCustomerPhone: '06-26688888',
     customerName: '吳文傑', customerMobile: '0955-789-012', customerPhone: '06-26688888', customerContact: '吳文傑', customerAddress: '台南市南區文南路65號', customerEmail: 'wu.wj@example.com', customerTaxId: '34567890',
   },
   {
     id: 'e9', type: ['erp'],
-    sourceSystem: '康健', orderDate: '2025-06-15', sourceProduct: '康健雜誌年訂',
-    paymentMethod: 'ATM轉帳', paymentStatus: '已付款', orderStatus: '止寄',
-    orderNumber: '102862830', orderStartDate: '2025-06-15', orderEndDate: '2026-06-14', orderAmount: 8980,
-    isUnresolved: 'N', magazineCode: 'CH00003',
-    shippingCustomerNumber: '1679133', shippingCustomerName: '葉淑芬', shippingCustomerAddress: '宜蘭縣宜蘭市民權路25號', shippingCustomerPhone: '03-93223333',
-    paymentCustomerNumber: '1679133', paymentCustomerName: '葉淑芬', paymentCustomerAddress: '宜蘭縣宜蘭市民權路25號', paymentCustomerPhone: '03-93223333',
-    orderNote: '已停寄',
+    legalEntity: '88 CK', orderNumber: '102862830', lineNo: '1', sourceOrderNumber: '102862830-S', processOrderNumber: 'FLW862830',
+    sourceSystem: '康健', sourceCode: 'ERP01', orderDate: '2025-06-15', sourceProduct: '康健雜誌年訂',
+    orderStartDate: '2025-06-15', orderEndDate: '2026-06-14',
     planCode: 'CH-Y', planName: '康健年訂方案',
-    knowledgeStartDate: '2025-06-15', knowledgeEndDate: '2026-06-14',
-    isPaused: 'Y', pauseReason: '客戶申請暫停',
+    productCode: 'CH00003', productName: '康健雜誌年訂', quantity: 1, itemAmount: 8980, orderAmount: 8980,
+    salesPerson: '王業務', omgStatus: '', serviceStatus: 'I',
+    paymentMethod: 'ATM轉帳', paymentStatus: '已付款', orderStatus: '止寄', orderNote: '已停寄',
+    isPaused: 'Y', pauseReason: '客戶申請暫停', publishShipping: '康健', oldStartDate: '2024-06-15', oldEndDate: '2025-06-14',
+    paymentCustomerNumber: '1679133', paymentCustomerName: '葉淑芬',
+    shippingCustomerNumber: '1679133', shippingCustomerName: '葉淑芬',
+    recipient: '葉淑芬', shippingCustomerAddress: '宜蘭縣宜蘭市民權路25號', postalCode: '26055', shippingCountry: '台灣', shippingMethod: '1008-郵寄-限時掛號', shippingMobile: '0966-890-123', shippingEmail: 'ye.sf@example.com',
+    isUnresolved: 'N', magazineCode: 'CH00003', knowledgeStartDate: '2025-06-15', knowledgeEndDate: '2026-06-14',
+    paymentCustomerAddress: '宜蘭縣宜蘭市民權路25號', paymentCustomerPhone: '03-93223333', shippingCustomerPhone: '03-93223333',
     customerName: '葉淑芬', customerMobile: '0966-890-123', customerPhone: '03-93223333', customerContact: '葉淑芬', customerAddress: '宜蘭縣宜蘭市民權路25號', customerEmail: 'ye.sf@example.com', customerTaxId: '01234567',
   },
   {
     id: 'e10', type: ['erp'],
-    sourceSystem: '天下', orderDate: '2025-07-01', sourceProduct: '天下雜誌半年訂',
-    paymentMethod: '信用卡', paymentStatus: '已付款', orderStatus: '補贈電子',
-    orderNumber: '102862850', orderStartDate: '2025-07-01', orderEndDate: '2025-12-31', orderAmount: 2980,
-    isUnresolved: 'N', magazineCode: 'GCV00004',
-    shippingCustomerNumber: '1679134', shippingCustomerName: '曾家銘', shippingCustomerAddress: '嘉義市東區忠孝路15號', shippingCustomerPhone: '05-22229999',
-    paymentCustomerNumber: '1679134', paymentCustomerName: '曾家銘', paymentCustomerAddress: '嘉義市東區忠孝路15號', paymentCustomerPhone: '05-22229999',
-    orderNote: '補贈電子版',
+    legalEntity: '81 CW', orderNumber: '102862850', lineNo: '1', sourceOrderNumber: '102862850-S', processOrderNumber: 'FLW862850',
+    sourceSystem: '天下', sourceCode: 'ERP01', orderDate: '2025-07-01', sourceProduct: '天下雜誌半年訂',
+    orderStartDate: '2025-07-01', orderEndDate: '2025-12-31',
     planCode: 'GCV-H', planName: '天下雜誌半年訂',
-    knowledgeStartDate: '2025-07-01', knowledgeEndDate: '2025-12-31',
-    isPaused: 'N', pauseReason: '',
+    productCode: 'GCV00004', productName: '天下雜誌半年訂', quantity: 1, itemAmount: 2980, orderAmount: 2980,
+    salesPerson: '郭業務', omgStatus: '', serviceStatus: 'I',
+    paymentMethod: '信用卡', paymentStatus: '已付款', orderStatus: '補贈電子', orderNote: '補贈電子版',
+    isPaused: 'N', pauseReason: '', publishShipping: '天下', oldStartDate: '', oldEndDate: '',
+    paymentCustomerNumber: '1679134', paymentCustomerName: '曾家銘',
+    shippingCustomerNumber: '1679134', shippingCustomerName: '曾家銘',
+    recipient: '曾家銘', shippingCustomerAddress: '嘉義市東區忠孝路15號', postalCode: '60058', shippingCountry: '台灣', shippingMethod: '1007-郵寄-掛號航空', shippingMobile: '0977-901-234', shippingEmail: 'zeng.jm@example.com',
+    isUnresolved: 'N', magazineCode: 'GCV00004', knowledgeStartDate: '2025-07-01', knowledgeEndDate: '2025-12-31',
+    paymentCustomerAddress: '嘉義市東區忠孝路15號', paymentCustomerPhone: '05-22229999', shippingCustomerPhone: '05-22229999',
     customerName: '曾家銘', customerMobile: '0977-901-234', customerPhone: '05-22229999', customerContact: '曾家銘', customerAddress: '嘉義市東區忠孝路15號', customerEmail: 'zeng.jm@example.com', customerTaxId: '98765432',
   },
   {
     id: 'e11', type: ['erp'],
-    sourceSystem: '親子', orderDate: '2025-08-10', sourceProduct: '親子天下季訂',
-    paymentMethod: '信用卡', paymentStatus: '待付款', orderStatus: '輸入',
-    orderNumber: '102862870', orderStartDate: '2025-08-10', orderEndDate: '2025-11-09', orderAmount: 1980,
-    isUnresolved: 'Y', magazineCode: 'PK00003',
-    shippingCustomerNumber: '1679135', shippingCustomerName: '謝美華', shippingCustomerAddress: '屏東縣屏東市和平路20號', shippingCustomerPhone: '08-75552222',
-    paymentCustomerNumber: '1679135', paymentCustomerName: '謝美華', paymentCustomerAddress: '屏東縣屏東市和平路20號', paymentCustomerPhone: '08-75552222',
-    orderNote: '待客戶確認付款',
+    legalEntity: '82 CH', orderNumber: '102862870', lineNo: '1', sourceOrderNumber: '102862870-S', processOrderNumber: 'FLW862870',
+    sourceSystem: '親子', sourceCode: 'ERP01', orderDate: '2025-08-10', sourceProduct: '親子天下季訂',
+    orderStartDate: '2025-08-10', orderEndDate: '2025-11-09',
     planCode: 'PK-Q', planName: '親子天下季訂方案',
-    knowledgeStartDate: '', knowledgeEndDate: '',
-    isPaused: 'N', pauseReason: '',
+    productCode: 'PK00003', productName: '親子天下季訂', quantity: 1, itemAmount: 1980, orderAmount: 1980,
+    salesPerson: '陳業務', omgStatus: '', serviceStatus: 'P',
+    paymentMethod: '信用卡', paymentStatus: '待付款', orderStatus: '輸入', orderNote: '待客戶確認付款',
+    isPaused: 'N', pauseReason: '', publishShipping: '親子天下', oldStartDate: '', oldEndDate: '',
+    paymentCustomerNumber: '1679135', paymentCustomerName: '謝美華',
+    shippingCustomerNumber: '1679135', shippingCustomerName: '謝美華',
+    recipient: '謝美華', shippingCustomerAddress: '屏東縣屏東市和平路20號', postalCode: '90053', shippingCountry: '台灣', shippingMethod: '1005-郵寄-一般航空', shippingMobile: '0988-012-345', shippingEmail: 'xie.mh@example.com',
+    isUnresolved: 'Y', magazineCode: 'PK00003', knowledgeStartDate: '', knowledgeEndDate: '',
+    paymentCustomerAddress: '屏東縣屏東市和平路20號', paymentCustomerPhone: '08-75552222', shippingCustomerPhone: '08-75552222',
     customerName: '謝美華', customerMobile: '0988-012-345', customerPhone: '08-75552222', customerContact: '謝美華', customerAddress: '屏東縣屏東市和平路20號', customerEmail: 'xie.mh@example.com', customerTaxId: '11111111',
   },
   {
     id: 'e12', type: ['erp'],
-    sourceSystem: '康健', orderDate: '2025-09-05', sourceProduct: '康健雜誌月訂',
-    paymentMethod: 'ATM轉帳', paymentStatus: '已付款', orderStatus: '退訂',
-    orderNumber: '102862890', orderStartDate: '2025-09-05', orderEndDate: '2025-10-04', orderAmount: 380,
-    isUnresolved: 'N', magazineCode: 'CH00004',
-    shippingCustomerNumber: '1679136', shippingCustomerName: '許仁祥', shippingCustomerAddress: '花蓮縣花蓮市中山路88號', shippingCustomerPhone: '03-83334444',
-    paymentCustomerNumber: '1679136', paymentCustomerName: '許仁祥', paymentCustomerAddress: '花蓮縣花蓮市中山路88號', paymentCustomerPhone: '03-83334444',
-    orderNote: '客戶已主動退訂',
+    legalEntity: '88 CK', orderNumber: '102862890', lineNo: '1', sourceOrderNumber: '102862890-S', processOrderNumber: 'FLW862890',
+    sourceSystem: '康健', sourceCode: 'ERP01', orderDate: '2025-09-05', sourceProduct: '康健雜誌月訂',
+    orderStartDate: '2025-09-05', orderEndDate: '2025-10-04',
     planCode: '', planName: '',
-    knowledgeStartDate: '2025-09-05', knowledgeEndDate: '2025-10-04',
-    isPaused: 'N', pauseReason: '',
+    productCode: 'CH00004', productName: '康健雜誌月訂', quantity: 1, itemAmount: 380, orderAmount: 380,
+    salesPerson: '林業務', omgStatus: '', serviceStatus: 'C',
+    paymentMethod: 'ATM轉帳', paymentStatus: '已付款', orderStatus: '退訂', orderNote: '客戶已主動退訂',
+    isPaused: 'N', pauseReason: '', publishShipping: '康健', oldStartDate: '2025-08-05', oldEndDate: '2025-09-04',
+    paymentCustomerNumber: '1679136', paymentCustomerName: '許仁祥',
+    shippingCustomerNumber: '1679136', shippingCustomerName: '許仁祥',
+    recipient: '許仁祥', shippingCustomerAddress: '花蓮縣花蓮市中山路88號', postalCode: '97043', shippingCountry: '台灣', shippingMethod: '1006-郵寄-掛號水陸', shippingMobile: '0999-123-456', shippingEmail: 'xu.rx@example.com',
+    isUnresolved: 'N', magazineCode: 'CH00004', knowledgeStartDate: '2025-09-05', knowledgeEndDate: '2025-10-04',
+    paymentCustomerAddress: '花蓮縣花蓮市中山路88號', paymentCustomerPhone: '03-83334444', shippingCustomerPhone: '03-83334444',
     customerName: '許仁祥', customerMobile: '0999-123-456', customerPhone: '03-83334444', customerContact: '許仁祥', customerAddress: '花蓮縣花蓮市中山路88號', customerEmail: 'xu.rx@example.com', customerTaxId: '22222222',
   },
   {
     id: 'e13', type: ['erp'],
-    sourceSystem: '天下', orderDate: '2025-10-12', sourceProduct: '天下雜誌年訂',
-    paymentMethod: '信用卡', paymentStatus: '已付款', orderStatus: '正常',
-    orderNumber: '102862910', orderStartDate: '2025-10-12', orderEndDate: '2026-10-11', orderAmount: 3980,
-    isUnresolved: 'N', magazineCode: 'GCV00005',
-    shippingCustomerNumber: '1679137', shippingCustomerName: '何瑀恩', shippingCustomerAddress: '澎湖縣馬公市光華路12號', shippingCustomerPhone: '06-92775555',
-    paymentCustomerNumber: '1679137', paymentCustomerName: '何瑀恩', paymentCustomerAddress: '澎湖縣馬公市光華路12號', paymentCustomerPhone: '06-92775555',
-    orderNote: '新增訂戶',
+    legalEntity: '81 CW', orderNumber: '102862910', lineNo: '1', sourceOrderNumber: '102862910-S', processOrderNumber: 'FLW862910',
+    sourceSystem: '天下', sourceCode: 'ERP01', orderDate: '2025-10-12', sourceProduct: '天下雜誌年訂',
+    orderStartDate: '2025-10-12', orderEndDate: '2026-10-11',
     planCode: 'GCV-Y', planName: '天下雜誌年訂方案',
-    knowledgeStartDate: '2025-10-12', knowledgeEndDate: '2026-10-11',
-    isPaused: 'N', pauseReason: '',
+    productCode: 'GCV00005', productName: '天下雜誌年訂', quantity: 1, itemAmount: 3980, orderAmount: 3980,
+    salesPerson: '郭業務', omgStatus: '', serviceStatus: 'I',
+    paymentMethod: '信用卡', paymentStatus: '已付款', orderStatus: '正常', orderNote: '新增訂戶',
+    isPaused: 'N', pauseReason: '', publishShipping: '天下', oldStartDate: '', oldEndDate: '',
+    paymentCustomerNumber: '1679137', paymentCustomerName: '何瑀恩',
+    shippingCustomerNumber: '1679137', shippingCustomerName: '何瑀恩',
+    recipient: '何瑀恩', shippingCustomerAddress: '澎湖縣馬公市光華路12號', postalCode: '88056', shippingCountry: '台灣', shippingMethod: '1009-郵寄-指定宅配', shippingMobile: '0911-234-567', shippingEmail: 'he.ye@example.com',
+    isUnresolved: 'N', magazineCode: 'GCV00005', knowledgeStartDate: '2025-10-12', knowledgeEndDate: '2026-10-11',
+    paymentCustomerAddress: '澎湖縣馬公市光華路12號', paymentCustomerPhone: '06-92775555', shippingCustomerPhone: '06-92775555',
     customerName: '何瑀恩', customerMobile: '0911-234-567', customerPhone: '06-92775555', customerContact: '何瑀恩', customerAddress: '澎湖縣馬公市光華路12號', customerEmail: 'he.ye@example.com', customerTaxId: '33333333',
   },
 ];
@@ -393,58 +461,70 @@ const mockErpOrders: UnifiedOrderData[] = [
 const mockOmgOrders: UnifiedOrderData[] = [
   {
     id: 'o1', type: ['omg'],
-    sourceSystem: '天下', orderDate: '2025-07-01', sourceProduct: '天下雜誌數位版年訂',
-    paymentMethod: '信用卡', paymentStatus: '已付款', orderStatus: '正常',
-    orderNumber: 'OMG20250701001', orderStartDate: '2025-07-01', orderEndDate: '2026-06-30', orderAmount: 1980,
-    isUnresolved: 'N', magazineCode: 'GCV-D001',
-    shippingCustomerNumber: '1679140', shippingCustomerName: '趙雅婷', shippingCustomerAddress: '台北市信義區信義路五段7號', shippingCustomerPhone: '02-27588888',
-    paymentCustomerNumber: '1679140', paymentCustomerName: '趙雅婷', paymentCustomerAddress: '台北市信義區信義路五段7號', paymentCustomerPhone: '02-27588888',
-    orderNote: 'OMG 數位訂閱',
+    legalEntity: '110 CL', orderNumber: 'OMG20250701001', lineNo: '1', sourceOrderNumber: 'OMG20250701001-S', processOrderNumber: 'OMG-PRO-001',
+    sourceSystem: '天下', sourceCode: 'OMG01', orderDate: '2025-07-01', sourceProduct: '天下雜誌數位版年訂',
+    orderStartDate: '2025-07-01', orderEndDate: '2026-06-30',
     planCode: 'GCV-D-Y', planName: '天下數位年訂方案',
-    knowledgeStartDate: '2025-07-01', knowledgeEndDate: '2026-06-30',
-    isPaused: 'N', pauseReason: '',
+    productCode: 'GCV-D001', productName: '天下雜誌數位版年訂', quantity: 1, itemAmount: 1980, orderAmount: 1980,
+    salesPerson: '', omgStatus: 'I', serviceStatus: 'I',
+    paymentMethod: '信用卡', paymentStatus: '已付款', orderStatus: '正常', orderNote: 'OMG 數位訂閱',
+    isPaused: 'N', pauseReason: '', publishShipping: '', oldStartDate: '', oldEndDate: '',
+    paymentCustomerNumber: '1679140', paymentCustomerName: '趙雅婷',
+    shippingCustomerNumber: '1679140', shippingCustomerName: '趙雅婷',
+    recipient: '趙雅婷', shippingCustomerAddress: '台北市信義區信義路五段7號', postalCode: '11049', shippingCountry: '台灣', shippingMethod: '', shippingMobile: '0955-111-222', shippingEmail: 'chao.yt@example.com',
+    isUnresolved: 'N', magazineCode: 'GCV-D001', knowledgeStartDate: '2025-07-01', knowledgeEndDate: '2026-06-30',
+    paymentCustomerAddress: '台北市信義區信義路五段7號', paymentCustomerPhone: '02-27588888', shippingCustomerPhone: '02-27588888',
     customerName: '趙雅婷', customerMobile: '0955-111-222', customerPhone: '02-27588888', customerContact: '趙雅婷', customerAddress: '台北市信義區信義路五段7號', customerEmail: 'chao.yt@example.com', customerTaxId: '',
   },
   {
     id: 'o2', type: ['omg'],
-    sourceSystem: '康健', orderDate: '2025-08-15', sourceProduct: '康健雜誌數位季訂',
-    paymentMethod: 'LINE Pay', paymentStatus: '已付款', orderStatus: '止寄',
-    orderNumber: 'OMG20250815002', orderStartDate: '2025-08-15', orderEndDate: '2025-11-14', orderAmount: 890,
-    isUnresolved: 'N', magazineCode: 'CH-D002',
-    shippingCustomerNumber: '1679141', shippingCustomerName: '蔡宗翰', shippingCustomerAddress: '新北市淡水區中正路66號', shippingCustomerPhone: '02-26213333',
-    paymentCustomerNumber: '1679141', paymentCustomerName: '蔡宗翰', paymentCustomerAddress: '新北市淡水區中正路66號', paymentCustomerPhone: '02-26213333',
-    orderNote: '',
+    legalEntity: '88 CK', orderNumber: 'OMG20250815002', lineNo: '1', sourceOrderNumber: 'OMG20250815002-S', processOrderNumber: 'OMG-PRO-002',
+    sourceSystem: '康健', sourceCode: 'OMG01', orderDate: '2025-08-15', sourceProduct: '康健雜誌數位季訂',
+    orderStartDate: '2025-08-15', orderEndDate: '2025-11-14',
     planCode: 'CH-D-Q', planName: '康健數位季訂方案',
-    knowledgeStartDate: '2025-08-15', knowledgeEndDate: '2025-11-14',
-    isPaused: 'N', pauseReason: '',
+    productCode: 'CH-D002', productName: '康健雜誌數位季訂', quantity: 1, itemAmount: 890, orderAmount: 890,
+    salesPerson: '', omgStatus: 'I', serviceStatus: 'I',
+    paymentMethod: 'LINE Pay', paymentStatus: '已付款', orderStatus: '止寄', orderNote: '',
+    isPaused: 'N', pauseReason: '', publishShipping: '', oldStartDate: '', oldEndDate: '',
+    paymentCustomerNumber: '1679141', paymentCustomerName: '蔡宗翰',
+    shippingCustomerNumber: '1679141', shippingCustomerName: '蔡宗翰',
+    recipient: '蔡宗翰', shippingCustomerAddress: '新北市淡水區中正路66號', postalCode: '25159', shippingCountry: '台灣', shippingMethod: '', shippingMobile: '0966-333-444', shippingEmail: 'tsai.zh@omg.com',
+    isUnresolved: 'N', magazineCode: 'CH-D002', knowledgeStartDate: '2025-08-15', knowledgeEndDate: '2025-11-14',
+    paymentCustomerAddress: '新北市淡水區中正路66號', paymentCustomerPhone: '02-26213333', shippingCustomerPhone: '02-26213333',
     customerName: '蔡宗翰', customerMobile: '0966-333-444', customerPhone: '02-26213333', customerContact: '蔡宗翰', customerAddress: '新北市淡水區中正路66號', customerEmail: 'tsai.zh@omg.com', customerTaxId: '',
   },
   {
     id: 'o3', type: ['omg', 'service'],
-    sourceSystem: '親子', orderDate: '2025-09-01', sourceProduct: '親子天下數位+紙本合訂',
-    paymentMethod: '信用卡', paymentStatus: '已付款', orderStatus: '正常',
-    orderNumber: 'OMG20250901003', orderStartDate: '2025-09-01', orderEndDate: '2026-08-31', orderAmount: 3480,
-    isUnresolved: 'N', magazineCode: 'PK-D003',
-    shippingCustomerNumber: '1679142', shippingCustomerName: '林怡君', shippingCustomerAddress: '台中市西區民生北路12號', shippingCustomerPhone: '04-23310000',
-    paymentCustomerNumber: '1679142', paymentCustomerName: '林怡君', paymentCustomerAddress: '台中市西區民生北路12號', paymentCustomerPhone: '04-23310000',
-    orderNote: '數位紙本合訂跨系統訂單',
+    legalEntity: '82 CH', orderNumber: 'OMG20250901003', lineNo: '1', sourceOrderNumber: 'OMG20250901003-S', processOrderNumber: 'OMG-PRO-003',
+    sourceSystem: '親子', sourceCode: 'OMG01', orderDate: '2025-09-01', sourceProduct: '親子天下數位+紙本合訂',
+    orderStartDate: '2025-09-01', orderEndDate: '2026-08-31',
     planCode: 'PK-D-Y', planName: '親子天下數位年訂',
-    knowledgeStartDate: '2025-09-01', knowledgeEndDate: '2026-08-31',
-    isPaused: 'N', pauseReason: '',
+    productCode: 'PK-D003', productName: '親子天下數位+紙本合訂', quantity: 1, itemAmount: 3480, orderAmount: 3480,
+    salesPerson: '', omgStatus: 'I', serviceStatus: 'I',
+    paymentMethod: '信用卡', paymentStatus: '已付款', orderStatus: '正常', orderNote: '數位紙本合訂跨系統訂單',
+    isPaused: 'N', pauseReason: '', publishShipping: '親子天下', oldStartDate: '', oldEndDate: '',
+    paymentCustomerNumber: '1679142', paymentCustomerName: '林怡君',
+    shippingCustomerNumber: '1679142', shippingCustomerName: '林怡君',
+    recipient: '林怡君', shippingCustomerAddress: '台中市西區民生北路12號', postalCode: '40344', shippingCountry: '台灣', shippingMethod: '1009-郵寄-指定宅配', shippingMobile: '0977-888-999', shippingEmail: 'lin.yj@example.com',
+    isUnresolved: 'N', magazineCode: 'PK-D003', knowledgeStartDate: '2025-09-01', knowledgeEndDate: '2026-08-31',
+    paymentCustomerAddress: '台中市西區民生北路12號', paymentCustomerPhone: '04-23310000', shippingCustomerPhone: '04-23310000',
     customerName: '林怡君', customerMobile: '0977-888-999', customerPhone: '04-23310000', customerContact: '林怡君', customerAddress: '台中市西區民生北路12號', customerEmail: 'lin.yj@example.com', customerTaxId: '',
   },
   {
     id: 'o4', type: ['omg', 'erp'],
-    sourceSystem: 'OMG', orderDate: '2025-10-05', sourceProduct: '天下雜誌數位月訂',
-    paymentMethod: 'Apple Pay', paymentStatus: '已付款', orderStatus: '退訂',
-    orderNumber: 'OMG20251005004', orderStartDate: '2025-10-05', orderEndDate: '2025-11-04', orderAmount: 299,
-    isUnresolved: 'Y', magazineCode: 'GCV-D004',
-    shippingCustomerNumber: '1679143', shippingCustomerName: '江明哲', shippingCustomerAddress: '高雄市苓雅區四維三路2號', shippingCustomerPhone: '07-33311111',
-    paymentCustomerNumber: '1679143', paymentCustomerName: '江明哲', paymentCustomerAddress: '高雄市苓雅區四維三路2號', paymentCustomerPhone: '07-33311111',
-    orderNote: '客戶申請退訂',
+    legalEntity: '81 CW', orderNumber: 'OMG20251005004', lineNo: '1', sourceOrderNumber: 'OMG20251005004-S', processOrderNumber: 'OMG-PRO-004',
+    sourceSystem: 'OMG', sourceCode: 'OMG01', orderDate: '2025-10-05', sourceProduct: '天下雜誌數位月訂',
+    orderStartDate: '2025-10-05', orderEndDate: '2025-11-04',
     planCode: 'GCV-D-M', planName: '天下數位月訂方案',
-    knowledgeStartDate: '2025-10-05', knowledgeEndDate: '2025-11-04',
-    isPaused: 'N', pauseReason: '',
+    productCode: 'GCV-D004', productName: '天下雜誌數位月訂', quantity: 1, itemAmount: 299, orderAmount: 299,
+    salesPerson: '', omgStatus: 'C', serviceStatus: 'C',
+    paymentMethod: 'Apple Pay', paymentStatus: '已付款', orderStatus: '退訂', orderNote: '客戶申請退訂',
+    isPaused: 'N', pauseReason: '', publishShipping: '', oldStartDate: '', oldEndDate: '',
+    paymentCustomerNumber: '1679143', paymentCustomerName: '江明哲',
+    shippingCustomerNumber: '1679143', shippingCustomerName: '江明哲',
+    recipient: '江明哲', shippingCustomerAddress: '高雄市苓雅區四維三路2號', postalCode: '80257', shippingCountry: '台灣', shippingMethod: '', shippingMobile: '0911-777-888', shippingEmail: 'jiang.mz@example.com',
+    isUnresolved: 'Y', magazineCode: 'GCV-D004', knowledgeStartDate: '2025-10-05', knowledgeEndDate: '2025-11-04',
+    paymentCustomerAddress: '高雄市苓雅區四維三路2號', paymentCustomerPhone: '07-33311111', shippingCustomerPhone: '07-33311111',
     customerName: '江明哲', customerMobile: '0911-777-888', customerPhone: '07-33311111', customerContact: '江明哲', customerAddress: '高雄市苓雅區四維三路2號', customerEmail: 'jiang.mz@example.com', customerTaxId: '',
   },
 ];
@@ -463,17 +543,86 @@ const ORDER_STATUS_COLORS: Record<string, { tagBg: string; tagColor: string; row
   '補贈電子': { tagBg: '#4a9dd4', tagColor: '#fff',  rowBg: '#eaf4fd' },
 };
 
+// OMG / 中台 訂單狀態 tag 色彩
+const ORDER_CODE_COLORS: Record<string, { bg: string; color: string; label: string }> = {
+  'E': { bg: '#fefce8', color: '#854d0e', label: 'E:輸入中' },
+  'P': { bg: '#eff6ff', color: '#1e40af', label: 'P:核單中' },
+  'C': { bg: '#f5e8fd', color: '#6d28d9', label: 'C:作廢'  },
+  'I': { bg: '#f0fdf4', color: '#166534', label: 'I:已核單' },
+};
+
+// 來源系統 tag 色彩
+const SOURCE_SYSTEM_COLORS: Record<string, { bg: string; color: string }> = {
+  '天下': { bg: '#e3f2fd', color: '#1565c0' },
+  '親子': { bg: '#fce4ec', color: '#c62828' },
+  '康健': { bg: '#e8f5e9', color: '#2e7d32' },
+  'OMG':  { bg: '#fff3e0', color: '#e65100' },
+};
+
+// 通路代碼 tag 色彩
+const SOURCE_CODE_COLORS: Record<string, { bg: string; color: string }> = {
+  'WEB01': { bg: '#e3f2fd', color: '#1565c0' },
+  'APP01': { bg: '#f3e8fd', color: '#6d28d9' },
+  'ERP01': { bg: '#fce4ec', color: '#c62828' },
+  'OMG01': { bg: '#fff3e0', color: '#e65100' },
+};
+
 const orderStatusOptions: CwSelectOption[] = [
-  { value: 'processing', label: '處理中' }, { value: 'completed', label: '已完成' }, { value: 'cancelled', label: '已取消' },
+  { value: 'E', label: 'E:輸入中' },
+  { value: 'P', label: 'P:核單中' },
+  { value: 'C', label: 'C:作廢' },
+  { value: 'I', label: 'I:已核單' },
 ];
 const paymentMethodOptions: CwSelectOption[] = [
-  { value: 'credit', label: '信用卡' }, { value: 'atm', label: 'ATM' },
+  { value: '2', label: '2 應收票據' },
+  { value: '劃撥', label: '劃撥' },
+  { value: 'ATM', label: 'ATM' },
+  { value: '信用卡', label: '信用卡' },
+  { value: '信用卡-網路', label: '信用卡-網路' },
+  { value: 'LINEPAY', label: 'LINEPAY' },
+  { value: '贈閱', label: '贈閱' },
+  { value: 'APP內購', label: 'APP內購' },
+  { value: '綠界', label: '綠界' },
+  { value: '消費券', label: '消費券' },
 ];
-const shippingMethodOptions: CwSelectOption[] = [
-  { value: 'm1', label: '常溫郵寄' }, { value: 'm2', label: '宅配' },
+const paymentStatusOptions: CwSelectOption[] = [
+  { value: '棄單', label: '棄單' },
+  { value: '未付款', label: '未付款' },
+  { value: '會員已付款', label: '會員已付款' },
+  { value: '退款', label: '退款' },
+  { value: '扣款失敗', label: '扣款失敗' },
+];
+
+const mockShippingMethods: { id: number; code: string; name: string }[] = [
+  { id: 1, code: '1005', name: '郵寄-一般航空' },
+  { id: 2, code: '1006', name: '郵寄-掛號水陸' },
+  { id: 3, code: '1007', name: '郵寄-掛號航空' },
+  { id: 4, code: '1008', name: '郵寄-限時掛號' },
+  { id: 5, code: '1009', name: '郵寄-指定宅配' },
+  { id: 6, code: '1010', name: '郵寄-郵箱' },
+  { id: 7, code: '1011', name: '郵寄-發票掛號' },
 ];
 const creatorOptions: CwSelectOption[] = [{ value: 'userA', label: '王小明' }];
+const legalEntityOptions: CwSelectOption[] = [
+  { value: '81', label: '81 CW' },
+  { value: '82', label: '82 CH' },
+  { value: '110', label: '110 CL' },
+  { value: '88', label: '88 CK' },
+];
 const emptyOptions: CwSelectOption[] = [];
+
+const mockProductCodes: { id: number; code: string; name: string }[] = [
+  { id: 1, code: 'P001', name: '天下雜誌（紙本）年訂' },
+  { id: 2, code: 'P002', name: '天下雜誌數位版年訂' },
+  { id: 3, code: 'P003', name: '親子天下紙本半年訂' },
+  { id: 4, code: 'P004', name: '親子天下數位年訂' },
+  { id: 5, code: 'P005', name: '康健雜誌紙本季訂' },
+  { id: 6, code: 'P006', name: '康健雜誌數位月訂' },
+  { id: 7, code: 'P007', name: '天下學習紙本週刊' },
+  { id: 8, code: 'P008', name: '遠見雜誌紙本年訂' },
+  { id: 9, code: 'P009', name: '哈佛商業評論數位版' },
+  { id: 10, code: 'P010', name: '科學人雜誌紙本月訂' },
+];
 
 const orderNumberOptions: CwSelectOption[] = [
   { value: '12345678', label: '12345678', searchValue: '林小哲' },
@@ -500,7 +649,13 @@ const orderNumberOptions: CwSelectOption[] = [
 
 // 欄位顯示分類
 const COLUMN_FILTER_OPTIONS = [
-  '客戶資訊', '訂單明細', '未結案單', '雜誌料號', '出貨客戶', '付款客戶', '訂單備註', '方案相關', '知識庫相關', '暫止相關',
+  '來源系統', '通路代碼', '訂單金額', 'OMG訂單狀態', '中台訂單狀態',
+  '來源單號', '流程單號', '訂閱起期', '訂閱迄期',
+  '方案代碼', '方案名稱', '數量', '品項金額', '業務員名',
+  '暫止原因', '發行出貨', '舊訂閱起期', '舊訂閱迄期',
+  '付款客戶編號', '付款客戶名稱', '出貨客戶編號',
+  '出貨收件人', '出貨地址', '郵遞區號', '出貨國別',
+  '出貨方式', '出貨客戶手機', '出貨客戶Email', '付款方式', '付款狀態',
 ] as const;
 
 // ── 區塊標題 ──────────────────────────────────────────────
@@ -512,27 +667,91 @@ function SectionLabel({ children }: { children: string }) {
   );
 }
 
+// ── 彈窗搜尋輸入欄位 ──────────────────────────────────────
+function PopupSearchInput({
+  label, value, onChange, onOpen, onClear,
+}: {
+  label: string; value: string;
+  onChange: (v: string) => void; onOpen: () => void; onClear: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-[6px]">
+      <label className="text-[#1c1c1c] text-[12px] font-[500] font-['Noto_Sans_TC',_sans-serif]">{label}</label>
+      <div className="relative flex items-center">
+        <input
+          type="text"
+          placeholder={label}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full h-[32px] px-[12px] pr-[64px] border border-[#c4c9d3] rounded-[4px] text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]"
+          style={{ fontWeight: 350 }}
+        />
+        {value && (
+          <button type="button" onClick={onClear} className="absolute right-[36px] w-[24px] h-[24px] flex items-center justify-center text-[#7c808c] hover:text-[#1c1c1c] transition-colors">
+            <X size={14} />
+          </button>
+        )}
+        <button type="button" onClick={onOpen} className="absolute right-[4px] w-[28px] h-[28px] rounded-[4px] border border-[#c4c9d3] bg-white hover:bg-[#f5f7fa] flex items-center justify-center text-[#01579b] transition-colors">
+          <Search size={14} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── ERP Checkbox ──────────────────────────────────────────
+function ErpCheckbox({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="flex items-center gap-[8px] cursor-pointer select-none" onClick={() => onChange(!checked)}>
+      <div className={`flex items-center justify-center w-[16px] h-[16px] rounded-[3px] border transition-colors shrink-0 ${checked ? 'bg-[#0078d4] border-[#0078d4]' : 'bg-white border-[#7c808c]'}`}>
+        {checked && <svg width="10" height="8" viewBox="0 0 12 9" fill="none"><path d="M1 4L4.5 7.5L11 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+      </div>
+      <span className="text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>{label}</span>
+    </label>
+  );
+}
+
 // ── 主元件 ───────────────────────────────────────────────
 export function NewPMOrderManagement() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [searchForm, setSearchForm] = useState<Record<string, any>>({
+    // ── 常用欄位
     '訂單編號': "", '來源編號': "", '方案代碼': "", '來源系統': "",
     '會員email': "", '訂單起日': new Date(new Date().setFullYear(new Date().getFullYear() - 10)),
     '訂單迄日': new Date(new Date().setDate(new Date().getDate() + 14)),
     '訂單狀態_基本': "", '訂單類型': "", '建單法人': "",
-    '受買人訂戶編號': "", '會員帳號': "", '會員姓名': "", '會員手機': "",
-    '收件人訂戶編號': "", '收件人姓名': "", '收件人email': "", '收件人手機': "",
-    '出貨收件人': "", '發票收件人': "", '統一編號': "", '推薦客戶': "", '贈品人': "",
-    '商品名稱': "", '付款方式': "", '付款狀態': "", '訂單狀態_細節': "",
-    '訂單備註': "", '產品代碼': "",
-    '訂單客編': "", '訂單客戶': "", '出貨客編': "", '出貨客戶': "",
-    '發票客編': "", '發票客戶': "", '付款客編': "", '付款客戶': "",
-    '訂單編號起期': "", '訂單編號迄期': "", '流程編號起期': "", '流程編號迄期': "",
-    '來源編號起期': "", '來源編號迄期': "", '來源': "",
-    '出貨方式': "", '出貨備註': "", '行銷通路代碼': "", '行銷通路說明': "",
-    '行銷專案代碼': "", '行銷專案說明': "", '促銷方案代碼': "", '促銷方案說明': "",
-    '行銷組盤碼': "",
-    '信用卡卡號': "", '建單人員': "", '暫停處理': "", '是否為贈閱單': "",
+    // ── 進階：時間區間
+    'adv_訂單起日': new Date(new Date().setFullYear(new Date().getFullYear() - 10)),
+    'adv_訂單迄日': new Date(new Date().setDate(new Date().getDate() + 14)),
+    // ── 進階：單號查詢
+    '訂單編號起': "", '訂單編號迄': "",
+    '來源單號起': "", '來源單號迄': "",
+    '流程單號起': "", '流程單號迄': "",
+    '異動單號': "",
+    // ── 進階：客戶與收件人身分
+    '訂單客戶編號': "", '訂單客戶名稱': "",
+    '付款客戶編號': "", '付款客戶名稱': "",
+    '發票客戶編號': "", '發票客戶名稱': "",
+    '出貨客戶編號': "", '出貨客戶名稱': "",
+    'adv_出貨收件人': "", 'adv_統一編號': "",
+    'adv_會員帳號': "", '會員名稱': "", '會員Email': "", 'adv_會員手機': "",
+    '出貨收件人Email': "", '出貨收件人手機': "", '出貨地址': "", '出貨收件人市話': "",
+    // ── 進階：商品資訊
+    '產品料號': "", '產品名稱': "",
+    // ── 進階：行銷與業務
+    'adv_方案代碼': "", '方案名稱': "",
+    '行銷追蹤碼': "", '行銷追蹤碼名稱': "",
+    '通路代碼': "", '通路名稱': "",
+    '業務員代碼': "", '業務員名稱': "",
+    'adv_來源系統': "",
+    // ── 進階：狀態、備註與其他條件
+    'OMG訂單狀態': "", '中台訂單狀態': "",
+    'adv_出貨備註': "", 'adv_訂單備註': "",
+    'OMG訂單類型': "", 'adv_出貨方式': "",
+    'adv_暫停處理': "N", 'adv_是否為贈閱單': "",
+    '發票號碼': "",
+    'adv_建單法人': "", 'adv_建單人員': "",
+    'adv_付款方式': "", 'adv_付款狀態': "",
   });
 
   const [searchKeyword, setSearchKeyword] = useState("");
@@ -543,7 +762,9 @@ export function NewPMOrderManagement() {
   const [isLoadingMore, setIsLoadingMore] = useState(false); // 無限滾動: 加載狀態
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [selectedOrderType, setSelectedOrderType] = useState<'service' | 'erp' | 'omg'>('service');
+  const [selectedOrderRecord, setSelectedOrderRecord] = useState<UnifiedOrderData | null>(null);
   const [showDetail, setShowDetail] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
 
   // 訂單類型 checkbox
   const [showServiceOrders, setShowServiceOrders] = useState(true);
@@ -553,28 +774,45 @@ export function NewPMOrderManagement() {
 
   // 欄位顯示 filter
   const [columnFilters, setColumnFilters] = useState<Record<string, boolean>>({
-    '客戶資訊': false, '訂單明細': false, '未結案單': false, '雜誌料號': false,
-    '出貨客戶': false, '付款客戶': false, '訂單備註': false,
-    '方案相關': false, '知識庫相關': false, '暫止相關': false,
+    '來源系統': true, '通路代碼': true, '訂單金額': true, 'OMG訂單狀態': true, '中台訂單狀態': true,
+    '來源單號': false, '流程單號': false, '訂閱起期': false, '訂閱迄期': false,
+    '方案代碼': false, '方案名稱': false, '數量': false, '品項金額': false, '業務員名': false,
+    '暫止原因': false, '發行出貨': false, '舊訂閱起期': false, '舊訂閱迄期': false,
+    '付款客戶編號': false, '付款客戶名稱': false, '出貨客戶編號': false,
+    '出貨收件人': false, '出貨地址': false, '郵遞區號': false, '出貨國別': false,
+    '出貨方式': false, '出貨客戶手機': false, '出貨客戶Email': false, '付款方式': false, '付款狀態': false,
   });
   const [showColumnFilter, setShowColumnFilter] = useState(false);
   const [pendingColumnFilters, setPendingColumnFilters] = useState<Record<string, boolean>>({ ...columnFilters });
   const tableContainerRef = useRef<HTMLDivElement>(null); // 表格容器 ref，用於無限滾動
 
-  // 訂單客編相關 state
-  const [showCustomerCodePopup, setShowCustomerCodePopup] = useState(false);
-  const [customerCodePopupKeyword, setCustomerCodePopupKeyword] = useState('');
-  const customerCodePopupRef = useRef<HTMLDivElement>(null);
+  // 統一客戶彈窗 state
+  type CustomerPopupTarget = { codeKey: string; nameKey: string; title: string } | null;
+  const [activeCustomerPopup, setActiveCustomerPopup] = useState<CustomerPopupTarget>(null);
+  const [customerPopupKeyword, setCustomerPopupKeyword] = useState('');
+  const customerPopupRef = useRef<HTMLDivElement>(null);
 
-  // 訂單客戶相關 state
-  const [showCustomerNamePopup, setShowCustomerNamePopup] = useState(false);
-  const [customerNamePopupKeyword, setCustomerNamePopupKeyword] = useState('');
-  const customerNamePopupRef = useRef<HTMLDivElement>(null);
+  // 產品彈窗 state
+  const [activeProductPopup, setActiveProductPopup] = useState<'code' | 'name' | null>(null);
+  const [productPopupKeyword, setProductPopupKeyword] = useState('');
+  const productPopupRef = useRef<HTMLDivElement>(null);
 
-  // 促銷方案相關 state
-  const [showPromotionPopup, setShowPromotionPopup] = useState(false);
-  const [promotionPopupKeyword, setPromotionPopupKeyword] = useState('');
-  const promotionPopupRef = useRef<HTMLDivElement>(null);
+  // 方案彈窗 state
+  const [activePlanPopup, setActivePlanPopup] = useState<'code' | 'name' | null>(null);
+  const [planPopupKeyword, setPlanPopupKeyword] = useState('');
+  const planPopupRef = useRef<HTMLDivElement>(null);
+
+  // 出貨方式彈窗 state
+  const [activeShippingPopup, setActiveShippingPopup] = useState(false);
+  const [shippingPopupKeyword, setShippingPopupKeyword] = useState('');
+  const shippingPopupRef = useRef<HTMLDivElement>(null);
+
+  // ERP 專屬核取方塊
+  const [erpPrint, setErpPrint] = useState(false);
+  const [erpDigital, setErpDigital] = useState(false);
+  const [erpUnresolved, setErpUnresolved] = useState(false);
+  const [erpShowDetail, setErpShowDetail] = useState(false);
+  const [erpQueryNote, setErpQueryNote] = useState(false);
 
   // 開啟欄位篩選 popup 時同步 pending 狀態
   const openColumnFilter = () => {
@@ -604,91 +842,93 @@ export function NewPMOrderManagement() {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  // 關閉 customer code popup 事件處理
+  // 統一關閉彈窗（點擊外部）
   useEffect(() => {
-    if (!showCustomerCodePopup) return;
+    const anyOpen = !!activeCustomerPopup || !!activeProductPopup || !!activePlanPopup || activeShippingPopup;
+    if (!anyOpen) return;
     const handler = (e: MouseEvent) => {
-      if (customerCodePopupRef.current && !customerCodePopupRef.current.contains(e.target as Node)) {
-        setShowCustomerCodePopup(false);
+      if (activeCustomerPopup && customerPopupRef.current && !customerPopupRef.current.contains(e.target as Node)) {
+        setActiveCustomerPopup(null); setCustomerPopupKeyword('');
+      }
+      if (activeProductPopup && productPopupRef.current && !productPopupRef.current.contains(e.target as Node)) {
+        setActiveProductPopup(null); setProductPopupKeyword('');
+      }
+      if (activePlanPopup && planPopupRef.current && !planPopupRef.current.contains(e.target as Node)) {
+        setActivePlanPopup(null); setPlanPopupKeyword('');
+      }
+      if (activeShippingPopup && shippingPopupRef.current && !shippingPopupRef.current.contains(e.target as Node)) {
+        setActiveShippingPopup(false); setShippingPopupKeyword('');
       }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [showCustomerCodePopup]);
+  }, [activeCustomerPopup, activeProductPopup, activePlanPopup, activeShippingPopup]);
 
-  // 關閉 customer name popup 事件處理
-  useEffect(() => {
-    if (!showCustomerNamePopup) return;
-    const handler = (e: MouseEvent) => {
-      if (customerNamePopupRef.current && !customerNamePopupRef.current.contains(e.target as Node)) {
-        setShowCustomerNamePopup(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [showCustomerNamePopup]);
-
-  // 關閉 promotion popup 事件處理
-  useEffect(() => {
-    if (!showPromotionPopup) return;
-    const handler = (e: MouseEvent) => {
-      if (promotionPopupRef.current && !promotionPopupRef.current.contains(e.target as Node)) {
-        setShowPromotionPopup(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [showPromotionPopup]);
-
-  // 搜尋訂單客編
-  const filteredCustomerCodes = customerCodePopupKeyword
+  // 客戶搜尋過濾（統一）
+  const filteredCustomersByPopup = customerPopupKeyword
     ? mockCustomerCodes.filter(
         (c) =>
-          c.code.toLowerCase().includes(customerCodePopupKeyword.toLowerCase()) ||
-          c.name.toLowerCase().includes(customerCodePopupKeyword.toLowerCase())
+          c.code.toLowerCase().includes(customerPopupKeyword.toLowerCase()) ||
+          c.name.toLowerCase().includes(customerPopupKeyword.toLowerCase())
       )
     : mockCustomerCodes;
 
-  // 選擇訂單客編
-  const handleSelectCustomerCode = (code: string, name: string) => {
-    handleInputChange('訂單客編', code);
-    handleInputChange('訂單客戶', name);
-    setShowCustomerCodePopup(false);
-    setCustomerCodePopupKeyword('');
+  // 選擇客戶（通用，同時填入 code + name）
+  const handleSelectCustomer = (code: string, name: string) => {
+    if (!activeCustomerPopup) return;
+    handleInputChange(activeCustomerPopup.codeKey, code);
+    handleInputChange(activeCustomerPopup.nameKey, name);
+    setActiveCustomerPopup(null);
+    setCustomerPopupKeyword('');
   };
 
-  // 掌管搭配的訂單客戶 popup 資料
-  const customerNamePopupData = filteredCustomerCodes;
-  const filteredCustomerNames = customerNamePopupKeyword
-    ? customerNamePopupData.filter(
-        (c) =>
-          c.code.toLowerCase().includes(customerNamePopupKeyword.toLowerCase()) ||
-          c.name.toLowerCase().includes(customerNamePopupKeyword.toLowerCase())
+  // 產品搜尋過濾
+  const filteredProducts = productPopupKeyword
+    ? mockProductCodes.filter(
+        (p) =>
+          p.code.toLowerCase().includes(productPopupKeyword.toLowerCase()) ||
+          p.name.toLowerCase().includes(productPopupKeyword.toLowerCase())
       )
-    : customerNamePopupData;
+    : mockProductCodes;
 
-  // 選擇訂單客戶（同時帶入客編和客戶名稱）
-  const handleSelectCustomerName = (code: string, name: string) => {
-    handleInputChange('訂單客編', code);
-    handleInputChange('訂單客戶', name);
-    setShowCustomerNamePopup(false);
-    setCustomerNamePopupKeyword('');
+  // 選擇產品（同時填入料號 + 名稱）
+  const handleSelectProduct = (code: string, name: string) => {
+    handleInputChange('產品料號', code);
+    handleInputChange('產品名稱', name);
+    setActiveProductPopup(null);
+    setProductPopupKeyword('');
   };
 
-  // 搜尋促銷方案
-  const filteredPromotions = promotionPopupKeyword
+  // 方案搜尋過濾
+  const filteredPlans = planPopupKeyword
     ? mockPromotionCodes.filter(
         (p) =>
-          p.code.toLowerCase().includes(promotionPopupKeyword.toLowerCase()) ||
-          p.name.toLowerCase().includes(promotionPopupKeyword.toLowerCase())
+          p.code.toLowerCase().includes(planPopupKeyword.toLowerCase()) ||
+          p.name.toLowerCase().includes(planPopupKeyword.toLowerCase())
       )
     : mockPromotionCodes;
 
-  // 選擇促銷方案
-  const handleSelectPromotion = (code: string) => {
-    handleInputChange('促銷方案代碼', code);
-    setShowPromotionPopup(false);
-    setPromotionPopupKeyword('');
+  // 出貨方式搜尋過濾
+  const filteredShippingMethods = shippingPopupKeyword
+    ? mockShippingMethods.filter(
+        (s) =>
+          s.code.includes(shippingPopupKeyword) ||
+          s.name.toLowerCase().includes(shippingPopupKeyword.toLowerCase())
+      )
+    : mockShippingMethods;
+
+  const handleSelectShipping = (code: string, name: string) => {
+    handleInputChange('adv_出貨方式', `${code}-${name}`);
+    setActiveShippingPopup(false);
+    setShippingPopupKeyword('');
+  };
+
+  // 選擇方案（同時填入代碼 + 名稱）
+  const handleSelectPlan = (code: string, name: string) => {
+    handleInputChange('adv_方案代碼', code);
+    handleInputChange('方案名稱', name);
+    setActivePlanPopup(null);
+    setPlanPopupKeyword('');
   };
 
   const handleInputChange = (field: string, value: any) => {
@@ -700,26 +940,44 @@ export function NewPMOrderManagement() {
     '會員email': "", '訂單起日': new Date(new Date().setFullYear(new Date().getFullYear() - 10)),
     '訂單迄日': new Date(new Date().setDate(new Date().getDate() + 14)),
     '訂單狀態_基本': "", '訂單類型': "", '建單法人': "",
-    '受買人訂戶編號': "", '會員帳號': "", '會員姓名': "", '會員手機': "",
-    '收件人訂戶編號': "", '收件人姓名': "", '收件人email': "", '收件人手機': "",
-    '出貨收件人': "", '發票收件人': "", '統一編號': "", '推薦客戶': "", '贈品人': "",
-    '商品名稱': "", '付款方式': "", '付款狀態': "", '訂單狀態_細節': "",
-    '訂單備註': "", '產品代碼': "",
-    '訂單客編': "", '訂單客戶': "", '出貨客編': "", '出貨客戶': "",
-    '發票客編': "", '發票客戶': "", '付款客編': "", '付款客戶': "",
-    '訂單編號起期': "", '訂單編號迄期': "", '流程編號起期': "", '流程編號迄期': "",
-    '來源編號起期': "", '來源編號迄期': "", '來源': "",
-    '出貨方式': "", '出貨備註': "", '行銷通路代碼': "", '行銷通路說明': "",
-    '行銷專案代碼': "", '行銷專案說明': "", '促銷方案代碼': "", '促銷方案說明': "",
-    '行銷組盤碼': "",
-    '信用卡卡號': "", '建單人員': "", '暫停處理': "", '是否為贈閱單': "",
+    'adv_訂單起日': new Date(new Date().setFullYear(new Date().getFullYear() - 10)),
+    'adv_訂單迄日': new Date(new Date().setDate(new Date().getDate() + 14)),
+    '訂單編號起': "", '訂單編號迄': "",
+    '來源單號起': "", '來源單號迄': "",
+    '流程單號起': "", '流程單號迄': "",
+    '異動單號': "",
+    '訂單客戶編號': "", '訂單客戶名稱': "",
+    '付款客戶編號': "", '付款客戶名稱': "",
+    '發票客戶編號': "", '發票客戶名稱': "",
+    '出貨客戶編號': "", '出貨客戶名稱': "",
+    'adv_出貨收件人': "", 'adv_統一編號': "",
+    'adv_會員帳號': "", '會員名稱': "", '會員Email': "", 'adv_會員手機': "",
+    '出貨收件人Email': "", '出貨收件人手機': "", '出貨地址': "", '出貨收件人市話': "",
+    '產品料號': "", '產品名稱': "",
+    'adv_方案代碼': "", '方案名稱': "",
+    '行銷追蹤碼': "", '行銷追蹤碼名稱': "",
+    '通路代碼': "", '通路名稱': "",
+    '業務員代碼': "", '業務員名稱': "",
+    'adv_來源系統': "",
+    'OMG訂單狀態': "", '中台訂單狀態': "",
+    'adv_出貨備註': "", 'adv_訂單備註': "",
+    'OMG訂單類型': "", 'adv_出貨方式': "",
+    'adv_暫停處理': "N", 'adv_是否為贈閱單': "",
+    '發票號碼': "",
+    'adv_建單法人': "", 'adv_建單人員': "",
+    'adv_付款方式': "", 'adv_付款狀態': "",
   };
 
   const handleClear = () => {
     setSearchForm(emptyClearForm);
+    setErpPrint(false);
+    setErpDigital(false);
+    setErpUnresolved(false);
+    setErpShowDetail(false);
+    setErpQueryNote(false);
     setHasSearched(false);
-    setDisplayCount(10); // 清除表單時重置顯示數量
-    setIsLoadingMore(false); // 重置加載狀態
+    setDisplayCount(10);
+    setIsLoadingMore(false);
   };
 
   const handleSearch = () => {
@@ -732,147 +990,109 @@ export function NewPMOrderManagement() {
   const handleView = (record: UnifiedOrderData) => {
     setSelectedOrderId(record.id);
     setSelectedOrderType(record.type[0]);
+    setSelectedOrderRecord(record);
     setShowDetail(true);
   };
 
   // ── 動態欄位 ────────────────────────────────────────────
   const buildColumns = (): CwTableColumn<UnifiedOrderData>[] => {
-    const cols: CwTableColumn<UnifiedOrderData>[] = [
-      { key: 'id', title: '#', width: '60px', align: 'center', stickyLeft: true, render: (_, __, idx) => (idx ?? 0) + 1 },
-      { key: 'orderNumber', title: '訂單編號', width: '110px', stickyLeft: true },
-      {
-        key: 'type', title: '訂單來源', width: '120px', align: 'center', stickyLeft: true,
-        render: (_, r) => {
-          const SOURCE_CONFIG: Record<string, { label: string; color: string }> = {
-            service: { label: '中台', color: '#0078d4' },
-            erp:     { label: 'ERP',  color: '#7c3aed' },
-            omg:     { label: 'OMG',  color: '#d97706' },
-          };
-          const sources = r.type;
-          return (
-            <div className="flex flex-wrap gap-[4px] justify-center">
-              {sources.map(s => {
-                const cfg = SOURCE_CONFIG[s];
-                return cfg ? (
-                  <span
-                    key={s}
-                    className="inline-block px-[6px] py-[2px] rounded-[4px] text-[12px] font-[500]"
-                    style={{ color: cfg.color, background: `${cfg.color}18` }}
-                  >
-                    {cfg.label}
-                  </span>
-                ) : null;
-              })}
-            </div>
-          );
-        },
+    const cols: CwTableColumn<UnifiedOrderData>[] = [];
+
+    // ── 常駐欄位 ────────────────────────────────────────
+    cols.push({ key: 'legalEntity', title: '法人', width: '60px', stickyLeft: true, render: (_, r) => r.legalEntity.replace(/^\d+\s*/, '') });
+    cols.push({ key: 'orderNumber', title: '訂單編號', width: '130px', stickyLeft: true });
+    cols.push({ key: 'lineNo', title: '#行號', width: '64px', align: 'center', stickyLeft: true });
+
+    if (columnFilters['來源單號']) cols.push({ key: 'sourceOrderNumber', title: '來源單號', width: '130px' });
+    if (columnFilters['流程單號']) cols.push({ key: 'processOrderNumber', title: '流程單號', width: '130px' });
+
+    cols.push({ key: 'orderDate', title: '訂單日期', width: '110px' });
+
+    if (columnFilters['訂閱起期']) cols.push({ key: 'orderStartDate', title: '訂閱起期', width: '110px', render: (_, r) => erpShowDetail ? r.orderStartDate : '' });
+    if (columnFilters['訂閱迄期']) cols.push({ key: 'orderEndDate', title: '訂閱迄期', width: '110px', render: (_, r) => erpShowDetail ? r.orderEndDate : '' });
+
+    if (columnFilters['方案代碼']) cols.push({ key: 'planCode', title: '方案代碼', width: '110px' });
+    if (columnFilters['方案名稱']) cols.push({ key: 'planName', title: '方案名稱', width: '160px' });
+
+    cols.push({ key: 'productCode', title: '產品料號', width: '110px', render: (_, r) => erpShowDetail ? r.productCode : '' });
+    cols.push({ key: 'productName', title: '產品名稱', width: '180px', render: (_, r) => erpShowDetail ? r.productName : '' });
+
+    if (columnFilters['數量']) cols.push({ key: 'quantity', title: '數量', width: '64px', align: 'right', render: (_, r) => erpShowDetail && r.quantity ? String(r.quantity) : '' });
+    if (columnFilters['品項金額']) cols.push({ key: 'itemAmount', title: '品項金額', width: '100px', align: 'right', render: (_, r) => erpShowDetail && r.itemAmount ? `NT$ ${r.itemAmount.toLocaleString()}` : '' });
+
+    if (columnFilters['訂單金額']) cols.push({ key: 'orderAmount', title: '訂單金額', width: '110px', align: 'right', render: (v) => (v as number) > 0 ? `NT$ ${(v as number).toLocaleString()}` : '' });
+
+    if (columnFilters['來源系統']) cols.push({
+      key: 'sourceSystem', title: '來源系統', width: '110px',
+      render: (_, r) => {
+        const cfg = SOURCE_SYSTEM_COLORS[r.sourceSystem];
+        return r.sourceSystem ? (
+          <span className="inline-flex items-center gap-[4px] text-[13px]">
+            <span className="inline-block px-[5px] py-[1px] rounded-[4px] text-[11px] font-[500]" style={cfg ? { background: cfg.bg, color: cfg.color } : { background: '#f0f0f0', color: '#555' }}>{r.sourceSystem}</span>
+          </span>
+        ) : null;
       },
-      { key: 'sourceSystem', title: '來源系統', width: '100px' },
-      { key: 'orderDate', title: '訂單日期', width: '110px' },
-      { key: 'sourceProduct', title: '來源產品', width: '180px' },
-      { key: 'paymentMethod', title: '付款方式', width: '100px' },
-      { key: 'paymentStatus', title: '付款狀態', width: '90px' },
-      {
-        key: 'orderStatus', title: '訂單狀態', width: '90px', align: 'center',
-        render: (_, r) => {
-          if (!r.orderStatus) return null;
-          const cfg = ORDER_STATUS_COLORS[r.orderStatus];
-          return (
-            <span
-              className="inline-block px-[8px] py-[2px] rounded-[5px] text-[12px]"
-              style={cfg ? { backgroundColor: cfg.tagBg, color: cfg.tagColor } : { backgroundColor: '#e8f5e9', color: '#16a34a' }}
-            >
-              {r.orderStatus}
-            </span>
-          );
-        },
+    });
+
+    if (columnFilters['通路代碼']) cols.push({
+      key: 'sourceCode', title: '通路代碼', width: '100px',
+      render: (_, r) => {
+        const cfg = SOURCE_CODE_COLORS[r.sourceCode];
+        return r.sourceCode ? (
+          <span className="inline-block px-[5px] py-[1px] rounded-[4px] text-[11px] font-[500]" style={cfg ? { background: cfg.bg, color: cfg.color } : { background: '#f0f0f0', color: '#555' }}>{r.sourceCode}</span>
+        ) : null;
       },
-    ];
+    });
 
-    // 客戶資訊：緊接在訂單來源右邊（position 2）
-    if (columnFilters['客戶資訊']) {
-      cols.splice(2, 0,
-        { key: 'customerName', title: '客戶名稱', width: '110px' },
-        { key: 'customerMobile', title: '手機', width: '120px' },
-        { key: 'customerPhone', title: '市話', width: '120px' },
-        { key: 'customerContact', title: '聯絡人', width: '100px' },
-        { key: 'customerAddress', title: '地址', width: '200px' },
-        { key: 'customerEmail', title: 'Email', width: '160px' },
-        { key: 'customerTaxId', title: '統編', width: '100px' },
-      );
-    }
+    if (columnFilters['業務員名']) cols.push({ key: 'salesPerson', title: '業務員名', width: '90px' });
 
-    // 訂單明細：接在客戶資訊之後（若客戶資訊已展開則 offset 7）
-    if (columnFilters['訂單明細']) {
-      const insertAt = 3 + (columnFilters['客戶資訊'] ? 7 : 0);
-      cols.splice(insertAt, 0,
-        { key: 'orderStartDate', title: '訂單起期', width: '110px' },
-        { key: 'orderEndDate', title: '訂單迄期', width: '110px' },
-        { key: 'orderAmount', title: '訂單金額', width: '110px', align: 'right', render: (v) => (v as number) > 0 ? `NT$ ${(v as number).toLocaleString()}` : '' },
-      );
-    }
+    if (columnFilters['OMG訂單狀態']) cols.push({
+      key: 'omgStatus', title: 'OMG 訂單狀態', width: '120px', align: 'center',
+      render: (_, r) => {
+        const cfg = ORDER_CODE_COLORS[r.omgStatus];
+        return cfg ? <span className="inline-block px-[8px] py-[2px] rounded-[5px] text-[12px] font-[500]" style={{ background: cfg.bg, color: cfg.color }}>{cfg.label}</span> : null;
+      },
+    });
 
-    if (columnFilters['未結案單']) {
-      cols.push({ key: 'isUnresolved', title: '未結案單', width: '90px', align: 'center' });
-    }
+    if (columnFilters['中台訂單狀態']) cols.push({
+      key: 'serviceStatus', title: '中台 訂單狀態', width: '120px', align: 'center',
+      render: (_, r) => {
+        const cfg = ORDER_CODE_COLORS[r.serviceStatus];
+        return cfg ? <span className="inline-block px-[8px] py-[2px] rounded-[5px] text-[12px] font-[500]" style={{ background: cfg.bg, color: cfg.color }}>{cfg.label.replace(/^[A-Z]:/, '')}</span> : null;
+      },
+    });
 
-    if (columnFilters['雜誌料號']) {
-      cols.push({ key: 'magazineCode', title: '雜誌料號', width: '110px' });
-    }
+    if (erpQueryNote) cols.push({ key: 'orderNote', title: '訂單備註', width: '180px' });
 
-    if (columnFilters['出貨客戶']) {
-      cols.push(
-        { key: 'shippingCustomerNumber', title: '出貨編號', width: '110px' },
-        { key: 'shippingCustomerName', title: '出貨客戶名稱', width: '120px' },
-        { key: 'shippingCustomerAddress', title: '出貨客戶地址', width: '210px' },
-        { key: 'shippingCustomerPhone', title: '出貨客戶電話', width: '130px' },
-      );
+    if (columnFilters['暫止原因']) {
+      cols.push({ key: 'isPaused', title: '暫停處理', width: '80px', align: 'center' });
+      cols.push({ key: 'pauseReason', title: '暫止原因', width: '160px' });
     }
+    if (columnFilters['發行出貨']) cols.push({ key: 'publishShipping', title: '發行出貨', width: '90px' });
+    if (columnFilters['舊訂閱起期']) cols.push({ key: 'oldStartDate', title: '舊訂閱起期', width: '110px' });
+    if (columnFilters['舊訂閱迄期']) cols.push({ key: 'oldEndDate', title: '舊訂閱迄期', width: '110px' });
+    if (columnFilters['付款客戶編號']) cols.push({ key: 'paymentCustomerNumber', title: '付款客戶編號', width: '120px' });
+    if (columnFilters['付款客戶名稱']) cols.push({ key: 'paymentCustomerName', title: '付款客戶名稱', width: '120px' });
+    if (columnFilters['出貨客戶編號']) cols.push({ key: 'shippingCustomerNumber', title: '出貨客戶編號', width: '120px' });
 
-    if (columnFilters['付款客戶']) {
-      cols.push(
-        { key: 'paymentCustomerNumber', title: '付款編號', width: '110px' },
-        { key: 'paymentCustomerName', title: '付款客戶名稱', width: '120px' },
-        { key: 'paymentCustomerAddress', title: '付款客戶地址', width: '210px' },
-        { key: 'paymentCustomerPhone', title: '付款客戶電話', width: '130px' },
-      );
-    }
+    cols.push({ key: 'shippingCustomerName', title: '出貨客戶名稱', width: '120px' });
 
-    if (columnFilters['訂單備註']) {
-      cols.push({ key: 'orderNote', title: '訂單備註', width: '180px' });
-    }
-
-    if (columnFilters['方案相關']) {
-      cols.push(
-        { key: 'planCode', title: '方案代碼', width: '110px' },
-        { key: 'planName', title: '方案名稱', width: '160px' },
-      );
-    }
-
-    if (columnFilters['知識庫相關']) {
-      cols.push(
-        { key: 'knowledgeStartDate', title: '知識庫起期', width: '110px' },
-        { key: 'knowledgeEndDate', title: '知識庫迄期', width: '110px' },
-      );
-    }
-
-    if (columnFilters['暫止相關']) {
-      cols.push(
-        { key: 'isPaused', title: '暫停處理', width: '90px', align: 'center' },
-        { key: 'pauseReason', title: '暫止原因', width: '160px' },
-      );
-    }
+    if (columnFilters['出貨收件人']) cols.push({ key: 'recipient', title: '出貨收件人', width: '100px' });
+    if (columnFilters['出貨地址']) cols.push({ key: 'shippingCustomerAddress', title: '出貨地址', width: '200px' });
+    if (columnFilters['郵遞區號']) cols.push({ key: 'postalCode', title: '郵遞區號', width: '80px' });
+    if (columnFilters['出貨國別']) cols.push({ key: 'shippingCountry', title: '出貨國別', width: '80px' });
+    if (columnFilters['出貨方式']) cols.push({ key: 'shippingMethod', title: '出貨方式', width: '140px' });
+    if (columnFilters['出貨客戶手機']) cols.push({ key: 'shippingMobile', title: '出貨客戶手機', width: '120px' });
+    if (columnFilters['出貨客戶Email']) cols.push({ key: 'shippingEmail', title: '出貨客戶Email', width: '160px' });
+    if (columnFilters['付款方式']) cols.push({ key: 'paymentMethod', title: '付款方式', width: '100px' });
+    if (columnFilters['付款狀態']) cols.push({ key: 'paymentStatus', title: '付款狀態', width: '90px' });
 
     cols.push({
-      key: 'actions' as any, title: '功能', width: '160px', align: 'center',
+      key: 'actions' as any, title: '功能', width: '64px', align: 'center',
       sticky: true,
       render: (_, r) => (
         <div className="flex items-center justify-center">
-          <button
-            onClick={() => handleView(r)}
-            className="px-[8px] text-[#0078d4] text-[12px] hover:bg-[#e6f2fb] transition-colors whitespace-nowrap font-['Noto_Sans_TC',_sans-serif] underline"
-            style={{ fontWeight: 350 }}
-          >查看</button>
+          <CwRoundButton icon="view" onClick={() => handleView(r)} title="查看" />
         </div>
       ),
     });
@@ -900,6 +1120,33 @@ export function NewPMOrderManagement() {
         )
       )
     : allOrders;
+
+  // 上一筆 / 下一筆（以 filteredOrders 為基準，需在其宣告後定義）
+  const handleDetailPrevious = () => {
+    if (!selectedOrderRecord) return;
+    const idx = filteredOrders.findIndex((o) => o.id === selectedOrderRecord.id);
+    if (idx > 0) {
+      const prev = filteredOrders[idx - 1];
+      setSelectedOrderId(prev.id);
+      setSelectedOrderType(prev.type[0]);
+      setSelectedOrderRecord(prev);
+    }
+  };
+
+  const handleDetailNext = () => {
+    if (!selectedOrderRecord) return;
+    const idx = filteredOrders.findIndex((o) => o.id === selectedOrderRecord.id);
+    if (idx < filteredOrders.length - 1) {
+      const next = filteredOrders[idx + 1];
+      setSelectedOrderId(next.id);
+      setSelectedOrderType(next.type[0]);
+      setSelectedOrderRecord(next);
+    }
+  };
+
+  const currentDetailIndex = selectedOrderRecord
+    ? filteredOrders.findIndex((o) => o.id === selectedOrderRecord.id)
+    : -1;
 
   const totalItems = filteredOrders.length;
   const totalPages = Math.ceil(totalItems / pageSize);
@@ -935,13 +1182,26 @@ export function NewPMOrderManagement() {
     { label: "訂單查詢" },
   ];
 
+  if (showCreate) {
+    return <CreatePMOrder onClose={() => setShowCreate(false)} />;
+  }
+
   // 如果顯示詳情，返回訂單詳情組件
   if (showDetail) {
     return (
       <PMOrderDetail
         orderId={selectedOrderId ? parseInt(selectedOrderId.replace(/\D/g, '')) || undefined : undefined}
         orderType={selectedOrderType}
-
+        orderHeaderInfo={selectedOrderRecord ? {
+          sourceSystem:      selectedOrderRecord.sourceSystem,
+          orderNumber:       selectedOrderRecord.orderNumber,
+          sourceOrderNumber: selectedOrderRecord.sourceOrderNumber,
+          orderDate:         selectedOrderRecord.orderDate,
+          omgOrderType:      selectedOrderRecord.sourceProduct,
+          omgStatus:         selectedOrderRecord.omgStatus,
+          omgOrderNote:      selectedOrderRecord.orderNote,
+          legalEntity:       selectedOrderRecord.legalEntity,
+        } : undefined}
         onClose={() => setShowDetail(false)}
       />
     );
@@ -949,43 +1209,28 @@ export function NewPMOrderManagement() {
 
   return (
     <div className="px-[30px] py-[20px] space-y-[20px]">
-      <CwTitle title="訂單查詢" breadcrumbs={breadcrumbs} />
+      <div className="flex items-center justify-between">
+        <CwTitle title="訂單查詢" breadcrumbs={breadcrumbs} />
+      </div>
 
       <form className="bg-white space-y-[16px]" onSubmit={(e) => { e.preventDefault(); handleSearch(); }}>
 
-        {/* ── 基本資訊 ── */}
+        {/* ── 常用欄位 ── */}
         <div className="space-y-[12px] border-b border-gray-200 pb-[20px]">
-          <SectionLabel>基本資訊</SectionLabel>
-
           <div className="grid grid-cols-8 gap-[12px] items-end">
-            <CwSelect
-              label="訂單編號"
-              placeholder="輸入編號或客戶名稱"
-              options={orderNumberOptions}
-              searchable
-              clearable
-              value={searchForm['訂單編號']}
-              onChange={(v) => handleInputChange('訂單編號', v)}
-              renderOption={(opt) => (
-                <div>
-                  <p style={{ fontFamily: 'var(--font-noto-sans-tc)', fontSize: '14px', fontWeight: 350, color: '#1c1c1c' }}>{opt.label}</p>
-                  <p style={{ fontFamily: 'var(--font-noto-sans-tc)', fontSize: '12px', fontWeight: 350, color: '#7c808c' }}>{opt.searchValue}</p>
-                </div>
-              )}
-            />
-            <CwInput label="來源編號" placeholder="來源編號" value={searchForm['來源編號']} onChange={(e) => handleInputChange('來源編號', e.target.value)} />
-            <CwInput label="方案代碼" placeholder="方案代碼" value={searchForm['方案代碼']} onChange={(e) => handleInputChange('方案代碼', e.target.value)} />
-            <CwSelect label="來源系統" placeholder="來源系統" options={sourceSystemOptions} searchable clearable value={searchForm['來源系統']} onChange={(v) => handleInputChange('來源系統', v)} />
-            <CwInput label="會員email" placeholder="會員email" value={searchForm['會員email']} onChange={(e) => handleInputChange('會員email', e.target.value)} />
-            <CwDatePicker label="訂單起日" placeholder="訂單起日" value={searchForm['訂單起日']} onChange={(v) => handleInputChange('訂單起日', v)} />
-            <CwDatePicker label="訂單迄日" placeholder="訂單迄日" value={searchForm['訂單迄日']} onChange={(v) => handleInputChange('訂單迄日', v)} />
+            <CwInput label="訂單編號 起" placeholder="訂單編號 起" value={searchForm['訂單編號起']} onChange={(e) => handleInputChange('訂單編號起', e.target.value)} />
+            <CwInput label="來源單號 起" placeholder="來源單號 起" value={searchForm['來源單號起']} onChange={(e) => handleInputChange('來源單號起', e.target.value)} />
+            <CwInput label="流程單號 起" placeholder="流程單號 起" value={searchForm['流程單號起']} onChange={(e) => handleInputChange('流程單號起', e.target.value)} />
+            <PopupSearchInput label="出貨客戶編號" value={searchForm['出貨客戶編號']} onChange={(v) => handleInputChange('出貨客戶編號', v)} onOpen={() => { setActiveCustomerPopup({ codeKey: '出貨客戶編號', nameKey: '出貨客戶名稱', title: '出貨客戶' }); setCustomerPopupKeyword(''); }} onClear={() => handleInputChange('出貨客戶編號', '')} />
+            <PopupSearchInput label="出貨客戶名稱" value={searchForm['出貨客戶名稱']} onChange={(v) => handleInputChange('出貨客戶名稱', v)} onOpen={() => { setActiveCustomerPopup({ codeKey: '出貨客戶編號', nameKey: '出貨客戶名稱', title: '出貨客戶' }); setCustomerPopupKeyword(''); }} onClear={() => handleInputChange('出貨客戶名稱', '')} />
+            <CwInput label="出貨地址" placeholder="出貨地址" value={searchForm['出貨地址']} onChange={(e) => handleInputChange('出貨地址', e.target.value)} />
+            <CwInput label="出貨收件人市話" placeholder="出貨收件人市話" value={searchForm['出貨收件人市話']} onChange={(e) => handleInputChange('出貨收件人市話', e.target.value)} />
+            <PopupSearchInput label="產品料號" value={searchForm['產品料號']} onChange={(v) => handleInputChange('產品料號', v)} onOpen={() => { setActiveProductPopup('code'); setProductPopupKeyword(''); }} onClear={() => handleInputChange('產品料號', '')} />
           </div>
 
           <div className="grid grid-cols-8 gap-[12px] items-center">
-            <CwSelect label="訂單狀態" placeholder="訂單狀態" options={orderStatusOptions} searchable clearable value={searchForm['訂單狀態_基本']} onChange={(v) => handleInputChange('訂單狀態_基本', v)} />
-            <CwInput label="訂單類型" placeholder="訂單類型" value={searchForm['訂單類型']} onChange={(e) => handleInputChange('訂單類型', e.target.value)} />
-            <CwInput label="建單法人" placeholder="建單法人" value={searchForm['建單法人']} onChange={(e) => handleInputChange('建單法人', e.target.value)} />
-            <div className="col-span-4" />
+            <PopupSearchInput label="方案代碼" value={searchForm['adv_方案代碼']} onChange={(v) => handleInputChange('adv_方案代碼', v)} onOpen={() => { setActivePlanPopup('code'); setPlanPopupKeyword(''); }} onClear={() => handleInputChange('adv_方案代碼', '')} />
+            <div className="col-span-6" />
             <div className="flex justify-end">
               <button
                 onClick={() => setShowAdvanced(!showAdvanced)}
@@ -1001,184 +1246,105 @@ export function NewPMOrderManagement() {
         {/* ── 進階篩選區 ── */}
         {showAdvanced && (
           <>
-            {/* 客戶資料 */}
+            {/* 時間區間 */}
             <div className="space-y-[12px] pt-[4px] border-b border-gray-200 pb-[20px]">
-              <SectionLabel>客戶資料</SectionLabel>
+              <SectionLabel>時間區間</SectionLabel>
               <div className="grid grid-cols-8 gap-[12px] items-end">
-                <CwInput label="受買人訂戶編號" placeholder="受買人訂戶編號" value={searchForm['受買人訂戶編號']} onChange={(e) => handleInputChange('受買人訂戶編號', e.target.value)} />
-                <CwInput label="會員帳號" placeholder="會員帳號" value={searchForm['會員帳號']} onChange={(e) => handleInputChange('會員帳號', e.target.value)} />
-                <CwInput label="會員姓名" placeholder="會員姓名" value={searchForm['會員姓名']} onChange={(e) => handleInputChange('會員姓名', e.target.value)} />
-                <CwInput label="會員手機" placeholder="會員手機" value={searchForm['會員手機']} onChange={(e) => handleInputChange('會員手機', e.target.value)} />
-              </div>
-              <div className="grid grid-cols-8 gap-[12px] items-end">
-                <CwInput label="收件人訂戶編號" placeholder="收件人訂戶編號" value={searchForm['收件人訂戶編號']} onChange={(e) => handleInputChange('收件人訂戶編號', e.target.value)} />
-                <CwInput label="收件人姓名" placeholder="收件人姓名" value={searchForm['收件人姓名']} onChange={(e) => handleInputChange('收件人姓名', e.target.value)} />
-                <CwInput label="收件人email" placeholder="收件人email" value={searchForm['收件人email']} onChange={(e) => handleInputChange('收件人email', e.target.value)} />
-                <CwInput label="收件人手機" placeholder="收件人手機" value={searchForm['收件人手機']} onChange={(e) => handleInputChange('收件人手機', e.target.value)} />
-              </div>
-              <div className="grid grid-cols-8 gap-[12px] items-end">
-                <CwSelect label="出貨收件人" placeholder="出貨收件人" options={emptyOptions} searchable clearable value={searchForm['出貨收件人']} onChange={(v) => handleInputChange('出貨收件人', v)} />
-                <CwSelect label="發票收件人" placeholder="發票收件人" options={emptyOptions} searchable clearable value={searchForm['發票收件人']} onChange={(v) => handleInputChange('發票收件人', v)} />
-                <CwInput label="統一編號" placeholder="統一編號" value={searchForm['統一編號']} onChange={(e) => handleInputChange('統一編號', e.target.value)} />
-                <CwInput label="推薦客戶" placeholder="推薦客戶" value={searchForm['推薦客戶']} onChange={(e) => handleInputChange('推薦客戶', e.target.value)} />
-                <CwInput label="贈品人" placeholder="贈品人" value={searchForm['贈品人']} onChange={(e) => handleInputChange('贈品人', e.target.value)} />
+                <CwDatePicker label="訂單起日" placeholder="訂單起日" value={searchForm['adv_訂單起日']} onChange={(v) => handleInputChange('adv_訂單起日', v)} />
+                <CwDatePicker label="訂單迄日" placeholder="訂單迄日" value={searchForm['adv_訂單迄日']} onChange={(v) => handleInputChange('adv_訂單迄日', v)} />
               </div>
             </div>
 
-            {/* 訂單細節 */}
+            {/* 單號查詢 */}
             <div className="space-y-[12px] pt-[4px] border-b border-gray-200 pb-[20px]">
-              <SectionLabel>訂單細節</SectionLabel>
+              <SectionLabel>單號查詢</SectionLabel>
               <div className="grid grid-cols-8 gap-[12px] items-end">
-                <CwSelect label="商品名稱" placeholder="商品名稱" options={emptyOptions} searchable clearable value={searchForm['商品名稱']} onChange={(v) => handleInputChange('商品名稱', v)} />
-                <CwSelect label="付款方式" placeholder="付款方式" options={paymentMethodOptions} searchable clearable value={searchForm['付款方式']} onChange={(v) => handleInputChange('付款方式', v)} />
-                <CwInput label="付款狀態" placeholder="付款狀態" value={searchForm['付款狀態']} onChange={(e) => handleInputChange('付款狀態', e.target.value)} />
-                <CwSelect label="訂單狀態" placeholder="訂單狀態" options={orderStatusOptions} searchable clearable value={searchForm['訂單狀態_細節']} onChange={(v) => handleInputChange('訂單狀態_細節', v)} />
-                <CwSelect label="訂單備註" placeholder="訂單備註" options={emptyOptions} searchable clearable value={searchForm['訂單備註']} onChange={(v) => handleInputChange('訂單備註', v)} />
-                <CwSelect label="產品代碼" placeholder="產品代碼" options={emptyOptions} searchable clearable value={searchForm['產品代碼']} onChange={(v) => handleInputChange('產品代碼', v)} />
-              </div>
-              <div className="grid grid-cols-8 gap-[12px] items-end">
-                {/* 訂單客編搜尋 */}
-                <div className="flex flex-col gap-[6px]">
-                  <label className="text-[#1c1c1c] text-[12px] font-[500] font-['Noto_Sans_TC',_sans-serif]">訂單客編</label>
-                  <div className="relative flex items-center">
-                    <input
-                      type="text"
-                      placeholder="輸入訂單客編"
-                      value={searchForm['訂單客編']}
-                      onChange={(e) => handleInputChange('訂單客編', e.target.value)}
-                      className="w-full h-[32px] px-[12px] border border-[#c4c9d3] rounded-[4px] text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]"
-                      style={{ fontWeight: 350 }}
-                    />
-                    <button
-                      onClick={() => {
-                        setShowCustomerCodePopup(true);
-                        setCustomerCodePopupKeyword('');
-                      }}
-                      className="absolute right-[4px] w-[28px] h-[28px] rounded-[4px] border border-[#c4c9d3] bg-white hover:bg-[#f5f7fa] flex items-center justify-center text-[#01579b] transition-colors"
-                      title="搜尋訂單客編"
-                    >
-                      <Search size={16} />
-                    </button>
-                    {searchForm['訂單客編'] && (
-                      <button
-                        onClick={() => handleInputChange('訂單客編', '')}
-                        className="absolute right-[36px] w-[24px] h-[24px] text-[#7c808c] hover:text-[#1c1c1c] transition-colors"
-                        title="清除"
-                      >
-                        <X size={16} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-                {/* 訂單客戶搜尋 */}
-                <div className="flex flex-col gap-[6px]">
-                  <label className="text-[#1c1c1c] text-[12px] font-[500] font-['Noto_Sans_TC',_sans-serif]">訂單客戶</label>
-                  <div className="relative flex items-center">
-                    <input
-                      type="text"
-                      placeholder="輸入訂單客戶"
-                      value={searchForm['訂單客戶']}
-                      onChange={(e) => handleInputChange('訂單客戶', e.target.value)}
-                      className="w-full h-[32px] px-[12px] border border-[#c4c9d3] rounded-[4px] text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]"
-                      style={{ fontWeight: 350 }}
-                    />
-                    <button
-                      onClick={() => {
-                        setShowCustomerNamePopup(true);
-                        setCustomerNamePopupKeyword('');
-                      }}
-                      className="absolute right-[4px] w-[28px] h-[28px] rounded-[4px] border border-[#c4c9d3] bg-white hover:bg-[#f5f7fa] flex items-center justify-center text-[#01579b] transition-colors"
-                      title="搜尋訂單客戶"
-                    >
-                      <Search size={16} />
-                    </button>
-                    {searchForm['訂單客戶'] && (
-                      <button
-                        onClick={() => handleInputChange('訂單客戶', '')}
-                        className="absolute right-[36px] w-[24px] h-[24px] text-[#7c808c] hover:text-[#1c1c1c] transition-colors"
-                        title="清除"
-                      >
-                        <X size={16} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <CwInput label="出貨客編" placeholder="出貨客編" value={searchForm['出貨客編']} onChange={(e) => handleInputChange('出貨客編', e.target.value)} />
-                <CwInput label="出貨客戶" placeholder="出貨客戶" value={searchForm['出貨客戶']} onChange={(e) => handleInputChange('出貨客戶', e.target.value)} />
-                <CwInput label="發票客編" placeholder="發票客編" value={searchForm['發票客編']} onChange={(e) => handleInputChange('發票客編', e.target.value)} />
-                <CwInput label="發票客戶" placeholder="發票客戶" value={searchForm['發票客戶']} onChange={(e) => handleInputChange('發票客戶', e.target.value)} />
-                <CwInput label="付款客編" placeholder="付款客編" value={searchForm['付款客編']} onChange={(e) => handleInputChange('付款客編', e.target.value)} />
-                <CwInput label="付款客戶" placeholder="付款客戶" value={searchForm['付款客戶']} onChange={(e) => handleInputChange('付款客戶', e.target.value)} />
-              </div>
-              <div className="grid grid-cols-8 gap-[12px] items-end">
-                <CwSelect label="訂單編號起期" placeholder="訂單編號起期" options={emptyOptions} searchable clearable value={searchForm['訂單編號起期']} onChange={(v) => handleInputChange('訂單編號起期', v)} />
-                <CwSelect label="訂單編號迄期" placeholder="訂單編號迄期" options={emptyOptions} searchable clearable value={searchForm['訂單編號迄期']} onChange={(v) => handleInputChange('訂單編號迄期', v)} />
-                <CwSelect label="流程編號起期" placeholder="流程編號起期" options={emptyOptions} searchable clearable value={searchForm['流程編號起期']} onChange={(v) => handleInputChange('流程編號起期', v)} />
-                <CwSelect label="流程編號迄期" placeholder="流程編號迄期" options={emptyOptions} searchable clearable value={searchForm['流程編號迄期']} onChange={(v) => handleInputChange('流程編號迄期', v)} />
-                <CwSelect label="來源編號起期" placeholder="來源編號起期" options={emptyOptions} searchable clearable value={searchForm['來源編號起期']} onChange={(v) => handleInputChange('來源編號起期', v)} />
-                <CwSelect label="來源編號迄期" placeholder="來源編號迄期" options={emptyOptions} searchable clearable value={searchForm['來源編號迄期']} onChange={(v) => handleInputChange('來源編號迄期', v)} />
-                <CwInput label="來源" placeholder="來源" value={searchForm['來源']} onChange={(e) => handleInputChange('來源', e.target.value)} />
+                <CwInput label="訂單編號 迄" placeholder="訂單編號 迄" value={searchForm['訂單編號迄']} onChange={(e) => handleInputChange('訂單編號迄', e.target.value)} onBlur={() => { if (!searchForm['訂單編號迄'] && searchForm['訂單編號起']) handleInputChange('訂單編號迄', searchForm['訂單編號起']); }} />
+                <CwInput label="來源單號 迄" placeholder="來源單號 迄" value={searchForm['來源單號迄']} onChange={(e) => handleInputChange('來源單號迄', e.target.value)} onBlur={() => { if (!searchForm['來源單號迄'] && searchForm['來源單號起']) handleInputChange('來源單號迄', searchForm['來源單號起']); }} />
+                <CwInput label="流程單號 迄" placeholder="流程單號 迄" value={searchForm['流程單號迄']} onChange={(e) => handleInputChange('流程單號迄', e.target.value)} onBlur={() => { if (!searchForm['流程單號迄'] && searchForm['流程單號起']) handleInputChange('流程單號迄', searchForm['流程單號起']); }} />
+                <CwInput label="異動單號" placeholder="異動單號" value={searchForm['異動單號']} onChange={(e) => handleInputChange('異動單號', e.target.value)} />
               </div>
             </div>
 
-            {/* 通路 / 行銷 */}
+            {/* 客戶與收件人身分 */}
             <div className="space-y-[12px] pt-[4px] border-b border-gray-200 pb-[20px]">
-              <SectionLabel>通路 / 行銷</SectionLabel>
+              <SectionLabel>客戶與收件人身分</SectionLabel>
               <div className="grid grid-cols-8 gap-[12px] items-end">
-                <CwSelect label="出貨方式" placeholder="出貨方式" options={shippingMethodOptions} searchable clearable value={searchForm['出貨方式']} onChange={(v) => handleInputChange('出貨方式', v)} />
-                <CwInput label="出貨備註" placeholder="出貨備註" value={searchForm['出貨備註']} onChange={(e) => handleInputChange('出貨備註', e.target.value)} />
-                <CwSelect label="行銷通路代碼" placeholder="行銷通路代碼" options={emptyOptions} searchable clearable value={searchForm['行銷通路代碼']} onChange={(v) => handleInputChange('行銷通路代碼', v)} />
-                <CwInput label="行銷通路說明" placeholder="行銷通路說明" value={searchForm['行銷通路說明']} onChange={(e) => handleInputChange('行銷通路說明', e.target.value)} />
-                <CwSelect label="行銷專案代碼" placeholder="行銷專案代碼" options={emptyOptions} searchable clearable value={searchForm['行銷專案代碼']} onChange={(v) => handleInputChange('行銷專案代碼', v)} />
-                <CwInput label="行銷專案說明" placeholder="行銷專案說明" value={searchForm['行銷專案說明']} onChange={(e) => handleInputChange('行銷專案說明', e.target.value)} />                
-            {/* 促銷方案代碼搜尋 */}
-            <div className="flex flex-col gap-[6px]">
-              <label className="text-[#1c1c1c] text-[12px] font-[500] font-['Noto_Sans_TC',_sans-serif]">促銷方案代碼</label>
-              <div className="relative flex items-center">
-                <input
-                  type="text"
-                  placeholder="輸入促銷方案代碼"
-                  value={searchForm['促銷方案代碼']}
-                  onChange={(e) => handleInputChange('促銷方案代碼', e.target.value)}
-                  className="w-full h-[32px] px-[12px] border border-[#c4c9d3] rounded-[4px] text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]"
-                  style={{ fontWeight: 350 }}
-                />
-                <button
-                  onClick={() => {
-                    setShowPromotionPopup(true);
-                    setPromotionPopupKeyword('');
-                  }}
-                  className="absolute right-[4px] w-[28px] h-[28px] rounded-[4px] border border-[#c4c9d3] bg-white hover:bg-[#f5f7fa] flex items-center justify-center text-[#01579b] transition-colors"
-                  title="搜尋促銷方案"
-                >
-                  <Search size={16} />
-                </button>
-                {searchForm['促銷方案代碼'] && (
-                  <button
-                    onClick={() => handleInputChange('促銷方案代碼', '')}
-                    className="absolute right-[36px] w-[24px] h-[24px] text-[#7c808c] hover:text-[#1c1c1c] transition-colors"
-                    title="清除"
-                  >
-                    <X size={16} />
-                  </button>
-                )}
-              </div>
-            </div>
-                <CwInput label="促銷方案說明" placeholder="促銷方案說明" value={searchForm['促銷方案說明']} onChange={(e) => handleInputChange('促銷方案說明', e.target.value)} />
+                <PopupSearchInput label="訂單客戶編號" value={searchForm['訂單客戶編號']} onChange={(v) => handleInputChange('訂單客戶編號', v)} onOpen={() => { setActiveCustomerPopup({ codeKey: '訂單客戶編號', nameKey: '訂單客戶名稱', title: '訂單客戶' }); setCustomerPopupKeyword(''); }} onClear={() => handleInputChange('訂單客戶編號', '')} />
+                <PopupSearchInput label="訂單客戶名稱" value={searchForm['訂單客戶名稱']} onChange={(v) => handleInputChange('訂單客戶名稱', v)} onOpen={() => { setActiveCustomerPopup({ codeKey: '訂單客戶編號', nameKey: '訂單客戶名稱', title: '訂單客戶' }); setCustomerPopupKeyword(''); }} onClear={() => handleInputChange('訂單客戶名稱', '')} />
+                <PopupSearchInput label="付款客戶編號" value={searchForm['付款客戶編號']} onChange={(v) => handleInputChange('付款客戶編號', v)} onOpen={() => { setActiveCustomerPopup({ codeKey: '付款客戶編號', nameKey: '付款客戶名稱', title: '付款客戶' }); setCustomerPopupKeyword(''); }} onClear={() => handleInputChange('付款客戶編號', '')} />
+                <PopupSearchInput label="付款客戶名稱" value={searchForm['付款客戶名稱']} onChange={(v) => handleInputChange('付款客戶名稱', v)} onOpen={() => { setActiveCustomerPopup({ codeKey: '付款客戶編號', nameKey: '付款客戶名稱', title: '付款客戶' }); setCustomerPopupKeyword(''); }} onClear={() => handleInputChange('付款客戶名稱', '')} />
+                <PopupSearchInput label="發票客戶編號" value={searchForm['發票客戶編號']} onChange={(v) => handleInputChange('發票客戶編號', v)} onOpen={() => { setActiveCustomerPopup({ codeKey: '發票客戶編號', nameKey: '發票客戶名稱', title: '發票客戶' }); setCustomerPopupKeyword(''); }} onClear={() => handleInputChange('發票客戶編號', '')} />
+                <PopupSearchInput label="發票客戶名稱" value={searchForm['發票客戶名稱']} onChange={(v) => handleInputChange('發票客戶名稱', v)} onOpen={() => { setActiveCustomerPopup({ codeKey: '發票客戶編號', nameKey: '發票客戶名稱', title: '發票客戶' }); setCustomerPopupKeyword(''); }} onClear={() => handleInputChange('發票客戶名稱', '')} />
               </div>
               <div className="grid grid-cols-8 gap-[12px] items-end">
-                <CwSelect label="行銷組盤碼" placeholder="行銷組盤碼" options={emptyOptions} searchable clearable value={searchForm['行銷組盤碼']} onChange={(v) => handleInputChange('行銷組盤碼', v)} />
+                <CwInput label="出貨收件人" placeholder="出貨收件人" value={searchForm['adv_出貨收件人']} onChange={(e) => handleInputChange('adv_出貨收件人', e.target.value)} />
+                <CwInput label="統一編號" placeholder="統一編號" value={searchForm['adv_統一編號']} onChange={(e) => handleInputChange('adv_統一編號', e.target.value)} />
+                <CwInput label="會員帳號" placeholder="會員帳號" value={searchForm['adv_會員帳號']} onChange={(e) => handleInputChange('adv_會員帳號', e.target.value)} />
+                <CwInput label="會員名稱" placeholder="會員名稱" value={searchForm['會員名稱']} onChange={(e) => handleInputChange('會員名稱', e.target.value)} />
+                <CwInput label="會員Email" placeholder="會員Email" value={searchForm['會員Email']} onChange={(e) => handleInputChange('會員Email', e.target.value)} />
+                <CwInput label="會員手機" placeholder="會員手機" value={searchForm['adv_會員手機']} onChange={(e) => handleInputChange('adv_會員手機', e.target.value)} />
+                <CwInput label="出貨收件人Email" placeholder="出貨收件人Email" value={searchForm['出貨收件人Email']} onChange={(e) => handleInputChange('出貨收件人Email', e.target.value)} />
+                <CwInput label="出貨收件人手機" placeholder="出貨收件人手機" value={searchForm['出貨收件人手機']} onChange={(e) => handleInputChange('出貨收件人手機', e.target.value)} />
               </div>
             </div>
 
-            {/* 其他條件 */}
+            {/* 商品資訊 */}
             <div className="space-y-[12px] pt-[4px] border-b border-gray-200 pb-[20px]">
-              <SectionLabel>其他條件</SectionLabel>
+              <SectionLabel>商品資訊</SectionLabel>
               <div className="grid grid-cols-8 gap-[12px] items-end">
-                <CwSelect label="信用卡卡號" placeholder="信用卡卡號" options={emptyOptions} searchable clearable value={searchForm['信用卡卡號']} onChange={(v) => handleInputChange('信用卡卡號', v)} />
-                <CwSelect label="建單人員" placeholder="建單人員" options={creatorOptions} searchable clearable value={searchForm['建單人員']} onChange={(v) => handleInputChange('建單人員', v)} />
-                <CwInput label="暫停處理" placeholder="暫停處理" value={searchForm['暫停處理']} onChange={(e) => handleInputChange('暫停處理', e.target.value)} />
-                <CwSelect label="是否為贈閱單" placeholder="是否為贈閱單" options={emptyOptions} searchable clearable value={searchForm['是否為贈閱單']} onChange={(v) => handleInputChange('是否為贈閱單', v)} />
+                <PopupSearchInput label="產品名稱" value={searchForm['產品名稱']} onChange={(v) => handleInputChange('產品名稱', v)} onOpen={() => { setActiveProductPopup('name'); setProductPopupKeyword(''); }} onClear={() => handleInputChange('產品名稱', '')} />
+              </div>
+            </div>
+
+            {/* 行銷與業務 */}
+            <div className="space-y-[12px] pt-[4px] border-b border-gray-200 pb-[20px]">
+              <SectionLabel>行銷與業務</SectionLabel>
+              <div className="grid grid-cols-8 gap-[12px] items-end">
+                <PopupSearchInput label="方案名稱" value={searchForm['方案名稱']} onChange={(v) => handleInputChange('方案名稱', v)} onOpen={() => { setActivePlanPopup('name'); setPlanPopupKeyword(''); }} onClear={() => handleInputChange('方案名稱', '')} />
+                <CwInput label="行銷追蹤碼" placeholder="行銷追蹤碼" value={searchForm['行銷追蹤碼']} onChange={(e) => handleInputChange('行銷追蹤碼', e.target.value)} />
+                <CwInput label="行銷追蹤碼名稱" placeholder="行銷追蹤碼名稱" value={searchForm['行銷追蹤碼名稱']} onChange={(e) => handleInputChange('行銷追蹤碼名稱', e.target.value)} />
+                <CwInput label="通路代碼" placeholder="通路代碼" value={searchForm['通路代碼']} onChange={(e) => handleInputChange('通路代碼', e.target.value)} />
+                <CwInput label="通路名稱" placeholder="通路名稱" value={searchForm['通路名稱']} onChange={(e) => handleInputChange('通路名稱', e.target.value)} />
+                <CwInput label="業務員代碼" placeholder="業務員代碼" value={searchForm['業務員代碼']} onChange={(e) => handleInputChange('業務員代碼', e.target.value)} />
+                <CwInput label="業務員名稱" placeholder="業務員名稱" value={searchForm['業務員名稱']} onChange={(e) => handleInputChange('業務員名稱', e.target.value)} />
+              </div>
+              <div className="grid grid-cols-8 gap-[12px] items-end">
+                <CwSelect label="來源系統" placeholder="來源系統" options={sourceSystemOptions} searchable clearable value={searchForm['adv_來源系統']} onChange={(v) => handleInputChange('adv_來源系統', v)} />
+              </div>
+            </div>
+
+            {/* 狀態、備註與其他條件 */}
+            <div className="space-y-[12px] pt-[4px] border-b border-gray-200 pb-[20px]">
+              <SectionLabel>狀態、備註與其他條件</SectionLabel>
+              <div className="grid grid-cols-8 gap-[12px] items-end">
+                <CwSelect label="OMG訂單狀態" placeholder="OMG訂單狀態" options={orderStatusOptions} searchable clearable value={searchForm['OMG訂單狀態']} onChange={(v) => handleInputChange('OMG訂單狀態', v)} />
+                <CwSelect label="中台訂單狀態" placeholder="中台訂單狀態" options={orderStatusOptions} searchable clearable value={searchForm['中台訂單狀態']} onChange={(v) => handleInputChange('中台訂單狀態', v)} />
+                <CwInput label="出貨備註" placeholder="出貨備註" value={searchForm['adv_出貨備註']} onChange={(e) => handleInputChange('adv_出貨備註', e.target.value)} />
+                <CwInput label="訂單備註" placeholder="訂單備註" value={searchForm['adv_訂單備註']} onChange={(e) => handleInputChange('adv_訂單備註', e.target.value)} />
+                <CwSelect label="OMG訂單類型" placeholder="OMG訂單類型" options={emptyOptions} searchable clearable value={searchForm['OMG訂單類型']} onChange={(v) => handleInputChange('OMG訂單類型', v)} />
+                <PopupSearchInput label="出貨方式" value={searchForm['adv_出貨方式']} onChange={(v) => handleInputChange('adv_出貨方式', v)} onOpen={() => { setActiveShippingPopup(true); setShippingPopupKeyword(''); }} onClear={() => handleInputChange('adv_出貨方式', '')} />
+                <CwSelect label="暫停處理" placeholder="暫停處理" options={[{ value: 'Y', label: 'Y' }, { value: 'N', label: 'N' }]} clearable value={searchForm['adv_暫停處理']} onChange={(v) => handleInputChange('adv_暫停處理', v)} />
+                <CwSelect label="是否為贈閱單" placeholder="是否為贈閱單" options={[{ value: 'Y', label: 'Y' }, { value: 'N', label: 'N' }]} clearable value={searchForm['adv_是否為贈閱單']} onChange={(v) => handleInputChange('adv_是否為贈閱單', v)} />
+              </div>
+              <div className="grid grid-cols-8 gap-[12px] items-end">
+                <CwInput label="發票號碼" placeholder="發票號碼" value={searchForm['發票號碼']} onChange={(e) => handleInputChange('發票號碼', e.target.value)} />
+                <CwSelect label="建單法人" placeholder="建單法人" options={legalEntityOptions} searchable clearable value={searchForm['adv_建單法人']} onChange={(v) => handleInputChange('adv_建單法人', v)} />
+                <CwSelect label="建單人員" placeholder="建單人員" options={creatorOptions} searchable clearable value={searchForm['adv_建單人員']} onChange={(v) => handleInputChange('adv_建單人員', v)} />
+                <CwSelect label="付款方式" placeholder="付款方式" options={paymentMethodOptions} searchable clearable value={searchForm['adv_付款方式']} onChange={(v) => handleInputChange('adv_付款方式', v)} />
+                <CwSelect label="付款狀態" placeholder="付款狀態" options={paymentStatusOptions} searchable clearable value={searchForm['adv_付款狀態']} onChange={(v) => handleInputChange('adv_付款狀態', v)} />
+              </div>
+            </div>
+
+            {/* ERP 專屬核取方塊 */}
+            <div className="space-y-[12px] pt-[4px] pb-[20px]">
+              <SectionLabel>ERP 專屬核取方塊</SectionLabel>
+              <div className="flex flex-wrap gap-x-[32px] gap-y-[12px] items-center">
+                <ErpCheckbox label="查紙本訂閱商品料號（只顯示含「紙本」的訂單）" checked={erpPrint} onChange={setErpPrint} />
+                <ErpCheckbox label="查數位訂閱商品料號（只顯示含「數位訂閱商品」的訂單）" checked={erpDigital} onChange={setErpDigital} />
+                <ErpCheckbox label="查未結案單" checked={erpUnresolved} onChange={setErpUnresolved} />
+                <ErpCheckbox label="展示明細" checked={erpShowDetail} onChange={setErpShowDetail} />
+                <ErpCheckbox label="查訂單備註" checked={erpQueryNote} onChange={setErpQueryNote} />
               </div>
             </div>
           </>
@@ -1187,7 +1353,10 @@ export function NewPMOrderManagement() {
         {/* ── 底部按鈕 ── */}
         <div className="flex items-center justify-between pt-[4px]">
           <CwButton variant="primary" appearance="outlined" leftIcon={<RotateCcw size={14} />} onClick={handleClear}>清除</CwButton>
-          <CwButton variant="primary" appearance="filled" type="submit">查詢</CwButton>
+          <div className="flex item-center gap-[10px]">
+            <CwButton variant="primary" appearance="filled" onClick={() => setShowCreate(true)}>新增訂單</CwButton>
+            <CwButton variant="primary" appearance="filled" type="submit">查詢</CwButton>
+          </div>
         </div>
       </form>
 
@@ -1322,11 +1491,11 @@ export function NewPMOrderManagement() {
                 <div className="fixed inset-0 z-[500] flex items-center justify-center" onClick={() => setShowColumnFilter(false)}>
                   <div className="absolute inset-0 bg-black/30" />
                   <div
-                    className="relative bg-white rounded-[8px] shadow-xl p-[20px] w-[320px]"
+                    className="relative bg-white rounded-[8px] shadow-xl p-[20px] w-[560px]"
                     onClick={e => e.stopPropagation()}
                   >
                     <p className="text-[14px] text-[#1c1c1c] mb-[16px] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 700 }}>欄位顯示設定</p>
-                    <div className="grid grid-cols-2 gap-x-[16px] gap-y-[10px] mb-[20px]">
+                    <div className="grid grid-cols-3 gap-x-[16px] gap-y-[10px] mb-[20px]">
                       {COLUMN_FILTER_OPTIONS.map(option => (
                         <label key={option} className="flex items-center gap-[8px] cursor-pointer select-none">
                           <div
@@ -1399,38 +1568,17 @@ export function NewPMOrderManagement() {
         </div>
       )}
 
-      {/* 訂單客編搜尋 Popup */}
-      {showCustomerCodePopup && (
-        <div className="fixed inset-0 bg-black/40 z-[1200] flex items-center justify-center" onClick={() => setShowCustomerCodePopup(false)}>
-          <div
-            ref={customerCodePopupRef}
-            className="bg-white rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.16)] w-[700px] max-h-[600px] flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
+      {/* 客戶搜尋 Popup（統一，8 個入口共用） */}
+      {activeCustomerPopup && (
+        <div className="fixed inset-0 bg-black/40 z-[1200] flex items-center justify-center" onClick={() => { setActiveCustomerPopup(null); setCustomerPopupKeyword(''); }}>
+          <div ref={customerPopupRef} className="bg-white rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.16)] w-[700px] max-h-[600px] flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-[20px] py-[16px] border-b border-[#e5e7eb]">
-              <h3 className="text-[16px] font-[600] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]">選擇訂單客編</h3>
-              <button
-                onClick={() => setShowCustomerCodePopup(false)}
-                className="w-[32px] h-[32px] rounded-[4px] flex items-center justify-center hover:bg-[#f5f7fa] text-[#7c808c] transition-colors"
-              >
-                <X size={20} />
-              </button>
+              <h3 className="text-[16px] font-[600] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]">選擇{activeCustomerPopup.title}</h3>
+              <button onClick={() => { setActiveCustomerPopup(null); setCustomerPopupKeyword(''); }} className="w-[32px] h-[32px] rounded-[4px] flex items-center justify-center hover:bg-[#f5f7fa] text-[#7c808c] transition-colors"><X size={20} /></button>
             </div>
-
-            {/* 搜尋 Input */}
             <div className="px-[20px] py-[12px] border-b border-[#e5e7eb]">
-              <input
-                type="text"
-                placeholder="搜尋訂單客編或客戶名稱"
-                value={customerCodePopupKeyword}
-                onChange={(e) => setCustomerCodePopupKeyword(e.target.value)}
-                className="w-full h-[36px] px-[12px] border border-[#c4c9d3] rounded-[4px] text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]"
-                style={{ fontWeight: 350 }}
-              />
+              <input type="text" placeholder="搜尋客編或名稱" value={customerPopupKeyword} onChange={(e) => setCustomerPopupKeyword(e.target.value)} autoFocus className="w-full h-[36px] px-[12px] border border-[#c4c9d3] rounded-[4px] text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }} />
             </div>
-
-            {/* 表格區域 */}
             <div className="flex-1 overflow-y-auto">
               <table className="w-full border-collapse text-[14px] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>
                 <thead className="sticky top-0 bg-[#f5f7fa] border-b border-[#e5e7eb]">
@@ -1443,29 +1591,18 @@ export function NewPMOrderManagement() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredCustomerCodes.length > 0 ? (
-                    filteredCustomerCodes.map((customer) => (
-                      <tr key={customer.id} className="border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors">
-                        <td className="px-[16px] py-[12px] text-[#1c1c1c] font-[500]">{customer.code}</td>
-                        <td className="px-[16px] py-[12px] text-[#1c1c1c]">{customer.name}</td>
-                        <td className="px-[16px] py-[12px] text-[#7c808c]">{customer.phone}</td>
-                        <td className="px-[16px] py-[12px] text-[#7c808c] truncate" title={customer.address}>{customer.address}</td>
-                        <td className="px-[16px] py-[12px] text-center">
-                          <button
-                            onClick={() => handleSelectCustomerCode(customer.code, customer.name)}
-                            className="px-[12px] py-[6px] bg-[#0078d4] text-white rounded-[4px] font-[500] hover:bg-[#1e3a8a] transition-colors"
-                          >
-                            選擇
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={5} className="px-[16px] py-[32px] text-center text-[#7c808c]">
-                        查無符合的訂單客編
+                  {filteredCustomersByPopup.length > 0 ? filteredCustomersByPopup.map((c) => (
+                    <tr key={c.id} className="border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors">
+                      <td className="px-[16px] py-[12px] text-[#1c1c1c] font-[500]">{c.code}</td>
+                      <td className="px-[16px] py-[12px] text-[#1c1c1c]">{c.name}</td>
+                      <td className="px-[16px] py-[12px] text-[#7c808c]">{c.phone}</td>
+                      <td className="px-[16px] py-[12px] text-[#7c808c] truncate max-w-[180px]" title={c.address}>{c.address}</td>
+                      <td className="px-[16px] py-[12px] text-center">
+                        <button onClick={() => handleSelectCustomer(c.code, c.name)} className="px-[12px] py-[6px] bg-[#0078d4] text-white rounded-[4px] font-[500] hover:bg-[#106ebe] transition-colors">選擇</button>
                       </td>
                     </tr>
+                  )) : (
+                    <tr><td colSpan={5} className="px-[16px] py-[32px] text-center text-[#7c808c]">查無符合資料</td></tr>
                   )}
                 </tbody>
               </table>
@@ -1474,73 +1611,37 @@ export function NewPMOrderManagement() {
         </div>
       )}
 
-      {/* 訂單客戶搜尋 Popup */}
-      {showCustomerNamePopup && (
-        <div className="fixed inset-0 bg-black/40 z-[1200] flex items-center justify-center" onClick={() => setShowCustomerNamePopup(false)}>
-          <div
-            ref={customerNamePopupRef}
-            className="bg-white rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.16)] w-[700px] max-h-[600px] flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
+      {/* 產品搜尋 Popup */}
+      {activeProductPopup && (
+        <div className="fixed inset-0 bg-black/40 z-[1200] flex items-center justify-center" onClick={() => { setActiveProductPopup(null); setProductPopupKeyword(''); }}>
+          <div ref={productPopupRef} className="bg-white rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.16)] w-[600px] max-h-[600px] flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-[20px] py-[16px] border-b border-[#e5e7eb]">
-              <h3 className="text-[16px] font-[600] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]">選擇訂單客戶</h3>
-              <button
-                onClick={() => setShowCustomerNamePopup(false)}
-                className="w-[32px] h-[32px] rounded-[4px] flex items-center justify-center hover:bg-[#f5f7fa] text-[#7c808c] transition-colors"
-              >
-                <X size={20} />
-              </button>
+              <h3 className="text-[16px] font-[600] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]">選擇產品</h3>
+              <button onClick={() => { setActiveProductPopup(null); setProductPopupKeyword(''); }} className="w-[32px] h-[32px] rounded-[4px] flex items-center justify-center hover:bg-[#f5f7fa] text-[#7c808c] transition-colors"><X size={20} /></button>
             </div>
-
-            {/* 搜尋 Input */}
             <div className="px-[20px] py-[12px] border-b border-[#e5e7eb]">
-              <input
-                type="text"
-                placeholder="搜尋客編或客戶名稱"
-                value={customerNamePopupKeyword}
-                onChange={(e) => setCustomerNamePopupKeyword(e.target.value)}
-                className="w-full h-[36px] px-[12px] border border-[#c4c9d3] rounded-[4px] text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]"
-                style={{ fontWeight: 350 }}
-              />
+              <input type="text" placeholder="搜尋產品料號或名稱" value={productPopupKeyword} onChange={(e) => setProductPopupKeyword(e.target.value)} autoFocus className="w-full h-[36px] px-[12px] border border-[#c4c9d3] rounded-[4px] text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }} />
             </div>
-
-            {/* 表格區域 */}
             <div className="flex-1 overflow-y-auto">
               <table className="w-full border-collapse text-[14px] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>
                 <thead className="sticky top-0 bg-[#f5f7fa] border-b border-[#e5e7eb]">
                   <tr>
-                    <th className="px-[16px] py-[12px] text-left text-[#7c808c] font-[500]">客編代碼</th>
-                    <th className="px-[16px] py-[12px] text-left text-[#7c808c] font-[500]">客戶名稱</th>
-                    <th className="px-[16px] py-[12px] text-left text-[#7c808c] font-[500]">電話</th>
-                    <th className="px-[16px] py-[12px] text-left text-[#7c808c] font-[500]">地址</th>
+                    <th className="px-[16px] py-[12px] text-left text-[#7c808c] font-[500]">產品料號</th>
+                    <th className="px-[16px] py-[12px] text-left text-[#7c808c] font-[500]">產品名稱</th>
                     <th className="px-[16px] py-[12px] text-center text-[#7c808c] font-[500]">動作</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredCustomerNames.length > 0 ? (
-                    filteredCustomerNames.map((customer) => (
-                      <tr key={customer.id} className="border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors">
-                        <td className="px-[16px] py-[12px] text-[#1c1c1c] font-[500]">{customer.code}</td>
-                        <td className="px-[16px] py-[12px] text-[#1c1c1c]">{customer.name}</td>
-                        <td className="px-[16px] py-[12px] text-[#7c808c]">{customer.phone}</td>
-                        <td className="px-[16px] py-[12px] text-[#7c808c] truncate" title={customer.address}>{customer.address}</td>
-                        <td className="px-[16px] py-[12px] text-center">
-                          <button
-                            onClick={() => handleSelectCustomerName(customer.code, customer.name)}
-                            className="px-[12px] py-[6px] bg-[#0078d4] text-white rounded-[4px] font-[500] hover:bg-[#1e3a8a] transition-colors"
-                          >
-                            選擇
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={5} className="px-[16px] py-[32px] text-center text-[#7c808c]">
-                        查無符合的訂單客戶
+                  {filteredProducts.length > 0 ? filteredProducts.map((p) => (
+                    <tr key={p.id} className="border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors">
+                      <td className="px-[16px] py-[12px] text-[#1c1c1c] font-[500]">{p.code}</td>
+                      <td className="px-[16px] py-[12px] text-[#1c1c1c]">{p.name}</td>
+                      <td className="px-[16px] py-[12px] text-center">
+                        <button onClick={() => handleSelectProduct(p.code, p.name)} className="px-[12px] py-[6px] bg-[#0078d4] text-white rounded-[4px] font-[500] hover:bg-[#106ebe] transition-colors">選擇</button>
                       </td>
                     </tr>
+                  )) : (
+                    <tr><td colSpan={3} className="px-[16px] py-[32px] text-center text-[#7c808c]">查無符合資料</td></tr>
                   )}
                 </tbody>
               </table>
@@ -1549,69 +1650,37 @@ export function NewPMOrderManagement() {
         </div>
       )}
 
-      {/* 促銷方案搜尋 Popup */}
-      {showPromotionPopup && (
-        <div className="fixed inset-0 bg-black/40 z-[1200] flex items-center justify-center" onClick={() => setShowCustomerCodePopup(false)}>
-          <div
-            ref={customerCodePopupRef}
-            className="bg-white rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.16)] w-[700px] max-h-[600px] flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
+      {/* 方案搜尋 Popup */}
+      {activeShippingPopup && (
+        <div className="fixed inset-0 bg-black/40 z-[1100] flex items-center justify-center" onClick={() => { setActiveShippingPopup(false); setShippingPopupKeyword(''); }}>
+          <div ref={shippingPopupRef} className="bg-white rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.16)] w-[480px] max-h-[520px] flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-[20px] py-[16px] border-b border-[#e5e7eb]">
-              <h3 className="text-[16px] font-[600] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]">選擇訂單客編</h3>
-              <button
-                onClick={() => setShowCustomerCodePopup(false)}
-                className="w-[32px] h-[32px] rounded-[4px] flex items-center justify-center hover:bg-[#f5f7fa] text-[#7c808c] transition-colors"
-              >
-                <X size={20} />
-              </button>
+              <h3 className="text-[16px] font-[600] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]">選擇出貨方式</h3>
+              <button onClick={() => { setActiveShippingPopup(false); setShippingPopupKeyword(''); }} className="w-[32px] h-[32px] rounded-[4px] flex items-center justify-center hover:bg-[#f5f7fa] text-[#7c808c] transition-colors"><X size={20} /></button>
             </div>
-
-            {/* 搜尋 Input */}
             <div className="px-[20px] py-[12px] border-b border-[#e5e7eb]">
-              <input
-                type="text"
-                placeholder="搜尋訂單客編或客戶名稱"
-                value={customerCodePopupKeyword}
-                onChange={(e) => setCustomerCodePopupKeyword(e.target.value)}
-                className="w-full h-[36px] px-[12px] border border-[#c4c9d3] rounded-[4px] text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]"
-                style={{ fontWeight: 350 }}
-              />
+              <input type="text" placeholder="搜尋代碼或名稱" value={shippingPopupKeyword} onChange={(e) => setShippingPopupKeyword(e.target.value)} autoFocus className="w-full h-[36px] px-[12px] border border-[#c4c9d3] rounded-[4px] text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }} />
             </div>
-
-            {/* 表格區域 */}
             <div className="flex-1 overflow-y-auto">
               <table className="w-full border-collapse text-[14px] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>
                 <thead className="sticky top-0 bg-[#f5f7fa] border-b border-[#e5e7eb]">
                   <tr>
-                    <th className="px-[16px] py-[12px] text-left text-[#7c808c] font-[500]">客編代碼</th>
-                    <th className="px-[16px] py-[12px] text-left text-[#7c808c] font-[500]">客戶名稱</th>
+                    <th className="px-[16px] py-[12px] text-left text-[#7c808c] font-[500]">代碼</th>
+                    <th className="px-[16px] py-[12px] text-left text-[#7c808c] font-[500]">名稱</th>
                     <th className="px-[16px] py-[12px] text-center text-[#7c808c] font-[500]">動作</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredCustomerCodes.length > 0 ? (
-                    filteredCustomerCodes.map((customer) => (
-                      <tr key={customer.id} className="border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors">
-                        <td className="px-[16px] py-[12px] text-[#1c1c1c] font-[500]">{customer.code}</td>
-                        <td className="px-[16px] py-[12px] text-[#1c1c1c]">{customer.name}</td>
-                        <td className="px-[16px] py-[12px] text-center">
-                          <button
-                            onClick={() => handleSelectCustomerCode(customer.code, customer.name)}
-                            className="px-[12px] py-[6px] bg-[#0078d4] text-white rounded-[4px] font-[500] hover:bg-[#1e3a8a] transition-colors"
-                          >
-                            選擇
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={5} className="px-[16px] py-[32px] text-center text-[#7c808c]">
-                        查無符合的訂單客編
+                  {filteredShippingMethods.length > 0 ? filteredShippingMethods.map((s) => (
+                    <tr key={s.id} className="border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors">
+                      <td className="px-[16px] py-[12px] text-[#1c1c1c] font-[500]">{s.code}</td>
+                      <td className="px-[16px] py-[12px] text-[#1c1c1c]">{s.name}</td>
+                      <td className="px-[16px] py-[12px] text-center">
+                        <button onClick={() => handleSelectShipping(s.code, s.name)} className="px-[12px] py-[6px] bg-[#0078d4] text-white rounded-[4px] font-[500] hover:bg-[#106ebe] transition-colors">選擇</button>
                       </td>
                     </tr>
+                  )) : (
+                    <tr><td colSpan={3} className="px-[16px] py-[32px] text-center text-[#7c808c]">查無符合資料</td></tr>
                   )}
                 </tbody>
               </table>
@@ -1620,38 +1689,16 @@ export function NewPMOrderManagement() {
         </div>
       )}
 
-      {/* 促銷方案搜尋 Popup */}
-      {showPromotionPopup && (
-        <div className="fixed inset-0 bg-black/40 z-[1100] flex items-center justify-center" onClick={() => setShowPromotionPopup(false)}>
-          <div
-            ref={promotionPopupRef}
-            className="bg-white rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.16)] w-[600px] max-h-[600px] flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
+      {activePlanPopup && (
+        <div className="fixed inset-0 bg-black/40 z-[1100] flex items-center justify-center" onClick={() => { setActivePlanPopup(null); setPlanPopupKeyword(''); }}>
+          <div ref={planPopupRef} className="bg-white rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.16)] w-[640px] max-h-[600px] flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-[20px] py-[16px] border-b border-[#e5e7eb]">
-              <h3 className="text-[16px] font-[600] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]">選擇促銷方案</h3>
-              <button
-                onClick={() => setShowPromotionPopup(false)}
-                className="w-[32px] h-[32px] rounded-[4px] flex items-center justify-center hover:bg-[#f5f7fa] text-[#7c808c] transition-colors"
-              >
-                <X size={20} />
-              </button>
+              <h3 className="text-[16px] font-[600] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]">選擇方案</h3>
+              <button onClick={() => { setActivePlanPopup(null); setPlanPopupKeyword(''); }} className="w-[32px] h-[32px] rounded-[4px] flex items-center justify-center hover:bg-[#f5f7fa] text-[#7c808c] transition-colors"><X size={20} /></button>
             </div>
-
-            {/* 搜尋 Input */}
             <div className="px-[20px] py-[12px] border-b border-[#e5e7eb]">
-              <input
-                type="text"
-                placeholder="搜尋促銷方案代碼或名稱"
-                value={promotionPopupKeyword}
-                onChange={(e) => setPromotionPopupKeyword(e.target.value)}
-                className="w-full h-[36px] px-[12px] border border-[#c4c9d3] rounded-[4px] text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]"
-                style={{ fontWeight: 350 }}
-              />
+              <input type="text" placeholder="搜尋方案代碼或名稱" value={planPopupKeyword} onChange={(e) => setPlanPopupKeyword(e.target.value)} autoFocus className="w-full h-[36px] px-[12px] border border-[#c4c9d3] rounded-[4px] text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }} />
             </div>
-
-            {/* 表格區域 */}
             <div className="flex-1 overflow-y-auto">
               <table className="w-full border-collapse text-[14px] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>
                 <thead className="sticky top-0 bg-[#f5f7fa] border-b border-[#e5e7eb]">
@@ -1664,31 +1711,18 @@ export function NewPMOrderManagement() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredPromotions.length > 0 ? (
-                    filteredPromotions.map((promo) => (
-                      <tr key={promo.id} className="border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors">
-                        <td className="px-[16px] py-[12px] text-[#1c1c1c] font-[500]">{promo.code}</td>
-                        <td className="px-[16px] py-[12px] text-[#1c1c1c]">{promo.name}</td>
-                        <td className="px-[16px] py-[12px] text-center text-[#0078d4]">{promo.discount}</td>
-                        <td className="px-[16px] py-[12px] text-center text-[#7c808c]">
-                          {promo.startDate} ~ {promo.endDate}
-                        </td>
-                        <td className="px-[16px] py-[12px] text-center">
-                          <button
-                            onClick={() => handleSelectPromotion(promo.code)}
-                            className="px-[12px] py-[6px] bg-[#0078d4] text-white rounded-[4px] font-[500] hover:bg-[#1e3a8a] transition-colors"
-                          >
-                            選擇
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={5} className="px-[16px] py-[32px] text-center text-[#7c808c]">
-                        查無符合的促銷方案
+                  {filteredPlans.length > 0 ? filteredPlans.map((p) => (
+                    <tr key={p.id} className="border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors">
+                      <td className="px-[16px] py-[12px] text-[#1c1c1c] font-[500]">{p.code}</td>
+                      <td className="px-[16px] py-[12px] text-[#1c1c1c]">{p.name}</td>
+                      <td className="px-[16px] py-[12px] text-center text-[#0078d4]">{p.discount}</td>
+                      <td className="px-[16px] py-[12px] text-center text-[#7c808c]">{p.startDate} ~ {p.endDate}</td>
+                      <td className="px-[16px] py-[12px] text-center">
+                        <button onClick={() => handleSelectPlan(p.code, p.name)} className="px-[12px] py-[6px] bg-[#0078d4] text-white rounded-[4px] font-[500] hover:bg-[#106ebe] transition-colors">選擇</button>
                       </td>
                     </tr>
+                  )) : (
+                    <tr><td colSpan={5} className="px-[16px] py-[32px] text-center text-[#7c808c]">查無符合資料</td></tr>
                   )}
                 </tbody>
               </table>

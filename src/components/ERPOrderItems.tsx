@@ -4,6 +4,10 @@ import { CwDrawer } from "./CwDrawer";
 import { CwInput } from "./CwInput";
 import { CwSelect } from "./CwSelect";
 import { CwTable, CwTableColumn } from "./CwTable";
+import { CwRoundButton } from "./CwRoundButton";
+import { CwButton } from "./CwButton";
+import { CwToast } from "./CwToast";
+import { CwDatePicker } from "./CwDatePicker";
 
 // ERP 訂單品項資料型別
 export interface ERPOrderItemData {
@@ -27,6 +31,7 @@ export interface ERPOrderItemData {
   taxType: string;
   requireDate: string;
   agreeMarketing: string;
+  agreeMarketingDate: string;
   shipCustomerCode: string;
   shipCustomerName: string;
   shipAddress: string;
@@ -72,7 +77,8 @@ const mockERPOrderItems: ERPOrderItemData[] = [
     transactionType: '訂閱',
     taxType: '內含稅',
     requireDate: '2025-05-20',
-    agreeMarketing: '是',
+    agreeMarketing: '1',
+    agreeMarketingDate: '2025-05-01',
     shipCustomerCode: '1679128',
     shipCustomerName: 'JEFF',
     shipAddress: '台北市大同區民權西路 103 號',
@@ -110,7 +116,8 @@ const mockERPOrderItems: ERPOrderItemData[] = [
     transactionType: '新訂',
     taxType: '內含稅',
     requireDate: '2025-06-05',
-    agreeMarketing: '否',
+    agreeMarketing: '2',
+    agreeMarketingDate: '',
     shipCustomerCode: '1679128',
     shipCustomerName: 'JEFF',
     shipAddress: '台北市大同區民權西路 103 號',
@@ -148,7 +155,8 @@ const mockERPOrderItems: ERPOrderItemData[] = [
     transactionType: '訂閱',
     taxType: '內含稅',
     requireDate: '2025-05-20',
-    agreeMarketing: '是',
+    agreeMarketing: '1',
+    agreeMarketingDate: '2025-04-10',
     shipCustomerCode: '1679128',
     shipCustomerName: 'JEFF',
     shipAddress: '台北市大同區民權西路 103 號',
@@ -186,7 +194,8 @@ const mockERPOrderItems: ERPOrderItemData[] = [
     transactionType: '新訂',
     taxType: '內含稅',
     requireDate: '2025-06-05',
-    agreeMarketing: '否',
+    agreeMarketing: '2',
+    agreeMarketingDate: '',
     shipCustomerCode: '1679128',
     shipCustomerName: 'JEFF',
     shipAddress: '台北市大同區民權西路 103 號',
@@ -204,6 +213,14 @@ const mockERPOrderItems: ERPOrderItemData[] = [
     promotionCode: '',
     planDescription: '康健雜誌半年訂閱',
   },
+];
+
+const mockPromotions = [
+  { id: 1, code: 'PROMO2025',  name: '天下雜誌年訂優惠',  discount: '10%', startDate: '2025-01-01', endDate: '2025-12-31' },
+  { id: 2, code: 'SPRING2025', name: '春季特惠專案',       discount: '15%', startDate: '2025-03-01', endDate: '2025-05-31' },
+  { id: 3, code: 'SUMMER2025', name: '夏季暢讀方案',       discount: '12%', startDate: '2025-06-01', endDate: '2025-08-31' },
+  { id: 4, code: 'VIP15',      name: 'VIP 會員專享',       discount: '15%', startDate: '2025-01-01', endDate: '2025-12-31' },
+  { id: 5, code: 'NEWUSER25',  name: '新用戶首購優惠',     discount: '25%', startDate: '2025-01-01', endDate: '2025-12-31' },
 ];
 
 // 區段標題
@@ -290,6 +307,54 @@ export function ERPOrderItems() {
     setPromotionCodeSearch('');
   };
 
+  const filteredPromotions = promotionPopupKeyword
+    ? mockPromotions.filter(
+        (p) =>
+          p.code.toLowerCase().includes(promotionPopupKeyword.toLowerCase()) ||
+          p.name.toLowerCase().includes(promotionPopupKeyword.toLowerCase())
+      )
+    : mockPromotions;
+
+  // ── 編輯模式 state ──
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editForm, setEditForm] = useState<ERPOrderItemData | null>(null);
+
+  const setEditField = (key: keyof ERPOrderItemData, value: string | number) => {
+    setEditForm((prev) => (prev ? { ...prev, [key]: value } : prev));
+  };
+
+  const openEditDrawer = (item: ERPOrderItemData) => {
+    setSelectedItem(item);
+    setEditForm({ ...item });
+    setIsEditMode(true);
+    setDrawerOpen(true);
+  };
+
+  const [showSaveToast, setShowSaveToast] = useState(false);
+
+  const closeDrawer = () => {
+    setDrawerOpen(false);
+    setIsEditMode(false);
+    setEditForm(null);
+  };
+
+  const handleSave = () => {
+    closeDrawer();
+    setShowSaveToast(true);
+  };
+
+  // 動作欄（三張表共用，sticky right）
+  const actionCol: CwTableColumn<ERPOrderItemData> = {
+    key: 'action' as any,
+    title: '動作',
+    width: '60px',
+    align: 'center',
+    sticky: true,
+    render: (_: any, record: ERPOrderItemData) => (
+      <CwRoundButton icon="edit" onClick={() => openEditDrawer(record)} />
+    ),
+  };
+
   // 固定前綴欄（每個 table 共用）
   const fixedCols: CwTableColumn<ERPOrderItemData>[] = [
     { key: 'productCode', title: '產品料號', width: '120px' },
@@ -321,12 +386,13 @@ export function ERPOrderItems() {
     { key: 'actualAmount', title: '實際銷售金額', width: '130px', align: 'right', render: (v: any) => `NT$ ${(v as number).toLocaleString()}` },
     { key: 'transactionType', title: '交易型態', width: '90px' },
     { key: 'taxType', title: '稅別', width: '80px' },
+    actionCol,
   ];
 
   const shippingCols: CwTableColumn<ERPOrderItemData>[] = [
     ...fixedCols,
     { key: 'requireDate', title: '需求日', width: '110px' },
-    { key: 'agreeMarketing', title: '同意行銷', width: '90px', align: 'center' },
+    { key: 'agreeMarketing', title: '同意行銷', width: '100px', align: 'center', render: (v: any) => ({ '1': '1 同意', '2': '2 不同意', 'A': 'A 不確定' }[v as string] ?? v) },
     { key: 'shipCustomerCode', title: '出貨客戶編號', width: '120px' },
     { key: 'shipCustomerName', title: '出貨客戶名稱', width: '120px' },
     { key: 'shipAddress', title: '出貨地址', width: '200px' },
@@ -337,6 +403,7 @@ export function ERPOrderItems() {
     { key: 'reserver', title: '保留者', width: '100px' },
     { key: 'shipWarehouse', title: '出貨倉', width: '90px' },
     { key: 'bookshelfLocation', title: '書展儲位', width: '100px' },
+    actionCol,
   ];
 
   const otherCols: CwTableColumn<ERPOrderItemData>[] = [
@@ -348,9 +415,11 @@ export function ERPOrderItems() {
     { key: 'mobile', title: '手機', width: '120px' },
     { key: 'promotionCode', title: '促銷方案代碼', width: '120px' },
     { key: 'planDescription', title: '方案描述', width: '180px' },
+    actionCol,
   ];
 
   return (
+    <>
     <div className="space-y-[12px]">
 
       {/* ── 搜尋列（對齊新訂單列表風格） ── */}
@@ -506,12 +575,12 @@ export function ERPOrderItems() {
         </div>
       )}
 
-      {/* 詳細資訊 Drawer */}
+      {/* 詳細資訊 / 編輯 Drawer */}
       {selectedItem && (
         <CwDrawer
           open={drawerOpen}
-          onClose={() => setDrawerOpen(false)}
-          title={selectedItem.productName}
+          onClose={closeDrawer}
+          title={isEditMode ? `編輯 — ${selectedItem.productName}` : selectedItem.productName}
           initialWidth={560}
           showPrevious
           showNext
@@ -522,7 +591,15 @@ export function ERPOrderItems() {
         >
           <div className="space-y-[24px]">
 
-            {/* 基本資訊（對應列表固定欄） */}
+            {/* 編輯模式頂部操作列 */}
+            {isEditMode && (
+              <div className="flex justify-end gap-[8px] pb-[4px]">
+                <CwButton variant="secondary" appearance="outlined" size="s" onClick={closeDrawer}>取消</CwButton>
+                <CwButton variant="primary" appearance="filled" size="s" onClick={handleSave}>儲存</CwButton>
+              </div>
+            )}
+
+            {/* 基本資訊（永遠唯讀） */}
             <div>
               <SectionTitle>基本資訊</SectionTitle>
               <div className="grid grid-cols-2 gap-x-[16px] gap-y-[16px]">
@@ -534,74 +611,96 @@ export function ERPOrderItems() {
               </div>
             </div>
 
-            {/* 定價資訊（對應列表「定價」欄位群） */}
+            {/* 定價資訊 */}
             <div>
               <SectionTitle>定價資訊</SectionTitle>
               <div className="grid grid-cols-2 gap-x-[16px] gap-y-[16px]">
-                <CwInput label="起訂期數" value={selectedItem.startPeriod} disabled readOnly />
-                <CwInput label="起訂日期" value={selectedItem.startDate} disabled readOnly />
-                <CwInput label="迄訂期數" value={selectedItem.endPeriod} disabled readOnly />
-                <CwInput label="迄訂日期" value={selectedItem.endDate} disabled readOnly />
-                <CwInput label="數量" value={String(selectedItem.quantity)} disabled readOnly />
+                <CwInput label="起訂期數" value={isEditMode && editForm ? editForm.startPeriod : selectedItem.startPeriod} disabled={!isEditMode} readOnly={!isEditMode} onChange={(e) => setEditField('startPeriod', e.target.value)} />
+                <CwInput label="起訂日期" value={isEditMode && editForm ? editForm.startDate : selectedItem.startDate} disabled={!isEditMode} readOnly={!isEditMode} onChange={(e) => setEditField('startDate', e.target.value)} />
+                <CwInput label="迄訂期數" value={isEditMode && editForm ? editForm.endPeriod : selectedItem.endPeriod} disabled={!isEditMode} readOnly={!isEditMode} onChange={(e) => setEditField('endPeriod', e.target.value)} />
+                <CwInput label="迄訂日期" value={isEditMode && editForm ? editForm.endDate : selectedItem.endDate} disabled={!isEditMode} readOnly={!isEditMode} onChange={(e) => setEditField('endDate', e.target.value)} />
+                <CwInput label="數量" value={String(isEditMode && editForm ? editForm.quantity : selectedItem.quantity)} disabled={!isEditMode} readOnly={!isEditMode} onChange={(e) => setEditField('quantity', Number(e.target.value) || 0)} />
                 <CwInput label="單位定價" value={`NT$ ${selectedItem.unitPrice.toLocaleString()}`} disabled readOnly />
-                <CwInput label="折扣" value={selectedItem.discount} disabled readOnly />
+                <CwInput label="折扣" value={isEditMode && editForm ? editForm.discount : selectedItem.discount} disabled={!isEditMode} readOnly={!isEditMode} onChange={(e) => setEditField('discount', e.target.value)} />
                 <CwInput label="單位售價" value={`NT$ ${selectedItem.sellPrice.toLocaleString()}`} disabled readOnly />
                 <div className="col-span-2">
                   <CwInput label="實際銷售金額" value={`NT$ ${selectedItem.actualAmount.toLocaleString()}`} disabled readOnly />
                 </div>
-                <CwSelect label="交易型態" value={selectedItem.transactionType} options={[{ value: '訂閱', label: '訂閱' }, { value: '新訂', label: '新訂' }, { value: '續訂', label: '續訂' }, { value: '加訂', label: '加訂' }]} disabled />
-                <CwSelect label="稅別" value={selectedItem.taxType} options={[{ value: '內含稅', label: '內含稅' }, { value: '外加稅', label: '外加稅' }, { value: '免稅', label: '免稅' }]} disabled />
+                <CwSelect label="交易型態" value={isEditMode && editForm ? editForm.transactionType : selectedItem.transactionType} options={[{ value: '訂閱', label: '訂閱' }, { value: '新訂', label: '新訂' }, { value: '續訂', label: '續訂' }, { value: '加訂', label: '加訂' }]} disabled={!isEditMode} onChange={(v) => setEditField('transactionType', Array.isArray(v) ? v[0] ?? '' : v)} />
+                <CwSelect label="稅別" value={isEditMode && editForm ? editForm.taxType : selectedItem.taxType} options={[{ value: '內含稅', label: '內含稅' }, { value: '外加稅', label: '外加稅' }, { value: '免稅', label: '免稅' }]} disabled={!isEditMode} onChange={(v) => setEditField('taxType', Array.isArray(v) ? v[0] ?? '' : v)} />
               </div>
             </div>
 
-            {/* 出貨資訊（對應列表「出貨」欄位群） */}
+            {/* 出貨資訊 */}
             <div>
               <SectionTitle>出貨資訊</SectionTitle>
               <div className="grid grid-cols-2 gap-x-[16px] gap-y-[16px]">
-                <CwInput label="需求日" value={selectedItem.requireDate} disabled readOnly />
-                <CwSelect label="同意行銷" value={selectedItem.agreeMarketing} options={[{ value: '是', label: '是' }, { value: '否', label: '否' }]} disabled />
-                <CwInput label="出貨客戶編號" value={selectedItem.shipCustomerCode} disabled readOnly />
-                <CwInput label="出貨客戶名稱" value={selectedItem.shipCustomerName} disabled readOnly />
+                <CwInput label="需求日" value={isEditMode && editForm ? editForm.requireDate : selectedItem.requireDate} disabled={!isEditMode} readOnly={!isEditMode} onChange={(e) => setEditField('requireDate', e.target.value)} />
+                <CwSelect label="同意行銷" value={isEditMode && editForm ? editForm.agreeMarketing : selectedItem.agreeMarketing} options={[{ value: '1', label: '1 同意' }, { value: '2', label: '2 不同意' }, { value: 'A', label: 'A 不確定' }]} disabled={!isEditMode} onChange={(v) => setEditField('agreeMarketing', Array.isArray(v) ? v[0] ?? '' : v)} />
                 <div className="col-span-2">
-                  <CwInput label="出貨地址" value={selectedItem.shipAddress} disabled readOnly />
+                  {isEditMode && editForm ? (
+                    <CwDatePicker
+                      label="同意行銷日期"
+                      disabled={editForm.agreeMarketing !== '1'}
+                      onChange={(d) => setEditField('agreeMarketingDate', d ? d.toISOString().slice(0, 10) : '')}
+                    />
+                  ) : (
+                    <CwInput label="同意行銷日期" value={selectedItem.agreeMarketingDate || '—'} disabled readOnly />
+                  )}
                 </div>
-                <CwInput label="出貨收件人" value={selectedItem.shipRecipient} disabled readOnly />
-                <CwInput label="出貨方式" value={selectedItem.shipMethod} disabled readOnly />
-                <CwInput label="品級" value={selectedItem.grade} disabled readOnly />
-                <CwSelect label="折扣標" value={selectedItem.discountMark} options={[{ value: 'Y', label: 'Y' }, { value: 'N', label: 'N' }]} disabled />
-                <CwInput label="保留者" value={selectedItem.reserver || '—'} disabled readOnly />
-                <CwInput label="出貨倉" value={selectedItem.shipWarehouse} disabled readOnly />
+                <CwInput label="出貨客戶編號" value={isEditMode && editForm ? editForm.shipCustomerCode : selectedItem.shipCustomerCode} disabled={!isEditMode} readOnly={!isEditMode} onChange={(e) => setEditField('shipCustomerCode', e.target.value)} />
+                <CwInput label="出貨客戶名稱" value={isEditMode && editForm ? editForm.shipCustomerName : selectedItem.shipCustomerName} disabled={!isEditMode} readOnly={!isEditMode} onChange={(e) => setEditField('shipCustomerName', e.target.value)} />
+                <div className="col-span-2">
+                  <CwInput label="出貨地址" value={isEditMode && editForm ? editForm.shipAddress : selectedItem.shipAddress} disabled={!isEditMode} readOnly={!isEditMode} onChange={(e) => setEditField('shipAddress', e.target.value)} />
+                </div>
+                <CwInput label="出貨收件人" value={isEditMode && editForm ? editForm.shipRecipient : selectedItem.shipRecipient} disabled={!isEditMode} readOnly={!isEditMode} onChange={(e) => setEditField('shipRecipient', e.target.value)} />
+                <CwInput label="出貨方式" value={isEditMode && editForm ? editForm.shipMethod : selectedItem.shipMethod} disabled={!isEditMode} readOnly={!isEditMode} onChange={(e) => setEditField('shipMethod', e.target.value)} />
+                <CwInput label="品級" value={isEditMode && editForm ? editForm.grade : selectedItem.grade} disabled={!isEditMode} readOnly={!isEditMode} onChange={(e) => setEditField('grade', e.target.value)} />
+                <CwSelect label="折扣標" value={isEditMode && editForm ? editForm.discountMark : selectedItem.discountMark} options={[{ value: 'Y', label: 'Y' }, { value: 'N', label: 'N' }]} disabled={!isEditMode} onChange={(v) => setEditField('discountMark', Array.isArray(v) ? v[0] ?? '' : v)} />
+                <CwInput label="保留者" value={isEditMode && editForm ? editForm.reserver : (selectedItem.reserver || '—')} disabled={!isEditMode} readOnly={!isEditMode} onChange={(e) => setEditField('reserver', e.target.value)} />
+                <CwInput label="出貨倉" value={isEditMode && editForm ? editForm.shipWarehouse : selectedItem.shipWarehouse} disabled={!isEditMode} readOnly={!isEditMode} onChange={(e) => setEditField('shipWarehouse', e.target.value)} />
                 {selectedItem.bookshelfLocation && (
                   <CwInput label="書展儲位" value={selectedItem.bookshelfLocation} disabled readOnly />
                 )}
               </div>
             </div>
 
-            {/* 其他資訊（對應列表「其他」欄位群） */}
+            {/* 其他資訊 */}
             <div>
               <SectionTitle>其他資訊</SectionTitle>
               <div className="grid grid-cols-2 gap-x-[16px] gap-y-[16px]">
-                <CwSelect label="自動續訂" value={selectedItem.autoRenew} options={[{ value: '是', label: '是' }, { value: '否', label: '否' }]} disabled />
-                <CwInput label="知識庫授權起期" value={selectedItem.licenseStartDate} disabled readOnly />
-                <CwInput label="知識庫授權迄期" value={selectedItem.licenseEndDate} disabled readOnly />
-                <CwInput label="Email" value={selectedItem.email} disabled readOnly />
-                <CwInput label="手機" value={selectedItem.mobile || '—'} disabled readOnly />
+                <CwSelect label="自動續訂" value={isEditMode && editForm ? editForm.autoRenew : selectedItem.autoRenew} options={[{ value: '是', label: '是' }, { value: '否', label: '否' }]} disabled={!isEditMode} onChange={(v) => setEditField('autoRenew', Array.isArray(v) ? v[0] ?? '' : v)} />
+                <CwInput label="知識庫授權起期" value={isEditMode && editForm ? editForm.licenseStartDate : selectedItem.licenseStartDate} disabled={!isEditMode} readOnly={!isEditMode} onChange={(e) => setEditField('licenseStartDate', e.target.value)} />
+                <CwInput label="知識庫授權迄期" value={isEditMode && editForm ? editForm.licenseEndDate : selectedItem.licenseEndDate} disabled={!isEditMode} readOnly={!isEditMode} onChange={(e) => setEditField('licenseEndDate', e.target.value)} />
+                <CwInput label="Email" value={isEditMode && editForm ? editForm.email : selectedItem.email} disabled={!isEditMode} readOnly={!isEditMode} onChange={(e) => setEditField('email', e.target.value)} />
+                <CwInput label="手機" value={isEditMode && editForm ? editForm.mobile : (selectedItem.mobile || '—')} disabled={!isEditMode} readOnly={!isEditMode} onChange={(e) => setEditField('mobile', e.target.value)} />
                 <CwInput label="虛擬聯絡電話" value={selectedItem.virtualPhone || '—'} disabled readOnly />
-                <CwInput label="促銷方案代碼" value={selectedItem.promotionCode || '—'} disabled readOnly />
+                <CwInput label="促銷方案代碼" value={isEditMode && editForm ? editForm.promotionCode : (selectedItem.promotionCode || '—')} disabled={!isEditMode} readOnly={!isEditMode} onChange={(e) => setEditField('promotionCode', e.target.value)} />
                 <div className="col-span-2">
-                  <CwInput label="方案描述" value={selectedItem.planDescription || '—'} disabled readOnly />
+                  <CwInput label="方案描述" value={isEditMode && editForm ? editForm.planDescription : (selectedItem.planDescription || '—')} disabled={!isEditMode} readOnly={!isEditMode} onChange={(e) => setEditField('planDescription', e.target.value)} />
                 </div>
-                {selectedItem.note && (
+                {(selectedItem.note || isEditMode) && (
                   <div className="col-span-2">
-                    <CwInput label="註記" value={selectedItem.note} disabled readOnly />
+                    <CwInput label="註記" value={isEditMode && editForm ? editForm.note : selectedItem.note} disabled={!isEditMode} readOnly={!isEditMode} onChange={(e) => setEditField('note', e.target.value)} />
                   </div>
                 )}
               </div>
             </div>
 
+
           </div>
         </CwDrawer>
       )}
     </div>
+
+      {/* 儲存成功 Toast */}
+      <CwToast
+        type="success"
+        message="儲存成功"
+        visible={showSaveToast}
+        duration={3000}
+        onClose={() => setShowSaveToast(false)}
+      />
+    </>
   );
 }

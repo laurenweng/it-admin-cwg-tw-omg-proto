@@ -6,6 +6,8 @@ export interface CwButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'destructive' | 'success' | 'secondary' | 'info' | 'disabled';
   /** 按鈕樣式 */
   appearance?: 'filled' | 'outlined';
+  /** 按鈕尺寸：m（預設）/ s */
+  size?: 'm' | 's';
   /** 左側圖標 */
   leftIcon?: ReactNode;
   /** 右側圖標 */
@@ -34,6 +36,7 @@ export const CwButton = forwardRef<HTMLButtonElement, CwButtonProps>(
     {
       variant = 'primary',
       appearance = 'filled',
+      size = 'm',
       leftIcon,
       rightIcon,
       iconOnly = false,
@@ -86,6 +89,25 @@ export const CwButton = forwardRef<HTMLButtonElement, CwButtonProps>(
 
     const colors = colorConfig[disabled ? 'disabled' : variant];
     const isFilled = appearance === 'filled';
+
+    // 尺寸配置
+    const sizeConfig = {
+      m: {
+        height:   'h-[38px] min-h-[38px]',
+        minWidth: 'min-w-[100px]',
+        padding:  'px-[15px] py-[5px]',
+        fontSize: 'text-[14px]',
+        iconSize: 14,
+      },
+      s: {
+        height:   'h-[28px] min-h-[28px]',
+        minWidth: 'min-w-[56px]',
+        padding:  'px-[4px] py-[4px]',
+        fontSize: 'text-[12px]',
+        iconSize: 12,
+      },
+    };
+    const sz = sizeConfig[size];
     
     // 背景色
     const bgColor = isFilled ? colors.bg : 'transparent';
@@ -105,7 +127,7 @@ export const CwButton = forwardRef<HTMLButtonElement, CwButtonProps>(
         }
         // 對於 lucide-react 圖標，使用 style 來設置顏色和尺寸
         return cloneElement(icon as any, { 
-          size: 14,
+          size: sz.iconSize,
           strokeWidth: 2,
           style: { color: textColor, ...((icon.props as any)?.style || {}) }
         });
@@ -118,7 +140,7 @@ export const CwButton = forwardRef<HTMLButtonElement, CwButtonProps>(
       <button
         ref={ref}
         disabled={disabled}
-        className={`box-border content-stretch flex ${iconOnly ? '' : 'gap-[4px]'} h-[35px] items-center justify-center min-h-[35px] min-w-[100px] px-[15px] py-[5px] rounded-[4px] relative transition-opacity ${disabled ? 'cursor-not-allowed' : 'hover:opacity-90'} ${className}`}
+        className={`box-border content-stretch flex ${iconOnly ? '' : 'gap-[4px]'} ${sz.height} items-center justify-center ${sz.minWidth} ${sz.padding} rounded-[4px] relative transition-opacity ${disabled ? 'cursor-not-allowed' : 'hover:opacity-90'} ${className}`}
         style={{ backgroundColor: bgColor, color: textColor }}
         {...props}
       >
@@ -132,8 +154,8 @@ export const CwButton = forwardRef<HTMLButtonElement, CwButtonProps>(
         
         {!iconOnly && children && (
           <div className="content-stretch flex gap-[10px] items-center justify-center relative shrink-0">
-            <div className="flex flex-col font-['Noto_Sans_TC',_sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-[14px] text-center text-nowrap" style={{ color: textColor }}>
-              <p className="leading-[19.6px] whitespace-pre">{children}</p>
+            <div className={`flex flex-col font-['Noto_Sans_TC',_sans-serif] font-normal justify-center leading-[0] relative shrink-0 ${sz.fontSize} text-center text-nowrap`} style={{ color: textColor }}>
+              <p className="leading-[1.4] whitespace-pre">{children}</p>
             </div>
           </div>
         )}
