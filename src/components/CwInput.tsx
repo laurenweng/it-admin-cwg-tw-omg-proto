@@ -5,6 +5,8 @@ import { CwTag } from "./CwTag";
 export interface CwInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
   /** 標籤文字 */
   label?: string;
+  /** 顯示必填紅色 * */
+  required?: boolean;
   /** 錯誤訊息，顯示時會改變樣式 */
   error?: string;
   /** 左側圖標 */
@@ -97,6 +99,7 @@ export const CwInput = forwardRef<HTMLInputElement, CwInputProps>(
   (
     {
       label,
+      required,
       error,
       leftIcon,
       rightIcon,
@@ -149,12 +152,12 @@ export const CwInput = forwardRef<HTMLInputElement, CwInputProps>(
       <div className="content-stretch flex flex-col gap-1 items-start" style={{ width }}>
         {/* 標籤 */}
         {label && (
-          <label className="block text-foreground" style={{ 
-            fontFamily: 'var(--font-noto-sans-tc)', 
-            fontSize: 'var(--text-base)', 
-            fontWeight: 350 
+          <label className="block text-foreground" style={{
+            fontFamily: 'var(--font-noto-sans-tc)',
+            fontSize: 'var(--text-base)',
+            fontWeight: 350
           }}>
-            {label}
+            {label}{required && <span className="text-[#c00000] ml-[2px]">*</span>}
           </label>
         )}
         
