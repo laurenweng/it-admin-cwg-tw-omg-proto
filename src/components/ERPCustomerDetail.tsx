@@ -28,6 +28,7 @@ export interface ERPCustomerInfo {
   customerIdentity?: string;
   marketingConsentDate?: string;
   lastTransactionDate?: string;
+  invoiceTitle?: string;
 }
 
 interface ERPCustomerDetailProps {
@@ -74,7 +75,7 @@ interface AddressForm {
 const EMPTY_FORM: AddressForm = { country: '台灣', postalCode: '', city: '', street: '', isPrimary: false, isActive: true, isPrimaryShipping: false, isPrimaryInvoice: false };
 
 // 國家選項（示範，可依需求擴充）
-const COUNTRY_OPTIONS = ['台灣', '中國', '日本', '美國', '香港', '新加坡', '馬來西亞'];
+const COUNTRY_OPTIONS = ['台灣 Taiwan', '中國 China', '日本 Japan', '美國 USA', '香港 HongKong', '新加坡 Singapore', '馬來西亞 Malaysia'];
 
 // 台灣行政區資料
 const TW_DISTRICTS: { postalCode: string; city: string }[] = [
@@ -166,40 +167,40 @@ const EMPTY_PERSON_FORM: PersonForm = { name: '', title: '' };
 // isPrimaryShipping / isPrimaryInvoice：各唯一一筆
 const mockAddressByCustomer: Record<string, AddressRecord[]> = {
   C001234: [
-    { id: 'a1', country: '台灣', postalCode: '104', city: '台北市中山區', street: '中山北路二段7號',   isPrimary: true,  isActive: true,  isPrimaryShipping: true,  isPrimaryInvoice: true,  updatedAt: '2026-04-18' },
-    { id: 'a2', country: '台灣', postalCode: '231', city: '新北市新店區', street: '中正路88號',         isPrimary: false, isActive: true,  isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2026-02-05' },
-    { id: 'a3', country: '台灣', postalCode: '330', city: '桃園市桃園區', street: '中正路500號3樓',     isPrimary: false, isActive: false, isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2025-09-03' },
-    { id: 'a4', country: '台灣', postalCode: '404', city: '台中市北區',   street: '三民路二段119號',    isPrimary: false, isActive: false, isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2024-11-20' },
+    { id: 'a1', country: '台灣 Taiwan', postalCode: '104', city: '台北市中山區', street: '中山北路二段7號',   isPrimary: true,  isActive: true,  isPrimaryShipping: true,  isPrimaryInvoice: true,  updatedAt: '2026-04-18' },
+    { id: 'a2', country: '台灣 Taiwan', postalCode: '231', city: '新北市新店區', street: '中正路88號',         isPrimary: false, isActive: true,  isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2026-02-05' },
+    { id: 'a3', country: '台灣 Taiwan', postalCode: '330', city: '桃園市桃園區', street: '中正路500號3樓',     isPrimary: false, isActive: false, isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2025-09-03' },
+    { id: 'a4', country: '台灣 Taiwan', postalCode: '404', city: '台中市北區',   street: '三民路二段119號',    isPrimary: false, isActive: false, isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2024-11-20' },
   ],
   C002345: [
-    { id: 'b1', country: '台灣', postalCode: '220', city: '新北市板橋區', street: '文化路一段188號',    isPrimary: true,  isActive: true,  isPrimaryShipping: true,  isPrimaryInvoice: false, updatedAt: '2026-04-15' },
-    { id: 'b2', country: '台灣', postalCode: '110', city: '台北市信義區', street: '松仁路100號',         isPrimary: false, isActive: true,  isPrimaryShipping: false, isPrimaryInvoice: true,  updatedAt: '2026-01-20' },
-    { id: 'b3', country: '台灣', postalCode: '320', city: '桃園市中壢區', street: '中山路500號',         isPrimary: false, isActive: true,  isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2024-11-05' },
-    { id: 'b4', country: '台灣', postalCode: '300', city: '新竹市東區',   street: '光復路一段101號',    isPrimary: false, isActive: false, isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2023-08-14' },
-    { id: 'b5', country: '台灣', postalCode: '802', city: '高雄市苓雅區', street: '四維三路2號',         isPrimary: false, isActive: false, isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2022-03-09' },
+    { id: 'b1', country: '台灣 Taiwan', postalCode: '220', city: '新北市板橋區', street: '文化路一段188號',    isPrimary: true,  isActive: true,  isPrimaryShipping: true,  isPrimaryInvoice: false, updatedAt: '2026-04-15' },
+    { id: 'b2', country: '台灣 Taiwan', postalCode: '110', city: '台北市信義區', street: '松仁路100號',         isPrimary: false, isActive: true,  isPrimaryShipping: false, isPrimaryInvoice: true,  updatedAt: '2026-01-20' },
+    { id: 'b3', country: '台灣 Taiwan', postalCode: '320', city: '桃園市中壢區', street: '中山路500號',         isPrimary: false, isActive: true,  isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2024-11-05' },
+    { id: 'b4', country: '台灣 Taiwan', postalCode: '300', city: '新竹市東區',   street: '光復路一段101號',    isPrimary: false, isActive: false, isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2023-08-14' },
+    { id: 'b5', country: '台灣 Taiwan', postalCode: '802', city: '高雄市苓雅區', street: '四維三路2號',         isPrimary: false, isActive: false, isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2022-03-09' },
   ],
   C003456: [
-    { id: 'c1', country: '台灣', postalCode: '407', city: '台中市西屯區', street: '台灣大道三段99號',   isPrimary: true,  isActive: true,  isPrimaryShipping: true,  isPrimaryInvoice: true,  updatedAt: '2025-03-02' },
-    { id: 'c2', country: '台灣', postalCode: '406', city: '台中市北屯區', street: '旅順路二段88號',      isPrimary: false, isActive: true,  isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2024-07-18' },
-    { id: 'c3', country: '台灣', postalCode: '500', city: '彰化市',       street: '中山路一段265號',    isPrimary: false, isActive: false, isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2023-12-01' },
+    { id: 'c1', country: '台灣 Taiwan', postalCode: '407', city: '台中市西屯區', street: '台灣大道三段99號',   isPrimary: true,  isActive: true,  isPrimaryShipping: true,  isPrimaryInvoice: true,  updatedAt: '2025-03-02' },
+    { id: 'c2', country: '台灣 Taiwan', postalCode: '406', city: '台中市北屯區', street: '旅順路二段88號',      isPrimary: false, isActive: true,  isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2024-07-18' },
+    { id: 'c3', country: '台灣 Taiwan', postalCode: '500', city: '彰化市',       street: '中山路一段265號',    isPrimary: false, isActive: false, isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2023-12-01' },
   ],
   C004567: [
-    { id: 'd1', country: '台灣', postalCode: '806', city: '高雄市前鎮區', street: '中山三路6號',         isPrimary: true,  isActive: true,  isPrimaryShipping: true,  isPrimaryInvoice: false, updatedAt: '2026-04-20' },
-    { id: 'd2', country: '台灣', postalCode: '106', city: '台北市大安區', street: '忠孝東路四段100號',   isPrimary: false, isActive: true,  isPrimaryShipping: false, isPrimaryInvoice: true,  updatedAt: '2026-02-11' },
-    { id: 'd3', country: '台灣', postalCode: '701', city: '台南市東區',   street: '東門路一段200號',    isPrimary: false, isActive: true,  isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2025-05-30' },
-    { id: 'd4', country: '台灣', postalCode: '900', city: '屏東市',       street: '民族路33號',          isPrimary: false, isActive: false, isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2024-01-07' },
-    { id: 'd5', country: '台灣', postalCode: '600', city: '嘉義市東區',   street: '垂楊路530號',         isPrimary: false, isActive: false, isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2023-07-14' },
+    { id: 'd1', country: '台灣 Taiwan', postalCode: '806', city: '高雄市前鎮區', street: '中山三路6號',         isPrimary: true,  isActive: true,  isPrimaryShipping: true,  isPrimaryInvoice: false, updatedAt: '2026-04-20' },
+    { id: 'd2', country: '台灣 Taiwan', postalCode: '106', city: '台北市大安區', street: '忠孝東路四段100號',   isPrimary: false, isActive: true,  isPrimaryShipping: false, isPrimaryInvoice: true,  updatedAt: '2026-02-11' },
+    { id: 'd3', country: '台灣 Taiwan', postalCode: '701', city: '台南市東區',   street: '東門路一段200號',    isPrimary: false, isActive: true,  isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2025-05-30' },
+    { id: 'd4', country: '台灣 Taiwan', postalCode: '900', city: '屏東市',       street: '民族路33號',          isPrimary: false, isActive: false, isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2024-01-07' },
+    { id: 'd5', country: '台灣 Taiwan', postalCode: '600', city: '嘉義市東區',   street: '垂楊路530號',         isPrimary: false, isActive: false, isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2023-07-14' },
   ],
   C005678: [
-    { id: 'e1', country: '台灣', postalCode: '701', city: '台南市東區',   street: '裕農路198號',         isPrimary: true,  isActive: true,  isPrimaryShipping: true,  isPrimaryInvoice: true,  updatedAt: '2024-01-08' },
-    { id: 'e2', country: '台灣', postalCode: '700', city: '台南市中西區', street: '民族路二段79號',      isPrimary: false, isActive: false, isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2023-06-22' },
-    { id: 'e3', country: '台灣', postalCode: '807', city: '高雄市三民區', street: '九如一路516號',       isPrimary: false, isActive: false, isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2022-11-15' },
+    { id: 'e1', country: '台灣 Taiwan', postalCode: '701', city: '台南市東區',   street: '裕農路198號',         isPrimary: true,  isActive: true,  isPrimaryShipping: true,  isPrimaryInvoice: true,  updatedAt: '2024-01-08' },
+    { id: 'e2', country: '台灣 Taiwan', postalCode: '700', city: '台南市中西區', street: '民族路二段79號',      isPrimary: false, isActive: false, isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2023-06-22' },
+    { id: 'e3', country: '台灣 Taiwan', postalCode: '807', city: '高雄市三民區', street: '九如一路516號',       isPrimary: false, isActive: false, isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2022-11-15' },
   ],
   C006789: [
-    { id: 'f1', country: '台灣', postalCode: '100', city: '台北市中正區', street: '重南路1號',           isPrimary: true,  isActive: true,  isPrimaryShipping: true,  isPrimaryInvoice: true,  updatedAt: '2026-03-28' },
-    { id: 'f2', country: '台灣', postalCode: '115', city: '台北市南港區', street: '經貿二路198號',       isPrimary: false, isActive: true,  isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2025-11-10' },
-    { id: 'f3', country: '台灣', postalCode: '221', city: '新北市汐止區', street: '新台五路一段79號',    isPrimary: false, isActive: false, isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2025-02-14' },
-    { id: 'f4', country: '台灣', postalCode: '333', city: '桃園市龜山區', street: '文化一路123號',       isPrimary: false, isActive: false, isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2022-10-19' },
+    { id: 'f1', country: '台灣 Taiwan', postalCode: '100', city: '台北市中正區', street: '重南路1號',           isPrimary: true,  isActive: true,  isPrimaryShipping: true,  isPrimaryInvoice: true,  updatedAt: '2026-03-28' },
+    { id: 'f2', country: '台灣 Taiwan', postalCode: '115', city: '台北市南港區', street: '經貿二路198號',       isPrimary: false, isActive: true,  isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2025-11-10' },
+    { id: 'f3', country: '台灣 Taiwan', postalCode: '221', city: '新北市汐止區', street: '新台五路一段79號',    isPrimary: false, isActive: false, isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2025-02-14' },
+    { id: 'f4', country: '台灣 Taiwan', postalCode: '333', city: '桃園市龜山區', street: '文化一路123號',       isPrimary: false, isActive: false, isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2022-10-19' },
   ],
 };
 const mockPersonsByCustomer: Record<string, ContactPerson[]> = {
@@ -441,7 +442,13 @@ function AddressFormFields({
         </label>
         <select
           value={form.country}
-          onChange={(e) => onChange('country', e.target.value)}
+          onChange={(e) => {
+            onChange('country', e.target.value);
+            if (e.target.value !== '台灣') {
+              onChange('city', '');
+              onChange('postalCode', '');
+            }
+          }}
           className="h-[35px] px-[10px] border border-[#c4c9d3] rounded-[4px] text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif] bg-white focus:outline-none focus:border-[#0078d4]"
           style={{ fontWeight: 350 }}
         >
@@ -449,8 +456,8 @@ function AddressFormFields({
         </select>
       </div>
 
-      {/* 城市、行政區、郵遞區號（合併可搜尋下拉） */}
-      {(() => {
+      {/* 城市、行政區、郵遞區號（合併可搜尋下拉，僅台灣顯示） */}
+      {form.country === '台灣' && (() => {
         const [districtOpen, setDistrictOpen] = useState(false);
         const [districtKeyword, setDistrictKeyword] = useState('');
         const districtRef = useRef<HTMLDivElement>(null);
@@ -466,8 +473,6 @@ function AddressFormFields({
           return () => document.removeEventListener('mousedown', handler);
         }, [districtOpen]);
 
-        // 僅在選台灣時顯示預設選項，其他國家允許手動輸入
-        const isTaiwan = form.country === '台灣';
         const displayValue = form.city
           ? `${form.postalCode ? form.postalCode + ' ' : ''}${form.city}`
           : '';
@@ -500,13 +505,13 @@ function AddressFormFields({
                   className={`flex-1 text-[14px] font-['Noto_Sans_TC',_sans-serif] truncate ${displayValue ? 'text-[#1c1c1c]' : 'text-[#9ca3af]'}`}
                   style={{ fontWeight: 350 }}
                 >
-                  {displayValue || (isTaiwan ? '請選擇城市、行政區' : '請輸入城市、行政區')}
+                  {displayValue || '請選擇城市、行政區'}
                 </span>
               )}
             </div>
 
             {/* 下拉選項 */}
-            {districtOpen && isTaiwan && (
+            {districtOpen && (
               <div className="absolute top-[calc(100%+4px)] left-0 right-0 z-[200] bg-white border border-[#c4c9d3] rounded-[4px] shadow-[0_4px_16px_rgba(0,0,0,0.12)] max-h-[220px] overflow-y-auto">
                 {filtered.length === 0 ? (
                   <div className="px-[12px] py-[10px] text-[13px] text-[#9ca3af] font-['Noto_Sans_TC',_sans-serif]">
@@ -537,22 +542,6 @@ function AddressFormFields({
                     </button>
                   ))
                 )}
-              </div>
-            )}
-
-            {/* 非台灣：手動輸入郵遞區號 + 城市 */}
-            {!isTaiwan && (
-              <div className="grid grid-cols-[110px_1fr] gap-[8px] mt-[6px]">
-                <CwInput
-                  value={form.postalCode}
-                  placeholder="郵遞區號"
-                  onChange={(e) => onChange('postalCode', e.target.value)}
-                />
-                <CwInput
-                  value={form.city}
-                  placeholder="城市／行政區"
-                  onChange={(e) => onChange('city', e.target.value)}
-                />
               </div>
             )}
 
@@ -605,7 +594,7 @@ function AddressFormFields({
         />
         <div className="flex flex-col gap-[2px]">
           <span className="font-['Noto_Sans_TC',_sans-serif] text-[14px] text-[#1c1c1c]" style={{ fontWeight: 350 }}>
-            設為主要寄送
+            主要寄送地址(ship to)
             <span>
             <CwTooltip content="每位客戶僅能有一筆主要寄送地址">
               <Info className="w-[14px] h-[12px] text-[#01579b] cursor-help shrink-0 ml-1" />
@@ -625,9 +614,9 @@ function AddressFormFields({
         />
         <div className="flex flex-col gap-[2px]">
           <span className="font-['Noto_Sans_TC',_sans-serif] text-[14px] text-[#1c1c1c]" style={{ fontWeight: 350 }}>
-            設為主要發票         
+            主要付款地址(bill to)        
             <span>
-            <CwTooltip content="每位客戶僅能有一筆主要發票地址">
+            <CwTooltip content="每位客戶僅能有一筆主要付款地址，作為沖賬用途">
               <Info className="w-[14px] h-[12px] text-[#01579b] cursor-help shrink-0 ml-1" />
             </CwTooltip>
             </span>
@@ -635,23 +624,6 @@ function AddressFormFields({
         </div>
       </label>
 
-      {/* 主要 */}
-      <label className="flex items-center gap-[10px] cursor-pointer select-none">
-        <input
-          type="checkbox"
-          checked={form.isPrimary}
-          onChange={(e) => onChange('isPrimary', e.target.checked)}
-          className="w-[16px] h-[16px] rounded border-[#c4c9d3] text-[#0078d4] cursor-pointer"
-        />
-        <div className="flex flex-col gap-[2px]">
-          <span className="font-['Noto_Sans_TC',_sans-serif] text-[14px] text-[#1c1c1c]" style={{ fontWeight: 350 }}>
-            設為主要
-            <CwTooltip content="每位客戶僅能有一筆主要地址（預設出貨地址）">
-              <Info className="w-[14px] h-[12px] text-[#01579b] cursor-help shrink-0 ml-1" />
-            </CwTooltip>
-          </span>
-        </div>
-      </label>
     </div>
   );
 }
@@ -689,16 +661,6 @@ function PhoneFormFields({ form, errors, onChange }: {
   const ec = "text-[12px] text-[#e53e3e] font-['Noto_Sans_TC',_sans-serif]";
   return (
     <div className="flex flex-col gap-[16px]">
-      <div className="grid grid-cols-2 gap-[12px]">
-        <div className={fc}>
-          <label className={lc} style={{ fontWeight: 500 }}>電話國碼</label>
-          <CwInput value={form.countryCode} placeholder="886" onChange={(e) => onChange('countryCode', e.target.value)} />
-        </div>
-        <div className={fc}>
-          <label className={lc} style={{ fontWeight: 500 }}>區域碼</label>
-          <CwInput value={form.areaCode} placeholder="2" onChange={(e) => onChange('areaCode', e.target.value)} />
-        </div>
-      </div>
       <div className="grid grid-cols-[1fr_110px] gap-[12px]">
         <div className={fc}>
           <label className={lc} style={{ fontWeight: 500 }}>電話號碼 <span className="text-[#e53e3e]">*</span></label>
@@ -935,19 +897,17 @@ const mockMergeRelations: MergeRelation[] = [
 type TabId = 'basic' | 'address' | 'contact' | 'other' | 'subscription' | 'relation';
 
 const TABS_DEFAULT: { id: TabId; label: string }[] = [
-  { id: 'basic',        label: '基本資料' },
   { id: 'address',      label: '地址' },
   { id: 'contact',      label: '聯絡資訊' },
-  { id: 'other',        label: '其他資訊' },
   { id: 'subscription', label: '訂閱年資' },
   { id: 'relation',     label: '客戶關聯' },
+  { id: 'basic',        label: '基本資料' },
 ];
 
 const TABS_CREATE: { id: TabId; label: string }[] = [
-  { id: 'basic',   label: '基本資料' },
   { id: 'address', label: '地址' },
   { id: 'contact', label: '聯絡資訊' },
-  { id: 'other',   label: '其他資訊' },
+  { id: 'basic',   label: '基本資料' },
 ];
 
 interface BasicInfo {
@@ -965,7 +925,7 @@ interface BasicInfo {
 
 const EMPTY_BASIC_INFO: BasicInfo = {
   customerName: '',
-  customerIdentity: '',
+  customerIdentity: '個人',
   status: '',
   customerNumber: '',
   taxId: '',
@@ -978,7 +938,7 @@ const EMPTY_BASIC_INFO: BasicInfo = {
 
 export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERPCustomerDetailProps) {
   const TABS = createMode ? TABS_CREATE : TABS_DEFAULT;
-  const [activeTab, setActiveTab] = useState<TabId>('basic');
+  const [activeTab, setActiveTab] = useState<TabId>(createMode ? 'basic' : 'address');
   const [basicInfo, setBasicInfo] = useState<BasicInfo>(EMPTY_BASIC_INFO);
 
   // ── 地址編輯 Drawer ──────────────────────────────────────────
@@ -1303,26 +1263,6 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
   // ── 地址欄位定義（放在元件內以存取 openEditDrawer）────────────
   const addressColumns: CwTableColumn<AddressRecord>[] = [
     {
-      key: 'isPrimary' as any,
-      title: '標記',
-      width: '90px',
-      align: 'center',
-      render: (_v, r) => (
-        <span className="flex items-center justify-center">
-          {r.isPrimary ? (
-            <span
-              className="inline-flex items-center px-[8px] py-[2px] rounded-full text-[12px] whitespace-nowrap font-['Noto_Sans_TC',_sans-serif]"
-              style={{ background: '#dbeafe', color: '#1d4ed8', fontWeight: 600 }}
-            >
-              主要
-            </span>
-          ) : (
-            <span></span>
-          )}
-        </span>
-      ),
-    },
-    {
       key: 'isActive' as any,
       title: '生效與否',
       width: '90px',
@@ -1342,7 +1282,7 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
     },
     {
       key: 'isPrimaryShipping' as any,
-      title: '主要寄送 / 主要發票',
+      title: '主要寄送 / 主要付款',
       width: '160px',
       align: 'center',
       render: (_v, r) => {
@@ -1430,7 +1370,7 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
   );
   const ActiveTag = ({ active }: { active: boolean }) => (
     <span className="inline-flex items-center px-[6px] py-[1px] rounded-full text-[11px] whitespace-nowrap font-['Noto_Sans_TC',_sans-serif]" style={active ? { background: '#f0fdf4', color: '#166534', fontWeight: 600 } : { background: '#f3f4f6', color: '#6b7280', fontWeight: 600 }}>
-      {active ? '生效' : '失效'}
+      {active ? '生效' : ''}
     </span>
   );
 
@@ -1698,18 +1638,19 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
   const statusStyle = STATUS_STYLE[customer.status] ?? { bg: '#f3f4f6', color: '#4b5563' };
 
   const headerFields: [string, React.ReactNode][] = [
+    ['客戶編號', customer.customerNumber || '—'],
     ['客戶名稱', customer.customerName || '—'],
     ['客戶身分', customer.customerIdentity || '—'],
     ['狀態', (
       <span
-        className="inline-flex items-center px-[8px] py-[2px] rounded-full text-[12px] whitespace-nowrap font-['Noto_Sans_TC',_sans-serif]"
+        className="inline-flex w-fit items-center px-[8px] py-[2px] rounded-full text-[12px] whitespace-nowrap font-['Noto_Sans_TC',_sans-serif]"
         style={{ backgroundColor: statusStyle.bg, color: statusStyle.color, fontWeight: 500 }}
       >
         {customer.status}
       </span>
     )],
-    ['客戶編號', customer.customerNumber || '—'],
     ['統一編號', customer.taxId || '—'],
+    ['發票抬頭', customer.invoiceTitle || '—'],
     ['同意行銷更改日期', customer.marketingConsentDate || '—'],
     ['最後交易日期', customer.lastTransactionDate || '—'],
   ];
@@ -1759,7 +1700,7 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
 
         <div className="py-[12px]">
         {activeTab === 'basic' ? (() => {
-  const labelStyle: React.CSSProperties = { fontFamily: 'var(--font-noto-sans-tc)', fontSize: '13px', fontWeight: 350, color: '#4b5563' };
+  const labelStyle: React.CSSProperties = { fontFamily: 'var(--font-noto-sans-tc)', fontSize: 'var(--text-base)', fontWeight: 350 };
   const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
     <div className="flex flex-col gap-[4px]">
       <span style={labelStyle}>{label}</span>
@@ -1797,7 +1738,49 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
     { value: '經銷商', label: '經銷商' },
   ];
   const upd = (key: keyof BasicInfo, val: string) => setBasicInfo(p => ({ ...p, [key]: val }));
+
+  // ── 其他資訊 helpers ──────────────────────────────────────────
+  const otherData = otherDraft;
+  const otherLabelStyle: React.CSSProperties = { fontFamily: 'var(--font-noto-sans-tc)', fontSize: 'var(--text-base)', fontWeight: 350 };
+  const OtherRequiredLabel = ({ text }: { text: string }) => (
+    <label className="block text-foreground" style={otherLabelStyle}>{text}<span style={{ color: '#E53E3E' }}> *</span></label>
+  );
+  const OtherErrorText = ({ fKey }: { fKey: keyof CustomerOtherInfo }) =>
+    otherErrors[fKey] ? <p className="text-[12px] mt-[2px]" style={{ color: '#E53E3E', fontFamily: 'var(--font-noto-sans-tc)' }}>{otherErrors[fKey]}</p> : null;
+  const OtherTextField = ({ label: lbl, fKey, required, colSpan }: { label: string; fKey: keyof CustomerOtherInfo; required?: boolean; colSpan?: number }) => (
+    <div className="flex flex-col gap-1" style={colSpan ? { gridColumn: `span ${colSpan}` } : undefined}>
+      {required ? <OtherRequiredLabel text={lbl} /> : <label style={otherLabelStyle}>{lbl}</label>}
+      <CwInput value={otherData[fKey]} onChange={e => setOtherField(fKey, (e as React.ChangeEvent<HTMLInputElement>).target.value)} error={otherErrors[fKey]} />
+    </div>
+  );
+  const OtherSelectField = ({ label: lbl, fKey, options: opts, required, disabled: dis }: { label: string; fKey: keyof CustomerOtherInfo; options: { value: string; label: string }[]; required?: boolean; disabled?: boolean }) => (
+    <div className="flex flex-col gap-1">
+      {required ? <OtherRequiredLabel text={lbl} /> : <label style={otherLabelStyle}>{lbl}</label>}
+      <CwSelect options={opts} value={otherData[fKey]} onChange={v => setOtherField(fKey, v as string)} clearable error={!!otherErrors[fKey]} disabled={dis} />
+      <OtherErrorText fKey={fKey} />
+    </div>
+  );
+  const OtherDateField = ({ label: lbl, fKey }: { label: string; fKey: keyof CustomerOtherInfo }) => (
+    <div className="flex flex-col gap-1">
+      <label style={otherLabelStyle}>{lbl}</label>
+      <CwDatePicker value={otherData[fKey] ? new Date(otherData[fKey]) : null} onChange={d => setOtherField(fKey, d ? d.toISOString().slice(0, 10) : '')} />
+    </div>
+  );
+  const oInvoiceOptions = [{ value: '3', label: '3 隨貨產生' }, { value: '4', label: '4 月結淨額' }, { value: '5', label: '5 月結金額' }, { value: '6', label: '6 電子發票' }, { value: 'N', label: 'N 一般開立' }];
+  const oMarketingOptions = [{ value: '1', label: '1 同意' }, { value: '2', label: '2 不同意' }, { value: 'A', label: 'A 不確定' }];
+  const oCycleOptions = [{ value: '即期付款', label: '即期付款' }, { value: '廣-月結120天', label: '廣-月結120天' }, { value: '廣-月結45天', label: '廣-月結45天' }, { value: '廣-月結60天', label: '廣-月結60天' }, { value: '廣-月結90天', label: '廣-月結90天' }, { value: '廣告交換', label: '廣告交換' }, { value: '月結-大和', label: '月結-大和' }, { value: '月結-宇泰', label: '月結-宇泰' }, { value: '月結120天', label: '月結120天' }, { value: '月結30天', label: '月結30天' }, { value: '月結45天', label: '月結45天' }, { value: '月結60天', label: '月結60天' }, { value: '月結90天', label: '月結90天' }];
+  const oCategoryOptions = [{ value: '廣告客戶', label: '廣告客戶' }, { value: '企業法人', label: '企業法人' }, { value: '去識別化', label: '去識別化' }, { value: '直銷商', label: '直銷商' }, { value: '通路經銷商', label: '通路經銷商' }, { value: '個人客戶', label: '個人客戶' }, { value: '訂戶型零售', label: '訂戶型零售' }, { value: '經銷商', label: '經銷商' }];
+  const oGenderOptions = [{ value: '1', label: '1 男' }, { value: '2', label: '2 女' }];
+  const oMaritalOptions = [{ value: '1', label: '1 單身' }, { value: '2', label: '2 已婚' }];
+  const oIndustryOptions = [{ value: '1', label: '1 製造業' }, { value: '2', label: '2 資訊科技業' }, { value: '3', label: '3 金融業' }, { value: '4', label: '4 服務業' }, { value: '5', label: '5 醫療保健' }, { value: '6', label: '6 傳播出版' }, { value: '7', label: '7 公職人員' }, { value: '8', label: '8 學生' }, { value: '9', label: '9 家管' }, { value: '10', label: '10 自由業' }, { value: '11', label: '11 專業技術與顧問服務' }, { value: '12', label: '12 教育服務業' }, { value: '99', label: '99 其他' }];
+  const oEducationOptions = [{ value: '1', label: '1 未知' }, { value: '2', label: '2 高中(含)以下' }, { value: '3', label: '3 專科' }, { value: '4', label: '4 大學' }, { value: '5', label: '5 研究所(含)以上' }];
+  const oJobPositionOptions = [{ value: '1', label: '1 公司負責人/董事/股東' }, { value: '2', label: '2 高階主管' }, { value: '3', label: '3 中階主管' }, { value: '4', label: '4 基層主管' }, { value: '5', label: '5 一般職員' }, { value: '6', label: '6 自由業' }, { value: '7', label: '7 學生' }, { value: '8', label: '8 家管' }, { value: '9', label: '9 退休人員' }, { value: '99', label: '99 其他' }];
+  const oIncomeOptions = [{ value: '1', label: '1 無收入' }, { value: '2', label: '2 50萬元以下' }, { value: '3', label: '3 50-100萬元' }, { value: '4', label: '4 100-200萬元' }, { value: '5', label: '5 200萬元以上' }];
+  const oBookBudgetOptions = [{ value: '1', label: '1 500元以下' }, { value: '2', label: '2 501-1000元' }, { value: '3', label: '3 1001-2000元' }, { value: '4', label: '4 2001-4000元' }, { value: '5', label: '5 4001元以上' }];
+  const oJobTitleOptions = [{ value: '1', label: '1 文教' }, { value: '2', label: '2 行政' }, { value: '3', label: '3 業務行銷' }, { value: '4', label: '4 財務/會計/稽核' }, { value: '5', label: '5 法務' }, { value: '6', label: '6 醫療衛生' }, { value: '7', label: '7 資訊/電信' }, { value: '8', label: '8 傳播/廣告' }, { value: '9', label: '9 藝術' }, { value: '10', label: '10 系統軟硬體工程師' }, { value: '11', label: '11 研發' }, { value: '12', label: '12 教職人員' }, { value: '13', label: '13 顧問/法律' }, { value: '14', label: '14 客服/門市人員' }, { value: '99', label: '99 其他' }];
+
   return (
+    <>
     <div className="grid grid-cols-4 gap-x-[24px] gap-y-[16px]">
       {createMode && <>
         <Field label="客戶名稱">
@@ -1819,9 +1802,9 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
       <Field label="開立發票方式">
         <CwSelect options={invoiceOptions} value={basicInfo.invoiceIssueMethod} onChange={v => upd('invoiceIssueMethod', v as string)} placeholder="請選擇" clearable />
       </Field>
-      <Field label="是否同意行銷">
-        <CwSelect options={marketingOptions} value={basicInfo.agreeMarketing} onChange={v => upd('agreeMarketing', v as string)} placeholder="請選擇" clearable />
-      </Field>
+      {/* <Field label="是否同意行銷">
+        <CwSelect options={marketingOptions} value={basicInfo.agreeMarketing} onChange={v => upd('agreeMarketing', v as string)} placeholder="請選擇" clearable disabled />
+      </Field> */}
       {createMode && <>
         <Field label="同意行銷更改日期">
           <CwDatePicker value={basicInfo.marketingConsentDate ? new Date(basicInfo.marketingConsentDate) : null} onChange={d => upd('marketingConsentDate', d ? d.toISOString().slice(0, 10) : '')} />
@@ -1841,6 +1824,31 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
         </Field>
       </>}
     </div>
+
+    <div className="border-t border-[#e5e7eb] my-5" />
+
+    <div className="grid grid-cols-4 gap-x-[24px] gap-y-[16px]">
+      <OtherTextField label="客戶註記" fKey="customerNote" colSpan={4} />
+      <OtherTextField label="統一編號" fKey="taxIdNumber" />
+      <OtherTextField label="發票抬頭" fKey="invoiceTitle" />
+      <OtherSelectField label="開立發票方式" fKey="invoiceIssueMethod" options={oInvoiceOptions} required />
+      <OtherSelectField label="是否同意行銷(訂單來源)" fKey="agreeMarketing" options={oMarketingOptions} />
+      <OtherSelectField label="結帳週期" fKey="checkoutCycle" options={oCycleOptions} required />
+      <OtherSelectField label="客戶分類" fKey="customerCategory" options={oCategoryOptions} required />
+      <OtherSelectField label="性別" fKey="gender" options={oGenderOptions} />
+      <OtherDateField label="出生日期" fKey="birthDate" />
+      <OtherSelectField label="婚姻" fKey="maritalStatus" options={oMaritalOptions} />
+      <OtherTextField label="子女人數" fKey="childrenCount" />
+      <OtherSelectField label="行業別" fKey="industry" options={oIndustryOptions} />
+      <OtherSelectField label="教育程度" fKey="education" options={oEducationOptions} />
+      <OtherSelectField label="職位別" fKey="jobPosition" options={oJobPositionOptions} />
+      <OtherSelectField label="年收入" fKey="annualIncome" options={oIncomeOptions} />
+      <OtherSelectField label="每月購書金額" fKey="monthlyBookBudget" options={oBookBudgetOptions} />
+      <OtherTextField label="經常購書種類" fKey="frequentBookCategory" />
+      <OtherTextField label="公司名稱" fKey="companyName" />
+      <OtherSelectField label="職務別" fKey="jobTitle" options={oJobTitleOptions} />
+    </div>
+    </>
   );
 })() : activeTab === 'address' ? (
   <div className="space-y-[12px]">
@@ -1930,7 +1938,14 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
               form={addForm}
               errors={addErrors}
               onChange={(field, value) => {
-                setAddForm((prev) => ({ ...prev, [field]: value }));
+                setAddForm((prev) => {
+                  const next = { ...prev, [field]: value };
+                  if (field === 'isActive' && value === false) {
+                    next.isPrimaryShipping = false;
+                    next.isPrimaryInvoice = false;
+                  }
+                  return next;
+                });
                 if (value) setAddErrors((prev) => ({ ...prev, [field]: undefined }));
               }}
             />
@@ -1960,215 +1975,7 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
   </div>
 ) : activeTab === 'contact' ? (
   <ContactTab />
-) : activeTab === 'other' ? (() => {
-  const editable = true;
-  const data = editable ? otherDraft : otherInfo;
-
-  const labelStyle: React.CSSProperties = {
-    fontFamily: 'var(--font-noto-sans-tc)',
-    fontSize: 'var(--text-base)',
-    fontWeight: 350,
-  };
-
-  const RequiredLabel = ({ text }: { text: string }) => (
-    <label className="block text-foreground" style={labelStyle}>
-      {text}<span style={{ color: '#E53E3E' }}> *</span>
-    </label>
-  );
-
-  const ErrorText = ({ fKey }: { fKey: keyof CustomerOtherInfo }) =>
-    otherErrors[fKey] ? (
-      <p className="text-[12px] mt-[2px]" style={{ color: '#E53E3E', fontFamily: 'var(--font-noto-sans-tc)' }}>
-        {otherErrors[fKey]}
-      </p>
-    ) : null;
-
-  const OtherTextField = ({ label, fKey, required, colSpan }: { label: string; fKey: keyof CustomerOtherInfo; required?: boolean; colSpan?: number }) => (
-    <div className={`flex flex-col gap-1${colSpan ? ` col-span-${colSpan}` : ''}`}>
-      {required ? <RequiredLabel text={label} /> : <label style={labelStyle}>{label}</label>}
-      {editable
-        ? <CwInput value={data[fKey]} onChange={e => setOtherField(fKey, (e as React.ChangeEvent<HTMLInputElement>).target.value)} error={otherErrors[fKey]} />
-        : <CwInput value={data[fKey]} disabled />
-      }
-    </div>
-  );
-
-  const OtherSelectField = ({ label, fKey, options, required }: {
-    label: string;
-    fKey: keyof CustomerOtherInfo;
-    options: { value: string; label: string }[];
-    required?: boolean;
-  }) => (
-    <div className="flex flex-col gap-1">
-      {required ? <RequiredLabel text={label} /> : <label style={labelStyle}>{label}</label>}
-      {editable
-        ? <>
-            <CwSelect options={options} value={data[fKey]} onChange={v => setOtherField(fKey, v as string)} clearable error={!!otherErrors[fKey]} />
-            <ErrorText fKey={fKey} />
-          </>
-        : <CwInput value={options.find(o => o.value === data[fKey])?.label ?? data[fKey]} disabled />
-      }
-    </div>
-  );
-
-  const OtherDateField = ({ label, fKey }: { label: string; fKey: keyof CustomerOtherInfo }) => (
-    <div className="flex flex-col gap-1">
-      <label style={labelStyle}>{label}</label>
-      {editable
-        ? <CwDatePicker
-            value={data[fKey] ? new Date(data[fKey]) : null}
-            onChange={d => setOtherField(fKey, d ? d.toISOString().slice(0, 10) : '')}
-          />
-        : <CwInput value={data[fKey]} disabled />
-      }
-    </div>
-  );
-
-  const invoiceOptions = [
-    { value: '3', label: '3 隨貨產生' },
-    { value: '4', label: '4 月結淨額' },
-    { value: '5', label: '5 月結金額' },
-    { value: '6', label: '6 電子發票' },
-    { value: 'N', label: 'N 一般開立' },
-  ];
-  const marketingOptions = [
-    { value: '1', label: '1 同意' },
-    { value: '2', label: '2 不同意' },
-    { value: 'A', label: 'A 不確定' },
-  ];
-  const cycleOptions = [
-    { value: '即期付款', label: '即期付款' },
-    { value: '廣-月結120天', label: '廣-月結120天' },
-    { value: '廣-月結45天', label: '廣-月結45天' },
-    { value: '廣-月結60天', label: '廣-月結60天' },
-    { value: '廣-月結90天', label: '廣-月結90天' },
-    { value: '廣告交換', label: '廣告交換' },
-    { value: '月結-大和', label: '月結-大和' },
-    { value: '月結-宇泰', label: '月結-宇泰' },
-    { value: '月結120天', label: '月結120天' },
-    { value: '月結30天', label: '月結30天' },
-    { value: '月結45天', label: '月結45天' },
-    { value: '月結60天', label: '月結60天' },
-    { value: '月結90天', label: '月結90天' },
-  ];
-  const categoryOptions = [
-    { value: '廣告客戶', label: '廣告客戶' },
-    { value: '企業法人', label: '企業法人' },
-    { value: '去識別化', label: '去識別化' },
-    { value: '直銷商', label: '直銷商' },
-    { value: '通路經銷商', label: '通路經銷商' },
-    { value: '個人客戶', label: '個人客戶' },
-    { value: '訂戶型零售', label: '訂戶型零售' },
-    { value: '經銷商', label: '經銷商' },
-  ];
-  const genderOptions = [
-    { value: '1', label: '1 男' },
-    { value: '2', label: '2 女' },
-  ];
-  const maritalOptions = [
-    { value: '1', label: '1 單身' },
-    { value: '2', label: '2 已婚' },
-  ];
-  const industryOptions = [
-    { value: '1', label: '1 製造業' },
-    { value: '2', label: '2 資訊科技業' },
-    { value: '3', label: '3 金融業' },
-    { value: '4', label: '4 服務業' },
-    { value: '5', label: '5 醫療保健' },
-    { value: '6', label: '6 傳播出版' },
-    { value: '7', label: '7 公職人員' },
-    { value: '8', label: '8 學生' },
-    { value: '9', label: '9 家管' },
-    { value: '10', label: '10 自由業' },
-    { value: '11', label: '11 專業技術與顧問服務' },
-    { value: '12', label: '12 教育服務業' },
-    { value: '99', label: '99 其他' },
-  ];
-  const educationOptions = [
-    { value: '1', label: '1 未知' },
-    { value: '2', label: '2 高中(含)以下' },
-    { value: '3', label: '3 專科' },
-    { value: '4', label: '4 大學' },
-    { value: '5', label: '5 碩士' },
-    { value: '6', label: '6 博士' },
-  ];
-  const jobPositionOptions = [
-    { value: '1', label: '1 企業負責人' },
-    { value: '2', label: '2 高階主管' },
-    { value: '3', label: '3 中階主管' },
-    { value: '4', label: '4 專業人員' },
-    { value: '5', label: '5 一般職員' },
-    { value: '99', label: '99 其他' },
-  ];
-  const incomeOptions = [
-    { value: '1', label: '1 30萬元(含)以下' },
-    { value: '2', label: '2 31萬元-50萬元(含)' },
-    { value: '3', label: '3 51萬元-80萬元(含)' },
-    { value: '4', label: '4 81萬元-100萬元(含)' },
-    { value: '5', label: '5 101萬元-200萬元(含)' },
-    { value: '6', label: '6 201萬元-500萬元(含)' },
-    { value: '7', label: '7 501萬元以上' },
-  ];
-  const bookBudgetOptions = [
-    { value: '1', label: '1 500元以下' },
-    { value: '2', label: '2 501-1000元' },
-    { value: '3', label: '3 1001元-1500元' },
-    { value: '4', label: '4 1501-2000元' },
-    { value: '5', label: '5 2001元以上' },
-  ];
-  const jobTitleOptions = [
-    { value: '1', label: '1 行政總務' },
-    { value: '2', label: '2 經營人事' },
-    { value: '3', label: '3 財務會計' },
-    { value: '4', label: '4 金融專業' },
-    { value: '5', label: '5 業務銷售' },
-    { value: '6', label: '6 保險業務' },
-    { value: '7', label: '7 醫護人員' },
-    { value: '8', label: '8 廣告行銷' },
-    { value: '9', label: '9 採訪編輯' },
-    { value: '10', label: '10 系統軟硬體工程師' },
-    { value: '11', label: '11 研發' },
-    { value: '12', label: '12 教職人員' },
-    { value: '13', label: '13 顧問/法律' },
-    { value: '14', label: '14 客服/門市人員' },
-    { value: '99', label: '99 其他' },
-  ];
-  const ynOptions = [
-    { value: 'Y', label: 'Y' },
-    { value: 'N', label: 'N' },
-  ];
-  const autoRenewalOptions = [
-    { value: '開立紙本發票', label: '開立紙本發票' },
-  ];
-
-  return (
-    <div className="space-y-[16px]">
-      <div className="grid grid-cols-4 gap-x-[24px] gap-y-[16px]">
-        <OtherTextField label="統一編號" fKey="taxIdNumber" />
-        <OtherSelectField label="開立發票方式" fKey="invoiceIssueMethod" options={invoiceOptions} required />
-        <OtherSelectField label="是否同意行銷" fKey="agreeMarketing" options={marketingOptions} required />
-        <OtherSelectField label="結帳週期" fKey="checkoutCycle" options={cycleOptions} required />
-        <OtherSelectField label="客戶分類" fKey="customerCategory" options={categoryOptions} required />
-        <OtherTextField label="客戶註記" fKey="customerNote" colSpan={2} />
-        <OtherTextField label="發票抬頭" fKey="invoiceTitle" />
-        <OtherSelectField label="性別" fKey="gender" options={genderOptions} />
-        <OtherDateField label="出生日期" fKey="birthDate" />
-        <OtherSelectField label="婚姻" fKey="maritalStatus" options={maritalOptions} />
-        <OtherTextField label="子女人數" fKey="childrenCount" />
-        <OtherSelectField label="行業別" fKey="industry" options={industryOptions} />
-        <OtherSelectField label="教育程度" fKey="education" options={educationOptions} />
-        <OtherSelectField label="職位別" fKey="jobPosition" options={jobPositionOptions} />
-        <OtherSelectField label="年收入" fKey="annualIncome" options={incomeOptions} />
-        <OtherSelectField label="每月購書金額" fKey="monthlyBookBudget" options={bookBudgetOptions} />
-        <OtherTextField label="經常購書種類" fKey="frequentBookCategory" />
-        <OtherTextField label="公司名稱" fKey="companyName" />
-        <OtherSelectField label="職務別" fKey="jobTitle" options={jobTitleOptions} />
-        <OtherSelectField label="行業別分類" fKey="industryClassification" options={ynOptions} />
-        <OtherSelectField label="自動續訂發票開立判斷" fKey="autoRenewalInvoice" options={autoRenewalOptions} />
-      </div>
-    </div>
-  );
-})() : activeTab === 'subscription' ? (() => {
+) : activeTab === 'subscription' ? (() => {
   const editable = false;
   const data = editable ? subDraft : subSeniority;
 
@@ -2621,7 +2428,7 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
           <div className="flex items-center justify-end gap-[8px] pt-[16px] pb-[40px]">
             <CwButton variant="primary" appearance="outlined" size="m" onClick={onClose}>取消</CwButton>
             <CwButton variant="primary" appearance="filled" size="m">儲存</CwButton>
-            <CwButton variant="destructive" appearance="outlined" size="m">刪除客戶</CwButton>
+            {/* <CwButton variant="destructive" appearance="outlined" size="m">刪除客戶</CwButton> */}
           </div>
         </div>
       )}
@@ -2655,19 +2462,18 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
       {editingAddress && (
         <div className="flex flex-col gap-[20px] p-[4px]">
 
-          {/* 儲存 / 取消 */}
-          <div className="flex gap-[8px]">
-            <CwButton variant="primary" appearance="filled" size="s" onClick={handleEditSave}>儲存</CwButton>
-            <CwButton variant="primary" appearance="outlined" size="s" onClick={closeEditDrawer}>取消</CwButton>
-          </div>
-
-          <div className="border-b border-[#e5e7eb]" />
-
           <AddressFormFields
             form={editForm}
             errors={editErrors}
             onChange={(field, value) => {
-              setEditForm(prev => ({ ...prev, [field]: value }));
+              setEditForm(prev => {
+                const next = { ...prev, [field]: value };
+                if (field === 'isActive' && value === false) {
+                  next.isPrimaryShipping = false;
+                  next.isPrimaryInvoice = false;
+                }
+                return next;
+              });
               if (value) setEditErrors(prev => ({ ...prev, [field]: undefined }));
             }}
           />

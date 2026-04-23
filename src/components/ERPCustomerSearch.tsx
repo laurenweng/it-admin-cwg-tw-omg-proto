@@ -33,6 +33,7 @@ interface ERPCustomerData {
   marketingConsentDate?: string;
   lastTransactionDate?: string;
   updatedAt?: string;
+  invoiceTitle?: string;
   contacts: ContactRecord[];
 }
 
@@ -45,6 +46,7 @@ interface CustomerRow {
   status: string;
   customerIdentity?: string;
   updatedAt?: string;
+  lastTransactionDate?: string;
   contact: string;
   mobile: string;
   email: string;
@@ -68,6 +70,7 @@ const mockERPCustomers: ERPCustomerData[] = [
     marketingConsentDate: '2024-03-15',
     lastTransactionDate: '2025-11-20',
     updatedAt: '2026-04-18 09:32',
+    invoiceTitle: '王小明',
     contacts: [
       { contact: '王小明', mobile: '0912345678', email: 'wangxm@example.com', phone: '02-25074855', address: '台北市中山區中山北路二段7號', isPrimary: true },
       { contact: '王小明', mobile: '0912345678', email: 'wangxm@example.com', phone: '02-25074855', address: '新北市新店區中正路88號', isPrimary: false },
@@ -83,6 +86,7 @@ const mockERPCustomers: ERPCustomerData[] = [
     marketingConsentDate: '2023-08-01',
     lastTransactionDate: '2026-01-05',
     updatedAt: '2026-04-15 14:10',
+    invoiceTitle: '宏達股份有限公司',
     contacts: [
       { contact: '李大華', mobile: '0923456789', email: 'contact@htc.com.tw', phone: '02-29538888', address: '新北市板橋區文化路一段188號', isPrimary: true },
       { contact: '陳秘書', mobile: '0923456700', email: 'secretary@htc.com.tw', phone: '02-29538889', address: '新北市板橋區文化路一段188號', isPrimary: false },
@@ -113,6 +117,7 @@ const mockERPCustomers: ERPCustomerData[] = [
     marketingConsentDate: '2025-01-10',
     lastTransactionDate: '2026-02-14',
     updatedAt: '2026-04-20 08:47',
+    invoiceTitle: '志遠國際貿易有限公司',
     contacts: [
       { contact: '張志遠', mobile: '0945678901', email: 'zhangzr@example.com', phone: '07-33335555', address: '高雄市前鎮區中山三路6號', isPrimary: true },
       { contact: '財務部', mobile: '0945000001', email: 'finance@zhiyuan.com', phone: '07-33335556', address: '高雄市前鎮區中山三路6號', isPrimary: false },
@@ -143,6 +148,7 @@ const mockERPCustomers: ERPCustomerData[] = [
     marketingConsentDate: '2022-05-20',
     lastTransactionDate: '2026-03-01',
     updatedAt: '2026-03-28 10:00',
+    invoiceTitle: '天下文化事業股份有限公司',
     contacts: [
       { contact: '黃文龍', mobile: '0967890123', email: 'huang.wl@cwgv.com.tw', phone: '02-23560678', address: '台北市中正區重南路1號', isPrimary: true },
       { contact: '客服中心', mobile: '0967890000', email: 'service@cwgv.com.tw',  phone: '02-23560679', address: '台北市中正區重南路1號', isPrimary: false },
@@ -172,6 +178,7 @@ const mockERPCustomers: ERPCustomerData[] = [
     marketingConsentDate: '2021-07-19',
     lastTransactionDate: '2024-04-22',
     updatedAt: '2024-05-10 09:15',
+    invoiceTitle: '邱雅玲國際股份有限公司',
     contacts: [
       { contact: '邱雅玲', mobile: '0989012345', email: 'chiu.yl@example.com', phone: '04-77778888', address: '彰化市中山路88號', isPrimary: true },
       { contact: '行政部', mobile: '0989000001', email: 'admin@chiu.com',      phone: '04-77778889', address: '台中市南區建國路200號', isPrimary: false },
@@ -280,7 +287,8 @@ export function ERPCustomerSearch() {
       taxId:            c.taxId,
       status:           c.status,
       customerIdentity: c.customerIdentity,
-      updatedAt:        c.updatedAt,
+      updatedAt:            c.updatedAt,
+      lastTransactionDate:  c.lastTransactionDate,
       _raw:             c,
     };
 
@@ -389,15 +397,15 @@ export function ERPCustomerSearch() {
     { key: 'email',   title: 'Email',  width: '200px' },
     { key: 'address', title: '地址',   width: '260px' },
     {
-      key: 'updatedAt' as any,
-      title: '資料更新時間',
+      key: 'lastTransactionDate' as any,
+      title: '最後交易日期',
       width: '150px',
       render: (_v, r) => (
         <span
           className="font-['Noto_Sans_TC',_sans-serif] text-[13px] text-[#4b5563] tabular-nums"
           style={{ fontWeight: 350 }}
         >
-          {r.updatedAt ?? '—'}
+          {r.lastTransactionDate ?? '—'}
         </span>
       ),
     },
@@ -436,6 +444,7 @@ export function ERPCustomerSearch() {
           customerIdentity:     selectedCustomer.customerIdentity,
           marketingConsentDate: selectedCustomer.marketingConsentDate,
           lastTransactionDate:  selectedCustomer.lastTransactionDate,
+          invoiceTitle:         selectedCustomer.invoiceTitle,
           address: primary.address,
           contact: primary.contact,
           email:   primary.email,

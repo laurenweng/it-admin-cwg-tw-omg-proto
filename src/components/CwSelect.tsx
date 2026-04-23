@@ -283,9 +283,13 @@ export function CwSelect({
       <div className="relative" ref={containerRef}>
         {/* Input Box */}
         <div
-          className={`bg-white box-border h-[35px] rounded-[var(--radius)] cursor-pointer transition-colors ${
-            disabled ? 'bg-[#e9ebf2] cursor-not-allowed' : ''
-          } ${error ? 'bg-[#fff6f4]' : ''}`}
+          className={`box-border h-[35px] rounded-[var(--radius)] transition-colors ${
+            disabled
+              ? 'bg-[#e9ebf2] cursor-not-allowed'
+              : error
+              ? 'bg-[#fff6f4] cursor-pointer'
+              : 'bg-white cursor-pointer'
+          }`}
           onClick={handleInputClick}
         >
           <div
