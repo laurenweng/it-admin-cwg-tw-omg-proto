@@ -131,7 +131,7 @@ interface PhoneEntry {
   phone: string;
   ext: string;
   type: string;
-  purpose: string;
+  purpose?: string;
   isPrimary: boolean;
   isActive: boolean;
   updatedAt: string;
@@ -140,7 +140,7 @@ interface PhoneEntry {
 interface EmailEntry {
   id: string;
   email: string;
-  purpose: string;
+  purpose?: string;
   isPrimary: boolean;
   isActive: boolean;
   updatedAt: string;
@@ -149,21 +149,21 @@ interface EmailEntry {
 interface ContactPerson {
   id: string;
   name: string;
-  title: string;
+  title?: string;
   phones: PhoneEntry[];
   emails: EmailEntry[];
   updatedAt: string;
 }
 
-interface PersonForm { name: string; title: string; phone: string; email: string; }
-interface PhoneForm { countryCode: string; areaCode: string; phone: string; ext: string; type: string; purpose: string; isPrimary: boolean; isActive: boolean; }
-interface EmailForm { email: string; purpose: string; isPrimary: boolean; isActive: boolean; }
+interface PersonForm { name: string; phone: string; email: string; }
+interface PhoneForm { countryCode: string; areaCode: string; phone: string; ext: string; type: string; isPrimary: boolean; isActive: boolean; }
+interface EmailForm { email: string; isPrimary: boolean; isActive: boolean; }
 
 const PHONE_TYPE_OPTIONS = ["Tel(O)", "Tel(H)", "Mobile", "Fax(O)", "Fax(H)", "Pager", "Telex", "Voice Mail"];
 
-const EMPTY_PHONE_FORM: PhoneForm = { countryCode: '886', areaCode: '', phone: '', ext: '', type: 'Tel(O)', purpose: '', isPrimary: false, isActive: true };
-const EMPTY_EMAIL_FORM: EmailForm = { email: '', purpose: '', isPrimary: false, isActive: true };
-const EMPTY_PERSON_FORM: PersonForm = { name: '', title: '', phone: '', email: '' };
+const EMPTY_PHONE_FORM: PhoneForm = { countryCode: '886', areaCode: '', phone: '', ext: '', type: 'Tel(O)', isPrimary: false, isActive: true };
+const EMPTY_EMAIL_FORM: EmailForm = { email: '', isPrimary: false, isActive: true };
+const EMPTY_PERSON_FORM: PersonForm = { name: '', phone: '', email: '' };
 
 // ── Mock 地址資料（以客戶編號為 key）──────────────────────────────
 // isPrimary：全客戶唯一一筆（預設主要地址）
@@ -649,10 +649,6 @@ function PersonFormFields({ form, errors, onChange }: {
         {errors.name && <span className={ec}>{errors.name}</span>}
       </div>
       <div className={fc}>
-        <label className={lc} style={{ fontWeight: 500 }}>職稱</label>
-        <CwInput value={form.title} placeholder="業務副理" onChange={(e) => onChange('title', e.target.value)} />
-      </div>
-      <div className={fc}>
         <label className={lc} style={{ fontWeight: 500 }}>電話</label>
         <CwInput value={form.phone} placeholder="0912-345-678" onChange={(e) => onChange('phone', e.target.value)} />
       </div>
@@ -690,19 +686,13 @@ function PhoneFormFields({ form, errors, onChange }: {
           <CwInput value={form.ext} placeholder="123" onChange={(e) => onChange('ext', e.target.value)} />
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-[12px]">
-        <div className={fc}>
-          <label className={lc} style={{ fontWeight: 500 }}>電話類型</label>
-          <select value={form.type} onChange={(e) => onChange('type', e.target.value)}
-            className="h-[35px] px-[10px] border border-[#c4c9d3] rounded-[4px] text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif] bg-white focus:outline-none focus:border-[#0078d4]"
-            style={{ fontWeight: 350 }}>
-            {PHONE_TYPE_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-        </div>
-        <div className={fc}>
-          <label className={lc} style={{ fontWeight: 500 }}>聯絡目的</label>
-          <CwInput value={form.purpose} placeholder="主要聯繫" onChange={(e) => onChange('purpose', e.target.value)} />
-        </div>
+      <div className={fc}>
+        <label className={lc} style={{ fontWeight: 500 }}>電話類型</label>
+        <select value={form.type} onChange={(e) => onChange('type', e.target.value)}
+          className="h-[35px] px-[10px] border border-[#c4c9d3] rounded-[4px] text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif] bg-white focus:outline-none focus:border-[#0078d4]"
+          style={{ fontWeight: 350 }}>
+          {PHONE_TYPE_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
       </div>
       <label className="flex items-center gap-[10px] cursor-pointer select-none">
         <input type="checkbox" checked={form.isPrimary} onChange={(e) => onChange('isPrimary', e.target.checked)}
@@ -737,10 +727,6 @@ function EmailFormFields({ form, errors, onChange }: {
         <label className={lc} style={{ fontWeight: 500 }}>Email <span className="text-[#e53e3e]">*</span></label>
         <CwInput value={form.email} placeholder="example@company.com" onChange={(e) => onChange('email', e.target.value)} />
         {errors.email && <span className={ec}>{errors.email}</span>}
-      </div>
-      <div className={fc}>
-        <label className={lc} style={{ fontWeight: 500 }}>聯絡目的</label>
-        <CwInput value={form.purpose} placeholder="主要信件" onChange={(e) => onChange('purpose', e.target.value)} />
       </div>
       <label className="flex items-center gap-[10px] cursor-pointer select-none">
         <input type="checkbox" checked={form.isPrimary} onChange={(e) => onChange('isPrimary', e.target.checked)}
@@ -972,6 +958,7 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
   const TABS = createMode ? TABS_CREATE : TABS_DEFAULT;
   const [activeTab, setActiveTab] = useState<TabId>(createMode ? 'basic' : 'address');
   const [basicInfo, setBasicInfo] = useState<BasicInfo>(EMPTY_BASIC_INFO);
+  const [customerNameError, setCustomerNameError] = useState('');
 
   // ── 地址編輯 Drawer ──────────────────────────────────────────
   // ── 複製地址回饋 ──────────────────────────────────────────────
@@ -1046,7 +1033,7 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
     const emails: EmailEntry[] = addPersonForm.email.trim()
       ? [{ id: `em_${nextEmailIdRef.current++}`, email: addPersonForm.email.trim(), purpose: '', isPrimary: true, isActive: true, updatedAt: today() }]
       : [];
-    setLocalPersons(prev => [...prev, { id: `p_${nextPersonIdRef.current++}`, name: addPersonForm.name.trim(), title: addPersonForm.title.trim(), phones, emails, updatedAt: today() }]);
+    setLocalPersons(prev => [...prev, { id: `p_${nextPersonIdRef.current++}`, name: addPersonForm.name.trim(), phones, emails, updatedAt: today() }]);
     setShowAddPersonModal(false);
     setAddPersonForm(EMPTY_PERSON_FORM);
     setAddPersonErrors({});
@@ -1054,7 +1041,7 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
 
   const handleEditPersonSave = () => {
     if (!editPersonForm.name.trim()) { setEditPersonErrors({ name: '聯絡人名稱為必填' }); return; }
-    setLocalPersons(prev => prev.map(p => p.id === editingPerson!.id ? { ...p, name: editPersonForm.name.trim(), title: editPersonForm.title.trim(), updatedAt: today() } : p));
+    setLocalPersons(prev => prev.map(p => p.id === editingPerson!.id ? { ...p, name: editPersonForm.name.trim(), updatedAt: today() } : p));
     setEditingPerson(null);
   };
 
@@ -1545,13 +1532,12 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
                   <button onClick={() => togglePersonExpanded(person.id)} className="flex items-center gap-[12px] flex-1 text-left min-w-0">
                     {isExpanded ? <ChevronDown className="w-[16px] h-[16px] text-[#01579b] shrink-0" /> : <ChevronRight className="w-[16px] h-[16px] text-[#01579b] shrink-0" />}
                     <span className="font-['Noto_Sans_TC',_sans-serif] text-[14px] text-[#1c1c1c] font-[600] shrink-0">{person.name}</span>
-                    {person.title && <span className="font-['Noto_Sans_TC',_sans-serif] text-[13px] text-[#7c808c] shrink-0">{person.title}</span>}
                     <span className="text-[#e5e7eb] shrink-0">|</span>
                     <span className="font-['Noto_Sans_TC',_sans-serif] text-[13px] text-[#374151] truncate">{phoneParts ?? '—'}</span>
                     <span className="font-['Noto_Sans_TC',_sans-serif] text-[13px] text-[#374151] truncate">{primaryEmail?.email ?? '—'}</span>
                   </button>
                   <div className="flex items-center gap-[4px] shrink-0">
-                    <CwRoundButton icon="edit" title="編輯聯絡人" onClick={() => { setEditingPerson(person); setEditPersonForm({ name: person.name, title: person.title }); setEditPersonErrors({}); }} />
+                    <CwRoundButton icon="edit" title="編輯聯絡人" onClick={() => { setEditingPerson(person); setEditPersonForm({ name: person.name, phone: '', email: '' }); setEditPersonErrors({}); }} />
                     <CwRoundButton icon="delete" title="刪除聯絡人" onClick={() => handleDeletePerson(person.id)} />
                   </div>
                 </div>
@@ -1580,7 +1566,7 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
                         <table className="w-full text-[13px] font-['Noto_Sans_TC',_sans-serif]" style={{ borderCollapse: 'collapse' }}>
                           <thead>
                             <tr className="border-b border-[#e5e7eb]">
-                              {['主要', '電話號碼', '類型', '目的', '生效', '操作'].map(h => (
+                              {['主要', '電話號碼', '類型', '生效', '操作'].map(h => (
                                 <th key={h} className="py-[6px] px-[8px] text-left text-[#7c808c]" style={{ fontWeight: 500, whiteSpace: 'nowrap' }}>{h}</th>
                               ))}
                             </tr>
@@ -1593,11 +1579,10 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
                                   <td className="py-[6px] px-[8px]">{ph.isPrimary ? <PrimaryTag /> : <span className="text-[#d1d5db]">—</span>}</td>
                                   <td className="py-[6px] px-[8px] text-[#1c1c1c]">{num || '—'}</td>
                                   <td className="py-[6px] px-[8px] text-[#374151]">{ph.type || '—'}</td>
-                                  <td className="py-[6px] px-[8px] text-[#374151]">{ph.purpose || '—'}</td>
                                   <td className="py-[6px] px-[8px]"><ActiveTag active={ph.isActive} /></td>
                                   <td className="py-[6px] px-[8px]">
                                     <div className="flex gap-[4px]">
-                                      <CwRoundButton icon="edit" title="編輯" onClick={() => { setEditingPhone({ personId: person.id, entry: ph }); setEditPhoneForm({ countryCode: ph.countryCode, areaCode: ph.areaCode, phone: ph.phone, ext: ph.ext, type: ph.type, purpose: ph.purpose, isPrimary: ph.isPrimary, isActive: ph.isActive }); setEditPhoneErrors({}); }} />
+                                      <CwRoundButton icon="edit" title="編輯" onClick={() => { setEditingPhone({ personId: person.id, entry: ph }); setEditPhoneForm({ countryCode: ph.countryCode, areaCode: ph.areaCode, phone: ph.phone, ext: ph.ext, type: ph.type, isPrimary: ph.isPrimary, isActive: ph.isActive }); setEditPhoneErrors({}); }} />
                                       <CwRoundButton icon="delete" title="刪除" onClick={() => handleDeletePhone(person.id, ph.id)} />
                                     </div>
                                   </td>
@@ -1631,7 +1616,7 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
                         <table className="w-full text-[13px] font-['Noto_Sans_TC',_sans-serif]" style={{ borderCollapse: 'collapse' }}>
                           <thead>
                             <tr className="border-b border-[#e5e7eb]">
-                              {['主要', 'Email', '目的', '生效', '操作'].map(h => (
+                              {['主要', 'Email', '生效', '操作'].map(h => (
                                 <th key={h} className="py-[6px] px-[8px] text-left text-[#7c808c]" style={{ fontWeight: 500, whiteSpace: 'nowrap' }}>{h}</th>
                               ))}
                             </tr>
@@ -1641,11 +1626,10 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
                               <tr key={em.id} className="border-b border-[#f3f4f6] hover:bg-[#f9fafb]">
                                 <td className="py-[6px] px-[8px]">{em.isPrimary ? <PrimaryTag /> : <span className="text-[#d1d5db]">—</span>}</td>
                                 <td className="py-[6px] px-[8px] text-[#1c1c1c]">{em.email}</td>
-                                <td className="py-[6px] px-[8px] text-[#374151]">{em.purpose || '—'}</td>
                                 <td className="py-[6px] px-[8px]"><ActiveTag active={em.isActive} /></td>
                                 <td className="py-[6px] px-[8px]">
                                   <div className="flex gap-[4px]">
-                                    <CwRoundButton icon="edit" title="編輯" onClick={() => { setEditingEmail({ personId: person.id, entry: em }); setEditEmailForm({ email: em.email, purpose: em.purpose, isPrimary: em.isPrimary, isActive: em.isActive }); setEditEmailErrors({}); }} />
+                                    <CwRoundButton icon="edit" title="編輯" onClick={() => { setEditingEmail({ personId: person.id, entry: em }); setEditEmailForm({ email: em.email, isPrimary: em.isPrimary, isActive: em.isActive }); setEditEmailErrors({}); }} />
                                     <CwRoundButton icon="delete" title="刪除" onClick={() => handleDeleteEmail(person.id, em.id)} />
                                   </div>
                                 </td>
@@ -1742,10 +1726,14 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
         <div className="py-[12px]">
         {activeTab === 'basic' ? (() => {
   const labelStyle: React.CSSProperties = { fontFamily: 'var(--font-noto-sans-tc)', fontSize: 'var(--text-base)', fontWeight: 350 };
-  const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
+  const Field = ({ label, children, required, error }: { label: string; children: React.ReactNode; required?: boolean; error?: string }) => (
     <div className="flex flex-col gap-[4px]">
-      <span style={labelStyle}>{label}</span>
+      <span style={labelStyle}>
+        {label}
+        {required && <span className="text-[#e53e3e] ml-[2px]">*</span>}
+      </span>
       {children}
+      {error && <span className="text-[12px] text-[#e53e3e] font-['Noto_Sans_TC',_sans-serif]">{error}</span>}
     </div>
   );
   const customerIdentityOptions = [
@@ -1833,8 +1821,8 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
         <div />
 
         {/* Row 2: 客戶名稱 / 客戶分類 / 付款條件 / 客戶狀態 */}
-        <Field label="客戶名稱">
-          <CwInput value={basicInfo.customerName} onChange={e => upd('customerName', e.target.value)} placeholder="請輸入" />
+        <Field label="客戶名稱" required error={customerNameError}>
+          <CwInput value={basicInfo.customerName} onChange={e => { upd('customerName', e.target.value); if (e.target.value.trim()) setCustomerNameError(''); }} placeholder="請輸入" error={customerNameError || undefined} />
         </Field>
         <OtherSelectField label="客戶分類" fKey="customerCategory" options={oCategoryOptions} required />
         <OtherSelectField label="付款條件" fKey="checkoutCycle" options={oCycleOptions} required />
@@ -1871,12 +1859,6 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
         </Field>
         <Field label="統一編號">
           <CwInput value={basicInfo.taxId} onChange={e => upd('taxId', e.target.value)} placeholder="請輸入" />
-        </Field>
-        <Field label="同意行銷更改日期">
-          <CwDatePicker value={basicInfo.marketingConsentDate ? new Date(basicInfo.marketingConsentDate) : null} onChange={d => upd('marketingConsentDate', d ? d.toISOString().slice(0, 10) : '')} />
-        </Field>
-        <Field label="最後交易日期">
-          <CwDatePicker value={basicInfo.lastTransactionDate ? new Date(basicInfo.lastTransactionDate) : null} onChange={d => upd('lastTransactionDate', d ? d.toISOString().slice(0, 10) : '')} />
         </Field>
       </div>
     ) : (
@@ -2311,7 +2293,7 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
       {/* 最近訂貨日期（獨立欄位） */}
       <div className="grid grid-cols-4 gap-x-[24px]">
         <div className="flex flex-col gap-[4px]">
-          <span style={labelStyle}>最近訂貨日期</span>
+          <span style={labelStyle}>最後交易日期</span>
           {editable ? (
             <CwDatePicker
               value={data.lastOrderDate ? new Date(data.lastOrderDate) : null}
@@ -2627,7 +2609,9 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
         <div className="flex items-center justify-end gap-[8px] pt-[16px] pb-[40px]">
           <CwButton variant="primary" appearance="outlined" size="m" onClick={onClose}>取消</CwButton>
           <CwButton variant="primary" appearance="outlined" size="m">暫存</CwButton>
-          <CwButton variant="primary" appearance="filled" size="m">儲存</CwButton>
+          <CwButton variant="primary" appearance="filled" size="m" onClick={() => {
+            if (!basicInfo.customerName.trim()) { setCustomerNameError('客戶名稱為必填'); return; }
+          }}>儲存</CwButton>
         </div>
         </div>
       )}
