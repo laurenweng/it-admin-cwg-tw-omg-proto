@@ -217,7 +217,7 @@ export function ERPCustomerSearch() {
     Email: '',
     手機: '',
     市話: '',
-    客戶狀態: '',
+    客戶狀態: 'active',
   });
 
   const [showContactDetail, setShowContactDetail] = useState(false);
@@ -240,7 +240,7 @@ export function ERPCustomerSearch() {
   const handleReset = () => {
     setSearchForm({
       客戶編號: '', 客戶名稱: '', 統編: '', 地址: '',
-      聯絡人: '', Email: '', 手機: '', 市話: '', 客戶狀態: '',
+      聯絡人: '', Email: '', 手機: '', 市話: '', 客戶狀態: 'active',
     });
     setShowContactDetail(false);
     setHasSearched(false);

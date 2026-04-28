@@ -13,6 +13,9 @@ import { CwButton } from "./CwButton";
 import { CwTooltip } from './CwTooltip';
 import { CwSelect } from './CwSelect';
 import { CwDatePicker } from './CwDatePicker';
+import { CwPopup } from './CwPopup';
+import { CwToast } from './CwToast';
+import { CwTextButton } from './CwTextButton';
 
 export interface ERPCustomerInfo {
   customerNumber: string;
@@ -58,7 +61,7 @@ interface AddressRecord {
 
 // 組合成完整地址字串，供列表顯示與複製使用
 const fullAddress = (r: Pick<AddressRecord, 'country' | 'postalCode' | 'city' | 'street'>) =>
-  [r.country, r.postalCode, r.city, r.street].filter(Boolean).join(' ');
+  [r.country === '台灣 Taiwan' ? '' : r.country, r.postalCode, r.city, r.street].filter(Boolean).join(' ');
 
 // 地址表單型別（新增 & 編輯共用）
 interface AddressForm {
@@ -151,7 +154,7 @@ interface ContactPerson {
   updatedAt: string;
 }
 
-interface PersonForm { name: string; title: string; }
+interface PersonForm { name: string; title: string; phone: string; email: string; }
 interface PhoneForm { countryCode: string; areaCode: string; phone: string; ext: string; type: string; purpose: string; isPrimary: boolean; isActive: boolean; }
 interface EmailForm { email: string; purpose: string; isPrimary: boolean; isActive: boolean; }
 
@@ -159,7 +162,7 @@ const PHONE_TYPE_OPTIONS = ["Tel(O)", "Tel(H)", "Mobile", "Fax(O)", "Fax(H)", "P
 
 const EMPTY_PHONE_FORM: PhoneForm = { countryCode: '886', areaCode: '', phone: '', ext: '', type: 'Tel(O)', purpose: '', isPrimary: false, isActive: true };
 const EMPTY_EMAIL_FORM: EmailForm = { email: '', purpose: '', isPrimary: false, isActive: true };
-const EMPTY_PERSON_FORM: PersonForm = { name: '', title: '' };
+const EMPTY_PERSON_FORM: PersonForm = { name: '', title: '', phone: '', email: '' };
 
 // ── Mock 地址資料（以客戶編號為 key）──────────────────────────────
 // isPrimary：全客戶唯一一筆（預設主要地址）
@@ -557,7 +560,7 @@ function AddressFormFields({
         </label>
         <CwInput
           value={form.street}
-          placeholder="例：中山北路二段7號3樓"
+          placeholder="中山北路二段7號3樓"
           onChange={(e) => onChange('street', e.target.value)}
         />
         {errors.street && <span className={errorClass}>{errors.street}</span>}
@@ -640,12 +643,20 @@ function PersonFormFields({ form, errors, onChange }: {
     <div className="flex flex-col gap-[16px]">
       <div className={fc}>
         <label className={lc} style={{ fontWeight: 500 }}>聯絡人名稱 <span className="text-[#e53e3e]">*</span></label>
-        <CwInput value={form.name} placeholder="例：王小明" onChange={(e) => onChange('name', e.target.value)} />
+        <CwInput value={form.name} placeholder="王小明" onChange={(e) => onChange('name', e.target.value)} />
         {errors.name && <span className={ec}>{errors.name}</span>}
       </div>
       <div className={fc}>
         <label className={lc} style={{ fontWeight: 500 }}>職稱</label>
-        <CwInput value={form.title} placeholder="例：業務副理" onChange={(e) => onChange('title', e.target.value)} />
+        <CwInput value={form.title} placeholder="業務副理" onChange={(e) => onChange('title', e.target.value)} />
+      </div>
+      <div className={fc}>
+        <label className={lc} style={{ fontWeight: 500 }}>電話</label>
+        <CwInput value={form.phone} placeholder="0912-345-678" onChange={(e) => onChange('phone', e.target.value)} />
+      </div>
+      <div className={fc}>
+        <label className={lc} style={{ fontWeight: 500 }}>Email</label>
+        <CwInput value={form.email} placeholder="user@example.com" onChange={(e) => onChange('email', e.target.value)} />
       </div>
     </div>
   );
@@ -663,8 +674,13 @@ function PhoneFormFields({ form, errors, onChange }: {
     <div className="flex flex-col gap-[16px]">
       <div className="grid grid-cols-[1fr_110px] gap-[12px]">
         <div className={fc}>
-          <label className={lc} style={{ fontWeight: 500 }}>電話號碼 <span className="text-[#e53e3e]">*</span></label>
-          <CwInput value={form.phone} placeholder="2563-8888" onChange={(e) => onChange('phone', e.target.value)} />
+          <label className={`${lc} flex items-center gap-[4px]`} style={{ fontWeight: 500 }}>
+            電話號碼 <span className="text-[#e53e3e]">*</span>
+            <CwTooltip content="電話一律加區域號碼，並以「-」區隔，手機號碼不加分隔號">
+              <Info className="w-[13px] h-[13px] text-[#01579b] cursor-help shrink-0" />
+            </CwTooltip>
+          </label>
+          <CwInput value={form.phone} placeholder="02-2563-8888" onChange={(e) => onChange('phone', e.target.value)} />
           {errors.phone && <span className={ec}>{errors.phone}</span>}
         </div>
         <div className={fc}>
@@ -683,7 +699,7 @@ function PhoneFormFields({ form, errors, onChange }: {
         </div>
         <div className={fc}>
           <label className={lc} style={{ fontWeight: 500 }}>聯絡目的</label>
-          <CwInput value={form.purpose} placeholder="例：主要聯繫" onChange={(e) => onChange('purpose', e.target.value)} />
+          <CwInput value={form.purpose} placeholder="主要聯繫" onChange={(e) => onChange('purpose', e.target.value)} />
         </div>
       </div>
       <label className="flex items-center gap-[10px] cursor-pointer select-none">
@@ -722,7 +738,7 @@ function EmailFormFields({ form, errors, onChange }: {
       </div>
       <div className={fc}>
         <label className={lc} style={{ fontWeight: 500 }}>聯絡目的</label>
-        <CwInput value={form.purpose} placeholder="例：主要信件" onChange={(e) => onChange('purpose', e.target.value)} />
+        <CwInput value={form.purpose} placeholder="主要信件" onChange={(e) => onChange('purpose', e.target.value)} />
       </div>
       <label className="flex items-center gap-[10px] cursor-pointer select-none">
         <input type="checkbox" checked={form.isPrimary} onChange={(e) => onChange('isPrimary', e.target.checked)}
@@ -894,20 +910,38 @@ const mockMergeRelations: MergeRelation[] = [
   { id: 'mr3', parentNo: 'C001234', parentName: '天下集團採購部', childNo: 'C009876', childName: '天下集團行政室', isActive: false, note: '已停用' },
 ];
 
-type TabId = 'basic' | 'address' | 'contact' | 'other' | 'subscription' | 'relation';
+// ── 訂戶權益 mock 資料 ────────────────────────────────────────
+const mockPaperRightsData = [
+  { id: 1, product: '天下雜誌', subscriberId: '1234567', subscriberName: '王小明', autoRenewal: '是', recentStartDate: '2024-11-01', recentEndDate: '2025-10-31', subscriptionStartDate: '2024-11-01', subscriptionEndDate: '2025-10-31', physicalYears: '1' },
+  { id: 2, product: '康健雜誌', subscriberId: '7654321', subscriberName: '陳美玲', autoRenewal: '否', recentStartDate: '2024-06-01', recentEndDate: '2025-05-31', subscriptionStartDate: '2024-06-01', subscriptionEndDate: '2025-05-31', physicalYears: '2' },
+];
+const mockDigitalRightsData = [
+  { id: 1, memberAccount: 'wang.xiaoming@example.com', memberEmail: 'wang.xiaoming@example.com', product: '天下雜誌', autoRenewal: '是', recentStartDate: '2024-11-01', recentEndDate: '2025-10-31', rightsExpiry: '2025-10-31', physicalYears: '1' },
+];
+const mockWebsiteRightsData = [
+  { id: 1, website: '天下', expiryDate: '', action: '' },
+  { id: 2, website: '胡敏技', expiryDate: '', action: '' },
+  { id: 3, website: '康健', expiryDate: '', action: '' },
+];
+const mockAppRightsData = [
+  { id: 1, app: '天下每日報APP', expiryDate: '', action: '' },
+];
+
+type TabId = 'basic' | 'address' | 'contact' | 'other' | 'subscription' | 'relation' | 'subscriber-rights';
 
 const TABS_DEFAULT: { id: TabId; label: string }[] = [
-  { id: 'address',      label: '地址' },
-  { id: 'contact',      label: '聯絡資訊' },
-  { id: 'subscription', label: '訂閱年資' },
-  { id: 'relation',     label: '客戶關聯' },
-  { id: 'basic',        label: '基本資料' },
+  { id: 'address',           label: '地址' },
+  { id: 'contact',           label: '聯絡資訊' },
+  { id: 'subscription',      label: '訂閱年資' },
+  { id: 'relation',          label: '父子關聯' },
+  { id: 'basic',             label: '基本資料' },
+  { id: 'subscriber-rights', label: '訂戶權益' },
 ];
 
 const TABS_CREATE: { id: TabId; label: string }[] = [
+  { id: 'basic',   label: '基本資料' },
   { id: 'address', label: '地址' },
   { id: 'contact', label: '聯絡資訊' },
-  { id: 'basic',   label: '基本資料' },
 ];
 
 interface BasicInfo {
@@ -953,6 +987,7 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
   };
 
   // ── 地址列表（本地 state，支援新增後即時反映）──────────────────
+  const [showActiveAddressOnly, setShowActiveAddressOnly] = useState(false);
   const [localAddresses, setLocalAddresses] = useState<AddressRecord[]>(
     () => mockAddressByCustomer[customer.customerNumber] ?? []
   );
@@ -1007,7 +1042,13 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
   // 聯絡人 CRUD
   const handleAddPersonConfirm = () => {
     if (!addPersonForm.name.trim()) { setAddPersonErrors({ name: '聯絡人名稱為必填' }); return; }
-    setLocalPersons(prev => [...prev, { id: `p_${nextPersonIdRef.current++}`, name: addPersonForm.name.trim(), title: addPersonForm.title.trim(), phones: [], emails: [], updatedAt: today() }]);
+    const phones: PhoneEntry[] = addPersonForm.phone.trim()
+      ? [{ id: `ph_${nextPhoneIdRef.current++}`, countryCode: '886', areaCode: '', phone: addPersonForm.phone.trim(), ext: '', type: 'Tel(O)', purpose: '', isPrimary: true, isActive: true, updatedAt: today() }]
+      : [];
+    const emails: EmailEntry[] = addPersonForm.email.trim()
+      ? [{ id: `em_${nextEmailIdRef.current++}`, email: addPersonForm.email.trim(), purpose: '', isPrimary: true, isActive: true, updatedAt: today() }]
+      : [];
+    setLocalPersons(prev => [...prev, { id: `p_${nextPersonIdRef.current++}`, name: addPersonForm.name.trim(), title: addPersonForm.title.trim(), phones, emails, updatedAt: today() }]);
     setShowAddPersonModal(false);
     setAddPersonForm(EMPTY_PERSON_FORM);
     setAddPersonErrors({});
@@ -1019,9 +1060,22 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
     setEditingPerson(null);
   };
 
+  // 電話格式驗證：09 開頭為手機（須為 10 碼純數字），否則須含「-」區隔區域號碼
+  const validatePhone = (phone: string): string | null => {
+    const p = phone.trim();
+    if (!p) return '電話號碼為必填';
+    if (p.startsWith('09')) {
+      if (!/^09\d{8}$/.test(p)) return '手機號碼格式錯誤，請輸入 10 碼數字（例：0912345678）';
+      return null;
+    }
+    if (!p.includes('-')) return '非手機號碼請加區域號碼，並以「-」區隔（例：02-2563-8888）';
+    return null;
+  };
+
   // 電話 CRUD
   const handleAddPhoneConfirm = () => {
-    if (!addPhoneForm.phone.trim()) { setAddPhoneErrors({ phone: '電話號碼為必填' }); return; }
+    const err = validatePhone(addPhoneForm.phone);
+    if (err) { setAddPhoneErrors({ phone: err }); return; }
     const newEntry: PhoneEntry = { id: `ph_${nextPhoneIdRef.current++}`, ...addPhoneForm, phone: addPhoneForm.phone.trim(), updatedAt: today() };
     setLocalPersons(prev => prev.map(p => {
       if (p.id !== addPhonePersonId) return p;
@@ -1034,7 +1088,8 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
   };
 
   const handleEditPhoneSave = () => {
-    if (!editPhoneForm.phone.trim()) { setEditPhoneErrors({ phone: '電話號碼為必填' }); return; }
+    const err = validatePhone(editPhoneForm.phone);
+    if (err) { setEditPhoneErrors({ phone: err }); return; }
     setLocalPersons(prev => prev.map(p => {
       if (p.id !== editingPhone!.personId) return p;
       const phones = p.phones.map(ph => {
@@ -1143,7 +1198,7 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
     );
   };
   
-  // ── 客戶關聯 ────────────────────────────────────────────────────
+  // ── 父子關聯 ────────────────────────────────────────────────────
   const [mergeRelations, setMergeRelations] = useState<MergeRelation[]>(createMode ? [] : mockMergeRelations);
   const [editingRelation, setEditingRelation] = useState<MergeRelation | null>(null);
   const [editRelationForm, setEditRelationForm] = useState<MergeRelationForm>(EMPTY_MERGE_FORM);
@@ -1151,6 +1206,87 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
   const [newRelationRole, setNewRelationRole] = useState<'parent' | 'child' | ''>('');
   const [showCustomerLookup, setShowCustomerLookup] = useState<'parent' | 'child' | null>(null);
   const [customerLookupKeyword, setCustomerLookupKeyword] = useState('');
+
+  // ── 訂戶權益 state ───────────────────────────────────────────
+  const [isRightsPopupOpen, setIsRightsPopupOpen] = useState(false);
+  const [selectedRightsItem, setSelectedRightsItem] = useState<any>(null);
+  const [selectedRightsType, setSelectedRightsType] = useState<'website' | 'app'>('website');
+  const [rightsExpiryDate, setRightsExpiryDate] = useState<Date | null>(null);
+  const [rightsToastMessage, setRightsToastMessage] = useState('');
+  const [rightsToastType, setRightsToastType] = useState<'success' | 'error' | 'info' | 'warning' | 'question'>('success');
+  const [showRightsToast, setShowRightsToast] = useState(false);
+
+  // ── 訂戶權益 handlers ────────────────────────────────────────
+  const handleRightsConfirm = () => {
+    setRightsToastMessage('權益修改成功');
+    setRightsToastType('success');
+    setShowRightsToast(true);
+    setIsRightsPopupOpen(false);
+    setSelectedRightsItem(null);
+    setRightsExpiryDate(null);
+  };
+  const handleRightsCancel = () => {
+    setIsRightsPopupOpen(false);
+    setSelectedRightsItem(null);
+    setRightsExpiryDate(null);
+  };
+  const handleRightsSetToday = () => setRightsExpiryDate(new Date());
+
+  // ── 訂戶權益 columns ─────────────────────────────────────────
+  const erpPaperRightsColumns: CwTableColumn[] = [
+    { key: 'id', title: '', width: '60px' },
+    { key: 'product', title: '產品名', width: '120px' },
+    { key: 'subscriberId', title: '訂戶編號', width: '110px' },
+    { key: 'subscriberName', title: '訂戶姓名', width: '110px' },
+    { key: 'autoRenewal', title: '自動續訂', width: '100px' },
+    { key: 'recentStartDate', title: '最近訂閱起日', width: '120px' },
+    { key: 'recentEndDate', title: '最近訂閱到期日', width: '140px' },
+    { key: 'subscriptionStartDate', title: '訂閱起始日', width: '120px' },
+    { key: 'subscriptionEndDate', title: '訂閱到期日', width: '120px' },
+    { key: 'physicalYears', title: '累積年資', width: '100px' },
+    { key: 'action', title: '功能', width: '100px', align: 'center',
+      render: (_v: any, record: any) => (
+        <CwTextButton label="權益紀錄" icon="document" onClick={() => console.log('查看權益紀錄', record.subscriberId)} />
+      ),
+    },
+  ];
+  const erpDigitalRightsColumns: CwTableColumn[] = [
+    { key: 'id', title: '#', width: '60px' },
+    { key: 'memberAccount', title: '會員帳號', width: '140px' },
+    { key: 'memberEmail', title: '會員email', width: '180px' },
+    { key: 'product', title: '產品名', width: '110px' },
+    { key: 'autoRenewal', title: '自動續訂', width: '100px' },
+    { key: 'recentStartDate', title: '最近訂閱起日', width: '120px' },
+    { key: 'recentEndDate', title: '最近訂閱到期日', width: '140px' },
+    { key: 'rightsExpiry', title: '權益到期日', width: '120px' },
+    { key: 'physicalYears', title: '累積年資', width: '100px' },
+    { key: 'action', title: '功能', width: '100px', align: 'center',
+      render: (_v: any, record: any) => (
+        <div className="flex flex-col gap-[8px]">
+          <CwTextButton label="權益紀錄" icon="document" onClick={() => console.log('查看權益紀錄', record.id)} />
+          <CwTextButton label="修改權益" icon="edit" onClick={() => { setSelectedRightsItem(record); setSelectedRightsType('website'); setRightsExpiryDate(record.rightsExpiry ? new Date(record.rightsExpiry) : null); setIsRightsPopupOpen(true); }} />
+        </div>
+      ),
+    },
+  ];
+  const erpWebsiteRightsColumns: CwTableColumn[] = [
+    { key: 'website', title: '網站', width: '180px' },
+    { key: 'expiryDate', title: '權益到期日', width: '150px' },
+    { key: 'action', title: '功能', width: '100px', align: 'center',
+      render: (_v: any, record: any) => (
+        <CwTextButton label="修改權益" icon="edit" onClick={() => { setSelectedRightsItem(record); setSelectedRightsType('website'); setRightsExpiryDate(record.expiryDate ? new Date(record.expiryDate) : null); setIsRightsPopupOpen(true); }} />
+      ),
+    },
+  ];
+  const erpAppRightsColumns: CwTableColumn[] = [
+    { key: 'app', title: 'APP', width: '200px' },
+    { key: 'expiryDate', title: '權益到期日', width: '150px' },
+    { key: 'action', title: '功能', width: '100px', align: 'center',
+      render: (_v: any, record: any) => (
+        <CwTextButton label="修改權益" icon="edit" onClick={() => { setSelectedRightsItem(record); setSelectedRightsType('app'); setRightsExpiryDate(record.expiryDate ? new Date(record.expiryDate) : null); setIsRightsPopupOpen(true); }} />
+      ),
+    },
+  ];
 
   const handleEditRelationOpen = (rel: MergeRelation) => {
     setEditingRelation(rel);
@@ -1380,16 +1516,37 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
 
   const openAddPersonModal = () => { setAddPersonForm(EMPTY_PERSON_FORM); setAddPersonErrors({}); setShowAddPersonModal(true); };
 
+  const allExpanded = localPersons.length > 0 && localPersons.every(p => expandedPersonIds.includes(p.id));
+  const handleToggleAll = () => {
+    if (allExpanded) {
+      setExpandedPersonIds([]);
+    } else {
+      setExpandedPersonIds(localPersons.map(p => p.id));
+    }
+  };
+
   // ── 聯絡資訊 tab render ───────────────────────────────────────
   const ContactTab = () => (
     <div className="space-y-[16px]">
-      <div className="flex items-center justify-between">
-        <p className="text-[13px] text-[#7c808c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>
-          共 {localPersons.length} 位聯絡人，{contactsTotal} 筆聯絡方式
-        </p>
-        <CwButton variant="primary" appearance="filled" size="m" leftIcon={<Plus size={13} />} onClick={openAddPersonModal}>
-          新增聯絡人
-        </CwButton>
+      <div className="flex flex-col gap-[8px]">
+        <div className="flex items-center justify-between">
+          <CwButton variant="primary" appearance="filled" size="m" leftIcon={<Plus size={13} />} onClick={openAddPersonModal}>
+            新增聯絡人
+          </CwButton>
+        </div>
+        <div className="flex items-end justify-between">
+          <p className="text-[13px] text-[#7c808c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>
+            共 {localPersons.length} 位聯絡人，{contactsTotal} 筆聯絡方式
+          </p>
+          {localPersons.length > 0 && (
+            <button
+              onClick={handleToggleAll}
+              className="flex items-center gap-[4px] px-[20px] py-[6px] rounded-[var(--radius)] border border-[#01579b] text-[#01579b] hover:bg-[#e6f7ff] transition-colors font-['Noto_Sans_TC',_sans-serif] text-[14px] font-[350] whitespace-nowrap"
+            >
+              {allExpanded ? '全部收合' : '全部展開'}
+            </button>
+          )}
+        </div>
       </div>
 
       {localPersons.length === 0 ? (
@@ -1524,101 +1681,6 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
               </div>
             );
           })}
-        </div>
-      )}
-
-      {/* 新增聯絡人 modal */}
-      {showAddPersonModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30">
-          <div ref={addPersonModalRef} className="bg-white rounded-[8px] shadow-[0_8px_32px_rgba(0,0,0,0.18)] w-[400px] flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between px-[24px] py-[16px] border-b border-[#e5e7eb]">
-              <span className="font-['Noto_Sans_TC',_sans-serif] text-[16px] text-[#1c1c1c]" style={{ fontWeight: 700 }}>新增聯絡人</span>
-              <button onClick={() => setShowAddPersonModal(false)} className="w-[28px] h-[28px] flex items-center justify-center rounded hover:bg-[#f3f4f6] text-[#7c808c]">✕</button>
-            </div>
-            <div className="px-[24px] py-[20px]">
-              <PersonFormFields form={addPersonForm} errors={addPersonErrors} onChange={(f, v) => { setAddPersonForm(prev => ({ ...prev, [f]: v })); if (v) setAddPersonErrors(prev => { const n = { ...prev }; delete n[f]; return n; }); }} />
-            </div>
-            <div className="flex justify-end gap-[8px] px-[24px] py-[16px] border-t border-[#e5e7eb] bg-[#f9fafb]">
-              <CwButton variant="primary" appearance="outlined" size="m" onClick={() => setShowAddPersonModal(false)}>取消</CwButton>
-              <CwButton variant="primary" appearance="filled" size="m" onClick={handleAddPersonConfirm}>確認新增</CwButton>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 新增電話 modal */}
-      {addPhonePersonId && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30">
-          <div ref={addPhoneModalRef} className="bg-white rounded-[8px] shadow-[0_8px_32px_rgba(0,0,0,0.18)] w-[440px] flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between px-[24px] py-[16px] border-b border-[#e5e7eb]">
-              <span className="font-['Noto_Sans_TC',_sans-serif] text-[16px] text-[#1c1c1c]" style={{ fontWeight: 700 }}>新增電話</span>
-              <button onClick={() => setAddPhonePersonId(null)} className="w-[28px] h-[28px] flex items-center justify-center rounded hover:bg-[#f3f4f6] text-[#7c808c]">✕</button>
-            </div>
-            <div className="px-[24px] py-[20px]">
-              <PhoneFormFields form={addPhoneForm} errors={addPhoneErrors} onChange={(f, v) => { setAddPhoneForm(prev => ({ ...prev, [f]: v })); if (v) setAddPhoneErrors(prev => { const n = { ...prev }; delete n[f as keyof PhoneForm]; return n; }); }} />
-            </div>
-            <div className="flex justify-end gap-[8px] px-[24px] py-[16px] border-t border-[#e5e7eb] bg-[#f9fafb]">
-              <CwButton variant="primary" appearance="outlined" size="m" onClick={() => setAddPhonePersonId(null)}>取消</CwButton>
-              <CwButton variant="primary" appearance="filled" size="m" onClick={handleAddPhoneConfirm}>確認新增</CwButton>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 編輯電話 modal */}
-      {editingPhone && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30">
-          <div ref={editPhoneModalRef} className="bg-white rounded-[8px] shadow-[0_8px_32px_rgba(0,0,0,0.18)] w-[440px] flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between px-[24px] py-[16px] border-b border-[#e5e7eb]">
-              <span className="font-['Noto_Sans_TC',_sans-serif] text-[16px] text-[#1c1c1c]" style={{ fontWeight: 700 }}>編輯電話</span>
-              <button onClick={() => setEditingPhone(null)} className="w-[28px] h-[28px] flex items-center justify-center rounded hover:bg-[#f3f4f6] text-[#7c808c]">✕</button>
-            </div>
-            <div className="px-[24px] py-[20px]">
-              <PhoneFormFields form={editPhoneForm} errors={editPhoneErrors} onChange={(f, v) => { setEditPhoneForm(prev => ({ ...prev, [f]: v })); if (v) setEditPhoneErrors(prev => { const n = { ...prev }; delete n[f as keyof PhoneForm]; return n; }); }} />
-            </div>
-            <div className="flex justify-end gap-[8px] px-[24px] py-[16px] border-t border-[#e5e7eb] bg-[#f9fafb]">
-              <CwButton variant="primary" appearance="outlined" size="m" onClick={() => setEditingPhone(null)}>取消</CwButton>
-              <CwButton variant="primary" appearance="filled" size="m" onClick={handleEditPhoneSave}>儲存</CwButton>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 新增 Email modal */}
-      {addEmailPersonId && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30">
-          <div ref={addEmailModalRef} className="bg-white rounded-[8px] shadow-[0_8px_32px_rgba(0,0,0,0.18)] w-[440px] flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between px-[24px] py-[16px] border-b border-[#e5e7eb]">
-              <span className="font-['Noto_Sans_TC',_sans-serif] text-[16px] text-[#1c1c1c]" style={{ fontWeight: 700 }}>新增 Email</span>
-              <button onClick={() => setAddEmailPersonId(null)} className="w-[28px] h-[28px] flex items-center justify-center rounded hover:bg-[#f3f4f6] text-[#7c808c]">✕</button>
-            </div>
-            <div className="px-[24px] py-[20px]">
-              <EmailFormFields form={addEmailForm} errors={addEmailErrors} onChange={(f, v) => { setAddEmailForm(prev => ({ ...prev, [f]: v })); if (v) setAddEmailErrors(prev => { const n = { ...prev }; delete n[f as keyof EmailForm]; return n; }); }} />
-            </div>
-            <div className="flex justify-end gap-[8px] px-[24px] py-[16px] border-t border-[#e5e7eb] bg-[#f9fafb]">
-              <CwButton variant="primary" appearance="outlined" size="m" onClick={() => setAddEmailPersonId(null)}>取消</CwButton>
-              <CwButton variant="primary" appearance="filled" size="m" onClick={handleAddEmailConfirm}>確認新增</CwButton>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 編輯 Email modal */}
-      {editingEmail && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30">
-          <div ref={editEmailModalRef} className="bg-white rounded-[8px] shadow-[0_8px_32px_rgba(0,0,0,0.18)] w-[440px] flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between px-[24px] py-[16px] border-b border-[#e5e7eb]">
-              <span className="font-['Noto_Sans_TC',_sans-serif] text-[16px] text-[#1c1c1c]" style={{ fontWeight: 700 }}>編輯 Email</span>
-              <button onClick={() => setEditingEmail(null)} className="w-[28px] h-[28px] flex items-center justify-center rounded hover:bg-[#f3f4f6] text-[#7c808c]">✕</button>
-            </div>
-            <div className="px-[24px] py-[20px]">
-              <EmailFormFields form={editEmailForm} errors={editEmailErrors} onChange={(f, v) => { setEditEmailForm(prev => ({ ...prev, [f]: v })); if (v) setEditEmailErrors(prev => { const n = { ...prev }; delete n[f as keyof EmailForm]; return n; }); }} />
-            </div>
-            <div className="flex justify-end gap-[8px] px-[24px] py-[16px] border-t border-[#e5e7eb] bg-[#f9fafb]">
-              <CwButton variant="primary" appearance="outlined" size="m" onClick={() => setEditingEmail(null)}>取消</CwButton>
-              <CwButton variant="primary" appearance="filled" size="m" onClick={handleEditEmailSave}>儲存</CwButton>
-            </div>
-          </div>
         </div>
       )}
     </div>
@@ -1781,114 +1843,136 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
 
   return (
     <>
-    <div className="grid grid-cols-4 gap-x-[24px] gap-y-[16px]">
-      {createMode && <>
+    {createMode ? (
+      /* ── 新增客戶專用 grid ─────────────────────────────────── */
+      <div className="grid grid-cols-4 gap-x-[24px] gap-y-[16px]">
+        {/* Row 1: 客戶註記（col 1-2）/ 客戶編號（col 3-4） */}
+        <OtherTextField label="客戶註記" fKey="customerNote" colSpan={2} />
+        <Field label="客戶編號">
+          <CwInput value={basicInfo.customerNumber} onChange={e => upd('customerNumber', e.target.value)} placeholder="請輸入" />
+        </Field>
+        <div />
+
+        {/* Row 2: 客戶名稱 / 客戶分類 / 結帳週期 / 客戶狀態 */}
         <Field label="客戶名稱">
           <CwInput value={basicInfo.customerName} onChange={e => upd('customerName', e.target.value)} placeholder="請輸入" />
         </Field>
-        <Field label="客戶身分">
-          <CwSelect options={customerIdentityOptions} value={basicInfo.customerIdentity} onChange={v => upd('customerIdentity', v as string)} placeholder="請選擇" clearable />
-        </Field>
-        <Field label="狀態">
+        <OtherSelectField label="客戶分類" fKey="customerCategory" options={oCategoryOptions} required />
+        <OtherSelectField label="結帳週期" fKey="checkoutCycle" options={oCycleOptions} required />
+        <Field label="客戶狀態">
           <CwSelect options={statusOptions} value={basicInfo.status} onChange={v => upd('status', v as string)} placeholder="請選擇" clearable />
         </Field>
-        <Field label="客戶編號">
-          <CwInput value={basicInfo.customerNumber} onChange={e => upd('customerNumber', e.target.value)} placeholder="請輸入" />
+
+        {/* Row 3: 發票開立方式 / 統一編號 / 發票抬頭 / 公司名稱 */}
+        <OtherSelectField label="發票開立方式" fKey="invoiceIssueMethod" options={oInvoiceOptions} required />
+        <OtherTextField label="統一編號" fKey="taxIdNumber" />
+        <OtherTextField label="發票抬頭" fKey="invoiceTitle" />
+        <OtherTextField label="公司名稱" fKey="companyName" />
+
+        {/* Row 4: 性別 / 出生日期 / 婚姻 / 子女人數 */}
+        <OtherSelectField label="性別" fKey="gender" options={oGenderOptions} />
+        <OtherDateField label="出生日期" fKey="birthDate" />
+        <OtherSelectField label="婚姻" fKey="maritalStatus" options={oMaritalOptions} />
+        <OtherTextField label="子女人數" fKey="childrenCount" />
+
+        {/* Row 5: 行業別 / 職務別 / 職位別 / 年收入 */}
+        <OtherSelectField label="行業別" fKey="industry" options={oIndustryOptions} />
+        <OtherSelectField label="職務別" fKey="jobTitle" options={oJobTitleOptions} />
+        <OtherSelectField label="職位別" fKey="jobPosition" options={oJobPositionOptions} />
+        <OtherSelectField label="年收入" fKey="annualIncome" options={oIncomeOptions} />
+
+        {/* Row 6: 教育程度 */}
+        <OtherSelectField label="教育程度" fKey="education" options={oEducationOptions} />
+
+        {/* 其餘保留欄位 */}
+        <OtherSelectField label="是否同意行銷(訂單來源)" fKey="agreeMarketing" options={oMarketingOptions} />
+        <OtherSelectField label="每月購書金額" fKey="monthlyBookBudget" options={oBookBudgetOptions} />
+        <OtherTextField label="經常購書種類" fKey="frequentBookCategory" />
+        <Field label="客戶身分">
+          <CwSelect options={customerIdentityOptions} value={basicInfo.customerIdentity} onChange={v => upd('customerIdentity', v as string)} placeholder="請選擇" clearable />
         </Field>
         <Field label="統一編號">
           <CwInput value={basicInfo.taxId} onChange={e => upd('taxId', e.target.value)} placeholder="請輸入" />
         </Field>
-      </>}
-      <Field label="開立發票方式">
-        <CwSelect options={invoiceOptions} value={basicInfo.invoiceIssueMethod} onChange={v => upd('invoiceIssueMethod', v as string)} placeholder="請選擇" clearable />
-      </Field>
-      {/* <Field label="是否同意行銷">
-        <CwSelect options={marketingOptions} value={basicInfo.agreeMarketing} onChange={v => upd('agreeMarketing', v as string)} placeholder="請選擇" clearable disabled />
-      </Field> */}
-      {createMode && <>
         <Field label="同意行銷更改日期">
           <CwDatePicker value={basicInfo.marketingConsentDate ? new Date(basicInfo.marketingConsentDate) : null} onChange={d => upd('marketingConsentDate', d ? d.toISOString().slice(0, 10) : '')} />
         </Field>
-      </>}
-      <Field label="客戶分類">
-        <CwSelect options={categoryOptions} value={basicInfo.customerCategory} onChange={v => upd('customerCategory', v as string)} placeholder="請選擇" clearable />
-      </Field>
-      {!createMode && (
-        <Field label="狀態">
-          <CwSelect options={statusOptions} value={basicInfo.status} onChange={v => upd('status', v as string)} placeholder="請選擇" clearable />
-        </Field>
-      )}
-      {createMode && <>
         <Field label="最後交易日期">
           <CwDatePicker value={basicInfo.lastTransactionDate ? new Date(basicInfo.lastTransactionDate) : null} onChange={d => upd('lastTransactionDate', d ? d.toISOString().slice(0, 10) : '')} />
         </Field>
-      </>}
-    </div>
+      </div>
+    ) : (
+      /* ── ERP 客戶明細（完全不動）────────────────────────────── */
+      <>
+        <div className="grid grid-cols-4 gap-x-[24px] gap-y-[16px]">
+          {/* Row 1: 客戶名稱 / 客戶分類 / 結帳週期 / 客戶狀態 */}
+          <Field label="客戶名稱">
+            <CwInput value={basicInfo.customerName} onChange={e => upd('customerName', e.target.value)} placeholder="請輸入" />
+          </Field>
+          <OtherSelectField label="客戶分類" fKey="customerCategory" options={oCategoryOptions} required />
+          <OtherSelectField label="結帳週期" fKey="checkoutCycle" options={oCycleOptions} required />
+          <Field label="客戶狀態">
+            <CwSelect options={statusOptions} value={basicInfo.status} onChange={v => upd('status', v as string)} placeholder="請選擇" clearable />
+          </Field>
 
-    <div className="border-t border-[#e5e7eb] my-5" />
+          {/* Row 2: 發票開立方式 / 統一編號 / 發票抬頭 / 公司名稱 */}
+          <OtherSelectField label="發票開立方式" fKey="invoiceIssueMethod" options={oInvoiceOptions} required />
+          <OtherTextField label="統一編號" fKey="taxIdNumber" />
+          <OtherTextField label="發票抬頭" fKey="invoiceTitle" />
+          <OtherTextField label="公司名稱" fKey="companyName" />
 
-    <div className="grid grid-cols-4 gap-x-[24px] gap-y-[16px]">
-      <OtherTextField label="客戶註記" fKey="customerNote" colSpan={4} />
-      <OtherTextField label="統一編號" fKey="taxIdNumber" />
-      <OtherTextField label="發票抬頭" fKey="invoiceTitle" />
-      <OtherSelectField label="開立發票方式" fKey="invoiceIssueMethod" options={oInvoiceOptions} required />
-      <OtherSelectField label="是否同意行銷(訂單來源)" fKey="agreeMarketing" options={oMarketingOptions} />
-      <OtherSelectField label="結帳週期" fKey="checkoutCycle" options={oCycleOptions} required />
-      <OtherSelectField label="客戶分類" fKey="customerCategory" options={oCategoryOptions} required />
-      <OtherSelectField label="性別" fKey="gender" options={oGenderOptions} />
-      <OtherDateField label="出生日期" fKey="birthDate" />
-      <OtherSelectField label="婚姻" fKey="maritalStatus" options={oMaritalOptions} />
-      <OtherTextField label="子女人數" fKey="childrenCount" />
-      <OtherSelectField label="行業別" fKey="industry" options={oIndustryOptions} />
-      <OtherSelectField label="教育程度" fKey="education" options={oEducationOptions} />
-      <OtherSelectField label="職位別" fKey="jobPosition" options={oJobPositionOptions} />
-      <OtherSelectField label="年收入" fKey="annualIncome" options={oIncomeOptions} />
-      <OtherSelectField label="每月購書金額" fKey="monthlyBookBudget" options={oBookBudgetOptions} />
-      <OtherTextField label="經常購書種類" fKey="frequentBookCategory" />
-      <OtherTextField label="公司名稱" fKey="companyName" />
-      <OtherSelectField label="職務別" fKey="jobTitle" options={oJobTitleOptions} />
-    </div>
+          {/* Row 3: 客戶註記（整行） */}
+          <OtherTextField label="客戶註記" fKey="customerNote" colSpan={4} />
+
+          {/* Row 4: 性別 / 出生日期 / 婚姻 / 子女人數 */}
+          <OtherSelectField label="性別" fKey="gender" options={oGenderOptions} />
+          <OtherDateField label="出生日期" fKey="birthDate" />
+          <OtherSelectField label="婚姻" fKey="maritalStatus" options={oMaritalOptions} />
+          <OtherTextField label="子女人數" fKey="childrenCount" />
+
+          {/* Row 5: 行業別 / 職務別 / 職位別 / 年收入 */}
+          <OtherSelectField label="行業別" fKey="industry" options={oIndustryOptions} />
+          <OtherSelectField label="職務別" fKey="jobTitle" options={oJobTitleOptions} />
+          <OtherSelectField label="職位別" fKey="jobPosition" options={oJobPositionOptions} />
+          <OtherSelectField label="年收入" fKey="annualIncome" options={oIncomeOptions} />
+
+          {/* Row 6: 教育程度 */}
+          <OtherSelectField label="教育程度" fKey="education" options={oEducationOptions} />
+
+          {/* 其餘保留欄位 */}
+          <OtherSelectField label="是否同意行銷(訂單來源)" fKey="agreeMarketing" options={oMarketingOptions} />
+          <OtherSelectField label="每月購書金額" fKey="monthlyBookBudget" options={oBookBudgetOptions} />
+          <OtherTextField label="經常購書種類" fKey="frequentBookCategory" />
+        </div>
+      </>
+    )}
     </>
   );
 })() : activeTab === 'address' ? (
   <div className="space-y-[12px]">
     <div className="flex items-center justify-between">
-      <p
-        className="text-[13px] text-[#7c808c] font-['Noto_Sans_TC',_sans-serif]"
-        style={{ fontWeight: 350 }}
-      >
-        共 {localAddresses.length} 筆地址　
-        <span
-          style={{
-            background: '#dbeafe',
-            color: '#1d4ed8',
-            fontWeight: 600,
-            padding: '1px 6px',
-            borderRadius: 20,
-            fontSize: 12,
-            marginLeft: '16px',
-            marginRight: '4px',
-          }}
+      <div className="flex items-center gap-[6px]">
+        <p
+          className="text-[13px] text-[#7c808c] font-['Noto_Sans_TC',_sans-serif]"
+          style={{ fontWeight: 350 }}
         >
-          主要
-        </span>
-        　表示預設地址　
-        <span
-          style={{
-            background: '#f0fdf4',
-            color: '#166534',
-            fontWeight: 600,
-            padding: '1px 6px',
-            borderRadius: 20,
-            fontSize: 12,
-            marginLeft: '4px',
-            marginRight: '4px',
-          }}
-        >
-          生效
-        </span>
-        　表示目前可使用
-      </p>
+          共 {localAddresses.length} 筆地址
+        </p>
+        <CwTooltip content="「主要」表示預設地址，「生效」表示目前可使用">
+          <Info className="w-[14px] h-[14px] text-[#01579b] cursor-help shrink-0" />
+        </CwTooltip>
+        <label className="flex items-center gap-[6px] cursor-pointer select-none ml-[8px]">
+          <input
+            type="checkbox"
+            checked={showActiveAddressOnly}
+            onChange={e => setShowActiveAddressOnly(e.target.checked)}
+            className="w-[14px] h-[14px] rounded border-[#c4c9d3] text-[#0078d4] cursor-pointer"
+          />
+          <span className="text-[13px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>
+            只顯示生效地址
+          </span>
+        </label>
+      </div>
 
       <CwButton
         variant="primary"
@@ -1904,7 +1988,7 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
     {localAddresses.length > 0 ? (
       <CwTable
         columns={addressColumns}
-        dataSource={localAddresses}
+        dataSource={showActiveAddressOnly ? localAddresses.filter(a => a.isActive) : localAddresses}
         rowKey="id"
         emptyText="尚無地址資料"
       />
@@ -1974,7 +2058,104 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
     )}
   </div>
 ) : activeTab === 'contact' ? (
-  <ContactTab />
+  <>
+    <ContactTab />
+
+    {/* 新增聯絡人 modal */}
+    {showAddPersonModal && (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30">
+        <div ref={addPersonModalRef} className="bg-white rounded-[8px] shadow-[0_8px_32px_rgba(0,0,0,0.18)] w-[400px] flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between px-[24px] py-[16px] border-b border-[#e5e7eb]">
+            <span className="font-['Noto_Sans_TC',_sans-serif] text-[16px] text-[#1c1c1c]" style={{ fontWeight: 700 }}>新增聯絡人</span>
+            <button onClick={() => setShowAddPersonModal(false)} className="w-[28px] h-[28px] flex items-center justify-center rounded hover:bg-[#f3f4f6] text-[#7c808c]">✕</button>
+          </div>
+          <div className="px-[24px] py-[20px] overflow-y-auto max-h-[70vh]">
+            <PersonFormFields form={addPersonForm} errors={addPersonErrors} onChange={(f, v) => { setAddPersonForm(prev => ({ ...prev, [f]: v })); if (v) setAddPersonErrors(prev => { const n = { ...prev }; delete n[f]; return n; }); }} />
+          </div>
+          <div className="flex justify-end gap-[8px] px-[24px] py-[16px] border-t border-[#e5e7eb] bg-[#f9fafb]">
+            <CwButton variant="primary" appearance="outlined" size="m" onClick={() => setShowAddPersonModal(false)}>取消</CwButton>
+            <CwButton variant="primary" appearance="filled" size="m" onClick={handleAddPersonConfirm}>確認新增</CwButton>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* 新增電話 modal */}
+    {addPhonePersonId && (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30">
+        <div ref={addPhoneModalRef} className="bg-white rounded-[8px] shadow-[0_8px_32px_rgba(0,0,0,0.18)] w-[440px] flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between px-[24px] py-[16px] border-b border-[#e5e7eb]">
+            <span className="font-['Noto_Sans_TC',_sans-serif] text-[16px] text-[#1c1c1c]" style={{ fontWeight: 700 }}>新增電話</span>
+            <button onClick={() => setAddPhonePersonId(null)} className="w-[28px] h-[28px] flex items-center justify-center rounded hover:bg-[#f3f4f6] text-[#7c808c]">✕</button>
+          </div>
+          <div className="px-[24px] py-[20px]">
+            <PhoneFormFields form={addPhoneForm} errors={addPhoneErrors} onChange={(f, v) => { setAddPhoneForm(prev => ({ ...prev, [f]: v })); if (v) setAddPhoneErrors(prev => { const n = { ...prev }; delete n[f as keyof PhoneForm]; return n; }); }} />
+          </div>
+          <div className="flex justify-end gap-[8px] px-[24px] py-[16px] border-t border-[#e5e7eb] bg-[#f9fafb]">
+            <CwButton variant="primary" appearance="outlined" size="m" onClick={() => setAddPhonePersonId(null)}>取消</CwButton>
+            <CwButton variant="primary" appearance="filled" size="m" onClick={handleAddPhoneConfirm}>確認新增</CwButton>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* 編輯電話 modal */}
+    {editingPhone && (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30">
+        <div ref={editPhoneModalRef} className="bg-white rounded-[8px] shadow-[0_8px_32px_rgba(0,0,0,0.18)] w-[440px] flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between px-[24px] py-[16px] border-b border-[#e5e7eb]">
+            <span className="font-['Noto_Sans_TC',_sans-serif] text-[16px] text-[#1c1c1c]" style={{ fontWeight: 700 }}>編輯電話</span>
+            <button onClick={() => setEditingPhone(null)} className="w-[28px] h-[28px] flex items-center justify-center rounded hover:bg-[#f3f4f6] text-[#7c808c]">✕</button>
+          </div>
+          <div className="px-[24px] py-[20px]">
+            <PhoneFormFields form={editPhoneForm} errors={editPhoneErrors} onChange={(f, v) => { setEditPhoneForm(prev => ({ ...prev, [f]: v })); if (v) setEditPhoneErrors(prev => { const n = { ...prev }; delete n[f as keyof PhoneForm]; return n; }); }} />
+          </div>
+          <div className="flex justify-end gap-[8px] px-[24px] py-[16px] border-t border-[#e5e7eb] bg-[#f9fafb]">
+            <CwButton variant="primary" appearance="outlined" size="m" onClick={() => setEditingPhone(null)}>取消</CwButton>
+            <CwButton variant="primary" appearance="filled" size="m" onClick={handleEditPhoneSave}>確認</CwButton>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* 新增 Email modal */}
+    {addEmailPersonId && (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30">
+        <div ref={addEmailModalRef} className="bg-white rounded-[8px] shadow-[0_8px_32px_rgba(0,0,0,0.18)] w-[440px] flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between px-[24px] py-[16px] border-b border-[#e5e7eb]">
+            <span className="font-['Noto_Sans_TC',_sans-serif] text-[16px] text-[#1c1c1c]" style={{ fontWeight: 700 }}>新增 Email</span>
+            <button onClick={() => setAddEmailPersonId(null)} className="w-[28px] h-[28px] flex items-center justify-center rounded hover:bg-[#f3f4f6] text-[#7c808c]">✕</button>
+          </div>
+          <div className="px-[24px] py-[20px]">
+            <EmailFormFields form={addEmailForm} errors={addEmailErrors} onChange={(f, v) => { setAddEmailForm(prev => ({ ...prev, [f]: v })); if (v) setAddEmailErrors(prev => { const n = { ...prev }; delete n[f as keyof EmailForm]; return n; }); }} />
+          </div>
+          <div className="flex justify-end gap-[8px] px-[24px] py-[16px] border-t border-[#e5e7eb] bg-[#f9fafb]">
+            <CwButton variant="primary" appearance="outlined" size="m" onClick={() => setAddEmailPersonId(null)}>取消</CwButton>
+            <CwButton variant="primary" appearance="filled" size="m" onClick={handleAddEmailConfirm}>確認新增</CwButton>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* 編輯 Email modal */}
+    {editingEmail && (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30">
+        <div ref={editEmailModalRef} className="bg-white rounded-[8px] shadow-[0_8px_32px_rgba(0,0,0,0.18)] w-[440px] flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between px-[24px] py-[16px] border-b border-[#e5e7eb]">
+            <span className="font-['Noto_Sans_TC',_sans-serif] text-[16px] text-[#1c1c1c]" style={{ fontWeight: 700 }}>編輯 Email</span>
+            <button onClick={() => setEditingEmail(null)} className="w-[28px] h-[28px] flex items-center justify-center rounded hover:bg-[#f3f4f6] text-[#7c808c]">✕</button>
+          </div>
+          <div className="px-[24px] py-[20px]">
+            <EmailFormFields form={editEmailForm} errors={editEmailErrors} onChange={(f, v) => { setEditEmailForm(prev => ({ ...prev, [f]: v })); if (v) setEditEmailErrors(prev => { const n = { ...prev }; delete n[f as keyof EmailForm]; return n; }); }} />
+          </div>
+          <div className="flex justify-end gap-[8px] px-[24px] py-[16px] border-t border-[#e5e7eb] bg-[#f9fafb]">
+            <CwButton variant="primary" appearance="outlined" size="m" onClick={() => setEditingEmail(null)}>取消</CwButton>
+            <CwButton variant="primary" appearance="filled" size="m" onClick={handleEditEmailSave}>確認</CwButton>
+          </div>
+        </div>
+      </div>
+    )}
+  </>
 ) : activeTab === 'subscription' ? (() => {
   const editable = false;
   const data = editable ? subDraft : subSeniority;
@@ -2206,8 +2387,27 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
       </div>
     </div>
   );
-})() : activeTab === 'relation' ? (() => {
-  const RELATION_HEADERS = ['合併客戶客編（父）', '合併客戶名稱（父）', '合併客戶客編（子）', '合併客戶名稱（子）', '生效', '備註', '操作'];
+})() : activeTab === 'subscriber-rights' ? (
+  <div className="space-y-[20px]">
+    <div className="space-y-[12px]">
+      <h3 className="font-['Noto_Sans_TC',_sans-serif] font-[500] text-[#1c1c1c]">紙本權益</h3>
+      <CwTable columns={erpPaperRightsColumns} dataSource={mockPaperRightsData} emptyText="沒有資料" />
+    </div>
+    <div className="space-y-[12px]">
+      <h3 className="font-['Noto_Sans_TC',_sans-serif] font-[500] text-[#1c1c1c]">數位權益</h3>
+      <CwTable columns={erpDigitalRightsColumns} dataSource={mockDigitalRightsData} emptyText="沒有資料" />
+    </div>
+    <div className="space-y-[12px]">
+      <h3 className="font-['Noto_Sans_TC',_sans-serif] font-[500] text-[#1c1c1c]">網站觀看權益</h3>
+      <CwTable columns={erpWebsiteRightsColumns} dataSource={mockWebsiteRightsData} emptyText="沒有資料" />
+    </div>
+    <div className="space-y-[12px]">
+      <h3 className="font-['Noto_Sans_TC',_sans-serif] font-[500] text-[#1c1c1c]">APP臨時觀看權益</h3>
+      <CwTable columns={erpAppRightsColumns} dataSource={mockAppRightsData} emptyText="沒有資料" />
+    </div>
+  </div>
+) : activeTab === 'relation' ? (() => {
+  const RELATION_HEADERS = ['父客編', '父客名', '子客編', '子客名', '備註', '生效', '操作'];
   return (
     <div className="flex flex-col gap-[12px]">
       {/* 工具列 */}
@@ -2237,12 +2437,12 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
                 <td className="px-[12px] py-[10px] text-[#1c1c1c]">{rel.parentName}</td>
                 <td className="px-[12px] py-[10px] text-[#1c1c1c]" style={{ whiteSpace: 'nowrap' }}>{rel.childNo}</td>
                 <td className="px-[12px] py-[10px] text-[#1c1c1c]">{rel.childName}</td>
+                <td className="px-[12px] py-[10px] text-[#374151]">{rel.note || '—'}</td>
                 <td className="px-[12px] py-[10px]">
                   <span className={`inline-flex items-center px-[8px] py-[2px] rounded-[4px] text-[12px] font-['Noto_Sans_TC',_sans-serif] ${rel.isActive ? 'bg-[#e6f4ea] text-[#1e7e34]' : 'bg-[#f3f4f6] text-[#7c808c]'}`} style={{ fontWeight: 500 }}>
                     {rel.isActive ? '生效' : '停用'}
                   </span>
                 </td>
-                <td className="px-[12px] py-[10px] text-[#374151]">{rel.note || '—'}</td>
                 <td className="px-[12px] py-[10px]">
                   <div className="flex gap-[4px]">
                     <CwRoundButton icon="edit" title="編輯" onClick={() => handleEditRelationOpen(rel)} />
@@ -2260,7 +2460,7 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30">
           <div className="bg-white rounded-[8px] shadow-[0_8px_32px_rgba(0,0,0,0.18)] w-[480px] flex flex-col overflow-hidden">
             <div className="flex items-center justify-between px-[24px] py-[16px] border-b border-[#e5e7eb]">
-              <span className="font-['Noto_Sans_TC',_sans-serif] text-[16px] text-[#1c1c1c]" style={{ fontWeight: 700 }}>{editingRelation?.id === '__new__' ? '新增客戶關聯' : '編輯客戶關聯'}</span>
+              <span className="font-['Noto_Sans_TC',_sans-serif] text-[16px] text-[#1c1c1c]" style={{ fontWeight: 700 }}>{editingRelation?.id === '__new__' ? '新增父子關聯' : '編輯父子關聯'}</span>
               <button onClick={() => setEditingRelation(null)} className="w-[28px] h-[28px] flex items-center justify-center rounded hover:bg-[#f3f4f6] text-[#7c808c]">✕</button>
             </div>
             <div className="px-[24px] py-[20px] flex flex-col gap-[14px]">
@@ -2300,7 +2500,7 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
                 {/* 父 — 客編（帶放大鏡，新增模式且非自動帶入則可用） */}
                 <div className="flex flex-col gap-[4px]">
                   <label className="font-['Noto_Sans_TC',_sans-serif] text-foreground" style={{ fontSize: 'var(--text-base)', fontWeight: 350 }}>
-                    合併客戶客編（父）<span className="text-[#c00000] ml-[2px]">*</span>
+                    父客編<span className="text-[#c00000] ml-[2px]">*</span>
                   </label>
                   <div className="relative">
                     <CwInput value={editRelationForm.parentNo} error={editRelationErrors.parentNo} disabled={editingRelation?.id !== '__new__' || newRelationRole === 'parent'} onChange={e => { setEditRelationForm(p => ({ ...p, parentNo: e.target.value })); setEditRelationErrors(p => { const n = { ...p }; delete n.parentNo; return n; }); }} />
@@ -2312,11 +2512,11 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
                   </div>
                 </div>
                 {/* 父 — 名稱 */}
-                <CwInput label="合併客戶名稱（父）" required value={editRelationForm.parentName} error={editRelationErrors.parentName} disabled={editingRelation?.id !== '__new__' || newRelationRole === 'parent'} onChange={e => { setEditRelationForm(p => ({ ...p, parentName: e.target.value })); setEditRelationErrors(p => { const n = { ...p }; delete n.parentName; return n; }); }} />
+                <CwInput label="父客名" required value={editRelationForm.parentName} error={editRelationErrors.parentName} disabled={editingRelation?.id !== '__new__' || newRelationRole === 'parent'} onChange={e => { setEditRelationForm(p => ({ ...p, parentName: e.target.value })); setEditRelationErrors(p => { const n = { ...p }; delete n.parentName; return n; }); }} />
                 {/* 子 — 客編（帶放大鏡，新增模式且非自動帶入則可用） */}
                 <div className="flex flex-col gap-[4px]">
                   <label className="font-['Noto_Sans_TC',_sans-serif] text-foreground" style={{ fontSize: 'var(--text-base)', fontWeight: 350 }}>
-                    合併客戶客編（子）<span className="text-[#c00000] ml-[2px]">*</span>
+                    子客編<span className="text-[#c00000] ml-[2px]">*</span>
                   </label>
                   <div className="relative">
                     <CwInput value={editRelationForm.childNo} error={editRelationErrors.childNo} disabled={editingRelation?.id !== '__new__' || newRelationRole === 'child'} onChange={e => { setEditRelationForm(p => ({ ...p, childNo: e.target.value })); setEditRelationErrors(p => { const n = { ...p }; delete n.childNo; return n; }); }} />
@@ -2328,7 +2528,7 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
                   </div>
                 </div>
                 {/* 子 — 名稱 */}
-                <CwInput label="合併客戶名稱（子）" required value={editRelationForm.childName} error={editRelationErrors.childName} disabled={editingRelation?.id !== '__new__' || newRelationRole === 'child'} onChange={e => { setEditRelationForm(p => ({ ...p, childName: e.target.value })); setEditRelationErrors(p => { const n = { ...p }; delete n.childName; return n; }); }} />
+                <CwInput label="子客名" required value={editRelationForm.childName} error={editRelationErrors.childName} disabled={editingRelation?.id !== '__new__' || newRelationRole === 'child'} onChange={e => { setEditRelationForm(p => ({ ...p, childName: e.target.value })); setEditRelationErrors(p => { const n = { ...p }; delete n.childName; return n; }); }} />
               </div>
               <CwInput label="備註" value={editRelationForm.note} onChange={e => setEditRelationForm(p => ({ ...p, note: e.target.value }))} />
               <div className="flex items-center gap-[8px]">
@@ -2516,10 +2716,51 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
           </div>
           <div className="flex justify-end gap-[8px] px-[24px] py-[16px] border-t border-[#e5e7eb] bg-[#f9fafb]">
             <CwButton variant="primary" appearance="outlined" size="m" onClick={() => setEditingPerson(null)}>取消</CwButton>
-            <CwButton variant="primary" appearance="filled" size="m" onClick={handleEditPersonSave}>儲存</CwButton>
+            <CwButton variant="primary" appearance="filled" size="m" onClick={handleEditPersonSave}>確認</CwButton>
           </div>
         </div>
       </div>
+    )}
+    {/* ── 訂戶權益：修改權益 Popup ── */}
+    <CwPopup
+      open={isRightsPopupOpen}
+      onClose={handleRightsCancel}
+      title="修改權益"
+      size="sm"
+      closableByMask={false}
+      buttons={[
+        { label: '取消', variant: 'primary', appearance: 'outlined', onClick: handleRightsCancel, icon: 'close' },
+        { label: '確認', variant: 'primary', appearance: 'filled', onClick: handleRightsConfirm, icon: 'check' },
+      ]}
+    >
+      <div className="space-y-[16px]">
+        <div className="flex items-end gap-[8px]">
+          <div className="flex-1">
+            <CwDatePicker
+              label="權益到期日"
+              value={rightsExpiryDate}
+              onChange={setRightsExpiryDate}
+              placeholder="請選擇日期"
+            />
+          </div>
+          <button
+            onClick={handleRightsSetToday}
+            className="h-[35px] px-[16px] bg-[#e9ebf2] rounded-[4px] font-['Noto_Sans_TC',_sans-serif] text-[14px] text-[#1c1c1c] hover:bg-[#d1d5dd] transition-colors whitespace-nowrap"
+          >
+            今天
+          </button>
+        </div>
+      </div>
+    </CwPopup>
+
+    {/* ── 訂戶權益：Toast 通知 ── */}
+    {showRightsToast && (
+      <CwToast
+        message={rightsToastMessage}
+        type={rightsToastType}
+        onClose={() => setShowRightsToast(false)}
+        duration={3000}
+      />
     )}
     </>
   );
