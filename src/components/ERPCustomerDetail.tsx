@@ -29,6 +29,7 @@ export interface ERPCustomerInfo {
   status: string;
   // 新增欄位
   customerIdentity?: string;
+  agreeMarketing?: string;
   marketingConsentDate?: string;
   lastTransactionDate?: string;
   invoiceTitle?: string;
@@ -174,6 +175,7 @@ const mockAddressByCustomer: Record<string, AddressRecord[]> = {
     { id: 'a2', country: '台灣 Taiwan', postalCode: '231', city: '新北市新店區', street: '中正路88號',         isPrimary: false, isActive: true,  isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2026-02-05' },
     { id: 'a3', country: '台灣 Taiwan', postalCode: '330', city: '桃園市桃園區', street: '中正路500號3樓',     isPrimary: false, isActive: false, isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2025-09-03' },
     { id: 'a4', country: '台灣 Taiwan', postalCode: '404', city: '台中市北區',   street: '三民路二段119號',    isPrimary: false, isActive: false, isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2024-11-20' },
+    { id: 'a5', country: '日本 Japan',  postalCode: '100-0001', city: '東京都千代田區', street: '千代田1-1 千代田ビル3F', isPrimary: false, isActive: true,  isPrimaryShipping: false, isPrimaryInvoice: false, updatedAt: '2026-03-10' },
   ],
   C002345: [
     { id: 'b1', country: '台灣 Taiwan', postalCode: '220', city: '新北市板橋區', street: '文化路一段188號',    isPrimary: true,  isActive: true,  isPrimaryShipping: true,  isPrimaryInvoice: false, updatedAt: '2026-04-15' },
@@ -830,6 +832,8 @@ interface SubscriptionSeniority {
   crossing: PubSeniority;
   crossingDigital: PubSeniority;
   commonwealthIpad: PubSeniority;
+  webAccess: PubSeniority;
+  fullReadSubscription: PubSeniority;
   // 非天下訂閱
   commonHealth: PubSeniority;
   commonHealthDigital: PubSeniority;
@@ -858,6 +862,8 @@ const EMPTY_SUB_SENIORITY: SubscriptionSeniority = {
   crossing: { ...EMPTY_PUB },
   crossingDigital: { ...EMPTY_PUB },
   commonwealthIpad: { ...EMPTY_PUB },
+  webAccess: { ...EMPTY_PUB },
+  fullReadSubscription: { ...EMPTY_PUB },
   commonHealth: { ...EMPTY_PUB },
   commonHealthDigital: { ...EMPTY_PUB },
   cheers: { ...EMPTY_PUB },
@@ -917,14 +923,6 @@ const mockPaperRightsData = [
 ];
 const mockDigitalRightsData = [
   { id: 1, memberAccount: 'wang.xiaoming@example.com', memberEmail: 'wang.xiaoming@example.com', product: '天下雜誌', autoRenewal: '是', recentStartDate: '2024-11-01', recentEndDate: '2025-10-31', rightsExpiry: '2025-10-31', physicalYears: '1' },
-];
-const mockWebsiteRightsData = [
-  { id: 1, website: '天下', expiryDate: '', action: '' },
-  { id: 2, website: '胡敏技', expiryDate: '', action: '' },
-  { id: 3, website: '康健', expiryDate: '', action: '' },
-];
-const mockAppRightsData = [
-  { id: 1, app: '天下每日報APP', expiryDate: '', action: '' },
 ];
 
 type TabId = 'basic' | 'address' | 'contact' | 'other' | 'subscription' | 'relation' | 'subscriber-rights';
@@ -989,7 +987,7 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
   // ── 地址列表（本地 state，支援新增後即時反映）──────────────────
   const [showActiveAddressOnly, setShowActiveAddressOnly] = useState(false);
   const [localAddresses, setLocalAddresses] = useState<AddressRecord[]>(
-    () => mockAddressByCustomer[customer.customerNumber] ?? []
+    () => [...(mockAddressByCustomer[customer.customerNumber] ?? [])].sort((a, b) => Number(b.isActive) - Number(a.isActive))
   );
   const [localPersons, setLocalPersons] = useState<ContactPerson[]>(
     () => mockPersonsByCustomer[customer.customerNumber] ?? []
@@ -1264,26 +1262,7 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
       render: (_v: any, record: any) => (
         <div className="flex flex-col gap-[8px]">
           <CwTextButton label="權益紀錄" icon="document" onClick={() => console.log('查看權益紀錄', record.id)} />
-          <CwTextButton label="修改權益" icon="edit" onClick={() => { setSelectedRightsItem(record); setSelectedRightsType('website'); setRightsExpiryDate(record.rightsExpiry ? new Date(record.rightsExpiry) : null); setIsRightsPopupOpen(true); }} />
         </div>
-      ),
-    },
-  ];
-  const erpWebsiteRightsColumns: CwTableColumn[] = [
-    { key: 'website', title: '網站', width: '180px' },
-    { key: 'expiryDate', title: '權益到期日', width: '150px' },
-    { key: 'action', title: '功能', width: '100px', align: 'center',
-      render: (_v: any, record: any) => (
-        <CwTextButton label="修改權益" icon="edit" onClick={() => { setSelectedRightsItem(record); setSelectedRightsType('website'); setRightsExpiryDate(record.expiryDate ? new Date(record.expiryDate) : null); setIsRightsPopupOpen(true); }} />
-      ),
-    },
-  ];
-  const erpAppRightsColumns: CwTableColumn[] = [
-    { key: 'app', title: 'APP', width: '200px' },
-    { key: 'expiryDate', title: '權益到期日', width: '150px' },
-    { key: 'action', title: '功能', width: '100px', align: 'center',
-      render: (_v: any, record: any) => (
-        <CwTextButton label="修改權益" icon="edit" onClick={() => { setSelectedRightsItem(record); setSelectedRightsType('app'); setRightsExpiryDate(record.expiryDate ? new Date(record.expiryDate) : null); setIsRightsPopupOpen(true); }} />
       ),
     },
   ];
@@ -1713,7 +1692,7 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
     )],
     ['統一編號', customer.taxId || '—'],
     ['發票抬頭', customer.invoiceTitle || '—'],
-    ['同意行銷更改日期', customer.marketingConsentDate || '—'],
+    ['是否同意行銷(訂單來源)', [customer.agreeMarketing, customer.marketingConsentDate].filter(Boolean).join('　') || '—'],
     ['最後交易日期', customer.lastTransactionDate || '—'],
   ];
 
@@ -1849,16 +1828,16 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
         {/* Row 1: 客戶註記（col 1-2）/ 客戶編號（col 3-4） */}
         <OtherTextField label="客戶註記" fKey="customerNote" colSpan={2} />
         <Field label="客戶編號">
-          <CwInput value={basicInfo.customerNumber} onChange={e => upd('customerNumber', e.target.value)} placeholder="請輸入" />
+          <CwInput value={basicInfo.customerNumber} onChange={e => upd('customerNumber', e.target.value)} placeholder="請輸入" disabled />
         </Field>
         <div />
 
-        {/* Row 2: 客戶名稱 / 客戶分類 / 結帳週期 / 客戶狀態 */}
+        {/* Row 2: 客戶名稱 / 客戶分類 / 付款條件 / 客戶狀態 */}
         <Field label="客戶名稱">
           <CwInput value={basicInfo.customerName} onChange={e => upd('customerName', e.target.value)} placeholder="請輸入" />
         </Field>
         <OtherSelectField label="客戶分類" fKey="customerCategory" options={oCategoryOptions} required />
-        <OtherSelectField label="結帳週期" fKey="checkoutCycle" options={oCycleOptions} required />
+        <OtherSelectField label="付款條件" fKey="checkoutCycle" options={oCycleOptions} required />
         <Field label="客戶狀態">
           <CwSelect options={statusOptions} value={basicInfo.status} onChange={v => upd('status', v as string)} placeholder="請選擇" clearable />
         </Field>
@@ -1885,7 +1864,6 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
         <OtherSelectField label="教育程度" fKey="education" options={oEducationOptions} />
 
         {/* 其餘保留欄位 */}
-        <OtherSelectField label="是否同意行銷(訂單來源)" fKey="agreeMarketing" options={oMarketingOptions} />
         <OtherSelectField label="每月購書金額" fKey="monthlyBookBudget" options={oBookBudgetOptions} />
         <OtherTextField label="經常購書種類" fKey="frequentBookCategory" />
         <Field label="客戶身分">
@@ -1905,12 +1883,12 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
       /* ── ERP 客戶明細（完全不動）────────────────────────────── */
       <>
         <div className="grid grid-cols-4 gap-x-[24px] gap-y-[16px]">
-          {/* Row 1: 客戶名稱 / 客戶分類 / 結帳週期 / 客戶狀態 */}
+          {/* Row 1: 客戶名稱 / 客戶分類 / 付款條件 / 客戶狀態 */}
           <Field label="客戶名稱">
             <CwInput value={basicInfo.customerName} onChange={e => upd('customerName', e.target.value)} placeholder="請輸入" />
           </Field>
           <OtherSelectField label="客戶分類" fKey="customerCategory" options={oCategoryOptions} required />
-          <OtherSelectField label="結帳週期" fKey="checkoutCycle" options={oCycleOptions} required />
+          <OtherSelectField label="付款條件" fKey="checkoutCycle" options={oCycleOptions} required />
           <Field label="客戶狀態">
             <CwSelect options={statusOptions} value={basicInfo.status} onChange={v => upd('status', v as string)} placeholder="請選擇" clearable />
           </Field>
@@ -1940,7 +1918,6 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
           <OtherSelectField label="教育程度" fKey="education" options={oEducationOptions} />
 
           {/* 其餘保留欄位 */}
-          <OtherSelectField label="是否同意行銷(訂單來源)" fKey="agreeMarketing" options={oMarketingOptions} />
           <OtherSelectField label="每月購書金額" fKey="monthlyBookBudget" options={oBookBudgetOptions} />
           <OtherTextField label="經常購書種類" fKey="frequentBookCategory" />
         </div>
@@ -2219,12 +2196,14 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
     yearsVal,
     onNumChange,
     onYearsChange,
+    yearsOnly = false,
   }: {
     label: string;
     numVal: string;
     yearsVal: string;
     onNumChange: (v: string) => void;
     onYearsChange: (v: string) => void;
+    yearsOnly?: boolean;
   }) => (
     <div className="flex flex-col gap-[4px]">
       <span style={labelStyle}>{label}</span>
@@ -2251,9 +2230,13 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
   const PubRow = ({
     pubName,
     pubKey,
+    yearsOnly = false,
+    extraFields,
   }: {
     pubName: string;
     pubKey: keyof Omit<SubscriptionSeniority, 'lastOrderDate'>;
+    yearsOnly?: boolean;
+    extraFields?: React.ReactNode;
   }) => {
     const pub = data[pubKey];
     const set = (field: keyof PubSeniority) => (v: string) => setSubPubField(pubKey, field, v);
@@ -2292,12 +2275,14 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
             onNumChange={set('recentEndNum')}
           />
           <NumYearsField
-            label="累計訂閱期/年資"
+            label={yearsOnly ? '累計訂閱年資' : '累計訂閱期/年資'}
             numVal={pub.totalSubNum}
             yearsVal={pub.totalSubYears}
             onNumChange={set('totalSubNum')}
             onYearsChange={set('totalSubYears')}
+            yearsOnly={yearsOnly}
           />
+          {extraFields}
         </div>
       </div>
     );
@@ -2356,6 +2341,16 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
             <PubRow pubName="換日線電子" pubKey="crossingDigital" />
             <div className="border-t border-[#e5e7eb]" />
             <PubRow pubName="天下iPad" pubKey="commonwealthIpad" />
+            <div className="border-t border-[#e5e7eb]" />
+            <PubRow pubName="web access" pubKey="webAccess" yearsOnly extraFields={
+              <NumYearsField
+                label="全閱讀訂閱權益(訂戶贈閱)"
+                numVal={data.fullReadSubscription.totalSubNum}
+                yearsVal={data.fullReadSubscription.totalSubYears}
+                onNumChange={(v) => setSubPubField('fullReadSubscription', 'totalSubNum', v)}
+                onYearsChange={(v) => setSubPubField('fullReadSubscription', 'totalSubYears', v)}
+              />
+            } />
           </div>
         )}
       </div>
@@ -2396,14 +2391,6 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
     <div className="space-y-[12px]">
       <h3 className="font-['Noto_Sans_TC',_sans-serif] font-[500] text-[#1c1c1c]">數位權益</h3>
       <CwTable columns={erpDigitalRightsColumns} dataSource={mockDigitalRightsData} emptyText="沒有資料" />
-    </div>
-    <div className="space-y-[12px]">
-      <h3 className="font-['Noto_Sans_TC',_sans-serif] font-[500] text-[#1c1c1c]">網站觀看權益</h3>
-      <CwTable columns={erpWebsiteRightsColumns} dataSource={mockWebsiteRightsData} emptyText="沒有資料" />
-    </div>
-    <div className="space-y-[12px]">
-      <h3 className="font-['Noto_Sans_TC',_sans-serif] font-[500] text-[#1c1c1c]">APP臨時觀看權益</h3>
-      <CwTable columns={erpAppRightsColumns} dataSource={mockAppRightsData} emptyText="沒有資料" />
     </div>
   </div>
 ) : activeTab === 'relation' ? (() => {

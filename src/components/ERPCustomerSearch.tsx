@@ -30,6 +30,7 @@ interface ERPCustomerData {
   taxId: string;
   status: string;
   customerIdentity?: string;
+  agreeMarketing?: string;
   marketingConsentDate?: string;
   lastTransactionDate?: string;
   updatedAt?: string;
@@ -67,6 +68,7 @@ const mockERPCustomers: ERPCustomerData[] = [
     taxId: '12345678',
     status: 'active',
     customerIdentity: '個人',
+    agreeMarketing: '同意',
     marketingConsentDate: '2024-03-15',
     lastTransactionDate: '2025-11-20',
     updatedAt: '2026-04-18 09:32',
@@ -83,6 +85,7 @@ const mockERPCustomers: ERPCustomerData[] = [
     taxId: '23456789',
     status: 'active',
     customerIdentity: '公司',
+    agreeMarketing: '不同意',
     marketingConsentDate: '2023-08-01',
     lastTransactionDate: '2026-01-05',
     updatedAt: '2026-04-15 14:10',
@@ -100,6 +103,7 @@ const mockERPCustomers: ERPCustomerData[] = [
     taxId: '',
     status: 'inactive',
     customerIdentity: '個人',
+    agreeMarketing: '不確定',
     marketingConsentDate: '',
     lastTransactionDate: '2024-06-30',
     updatedAt: '2025-03-02 11:05',
@@ -114,6 +118,7 @@ const mockERPCustomers: ERPCustomerData[] = [
     taxId: '34567890',
     status: 'active',
     customerIdentity: '公司',
+    agreeMarketing: '同意',
     marketingConsentDate: '2025-01-10',
     lastTransactionDate: '2026-02-14',
     updatedAt: '2026-04-20 08:47',
@@ -131,6 +136,7 @@ const mockERPCustomers: ERPCustomerData[] = [
     taxId: '',
     status: 'inactive',
     customerIdentity: '個人',
+    agreeMarketing: '不確定',
     marketingConsentDate: '',
     lastTransactionDate: '2023-12-01',
     updatedAt: '2024-01-08 16:22',
@@ -145,6 +151,7 @@ const mockERPCustomers: ERPCustomerData[] = [
     taxId: '45678901',
     status: 'active',
     customerIdentity: '公司',
+    agreeMarketing: '同意',
     marketingConsentDate: '2022-05-20',
     lastTransactionDate: '2026-03-01',
     updatedAt: '2026-03-28 10:00',
@@ -161,6 +168,7 @@ const mockERPCustomers: ERPCustomerData[] = [
     taxId: '',
     status: 'active',
     customerIdentity: '個人',
+    agreeMarketing: '同意',
     marketingConsentDate: '2024-11-08',
     lastTransactionDate: '2025-09-15',
     updatedAt: '2025-10-01 13:38',
@@ -175,6 +183,7 @@ const mockERPCustomers: ERPCustomerData[] = [
     taxId: '56789012',
     status: 'inactive',
     customerIdentity: '公司',
+    agreeMarketing: '不同意',
     marketingConsentDate: '2021-07-19',
     lastTransactionDate: '2024-04-22',
     updatedAt: '2024-05-10 09:15',
@@ -442,6 +451,7 @@ export function ERPCustomerSearch() {
           taxId:                selectedCustomer.taxId,
           status:               selectedCustomer.status,
           customerIdentity:     selectedCustomer.customerIdentity,
+          agreeMarketing:       selectedCustomer.agreeMarketing,
           marketingConsentDate: selectedCustomer.marketingConsentDate,
           lastTransactionDate:  selectedCustomer.lastTransactionDate,
           invoiceTitle:         selectedCustomer.invoiceTitle,
