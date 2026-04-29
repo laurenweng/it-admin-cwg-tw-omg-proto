@@ -13,6 +13,7 @@ import { CwButton } from "./CwButton";
 import { CwTooltip } from './CwTooltip';
 import { CwSelect } from './CwSelect';
 import { CwDatePicker } from './CwDatePicker';
+import { DateRange } from './CwDateRangePicker';
 import { CwPopup } from './CwPopup';
 import { CwToast } from './CwToast';
 import { CwTextButton } from './CwTextButton';
@@ -911,7 +912,16 @@ const mockDigitalRightsData = [
   { id: 1, memberAccount: 'wang.xiaoming@example.com', memberEmail: 'wang.xiaoming@example.com', product: '天下雜誌', autoRenewal: '是', recentStartDate: '2024-11-01', recentEndDate: '2025-10-31', rightsExpiry: '2025-10-31', physicalYears: '1' },
 ];
 
-type TabId = 'basic' | 'address' | 'contact' | 'other' | 'subscription' | 'relation' | 'subscriber-rights';
+// ── 操作記錄 mock 資料 ────────────────────────────────────────
+const mockOperationLogData = [
+  { id: 1, operateTime: '2025/03/15 - 14:32:01', operator: '林小華', changedField: '聯絡電話', beforeValue: '02-2345-6789', afterValue: '02-9876-5432' },
+  { id: 2, operateTime: '2025/03/10 - 09:15:44', operator: '系統', changedField: '訂閱到期日', beforeValue: '2025-03-09', afterValue: '2026-03-09' },
+  { id: 3, operateTime: '2025/02/28 - 16:05:22', operator: '陳美玲', changedField: '電子郵件', beforeValue: 'old.email@example.com', afterValue: 'new.email@example.com' },
+  { id: 4, operateTime: '2025/02/20 - 11:48:09', operator: '王大明', changedField: '客戶名稱', beforeValue: '天下集團採購部舊版', afterValue: '天下集團採購部' },
+  { id: 5, operateTime: '2025/01/08 - 10:00:00', operator: '系統', changedField: '帳號狀態', beforeValue: '停用', afterValue: '啟用' },
+];
+
+type TabId = 'basic' | 'address' | 'contact' | 'other' | 'subscription' | 'relation' | 'subscriber-rights' | 'operation-log';
 
 const TABS_DEFAULT: { id: TabId; label: string }[] = [
   { id: 'address',           label: '地址' },
@@ -920,6 +930,7 @@ const TABS_DEFAULT: { id: TabId; label: string }[] = [
   { id: 'relation',          label: '父子關聯' },
   { id: 'basic',             label: '基本資料' },
   { id: 'subscriber-rights', label: '訂戶權益' },
+  { id: 'operation-log',     label: '操作記錄' },
 ];
 
 const TABS_CREATE: { id: TabId; label: string }[] = [
@@ -1193,6 +1204,12 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
   const [customerLookupKeyword, setCustomerLookupKeyword] = useState('');
 
   // ── 訂戶權益 state ───────────────────────────────────────────
+  // 操作記錄篩選
+  const [opLogDateStart, setOpLogDateStart] = useState<Date | null>(null);
+  const [opLogDateEnd, setOpLogDateEnd] = useState<Date | null>(null);
+  const [opLogOperator, setOpLogOperator] = useState('');
+  const [opLogApplied, setOpLogApplied] = useState<{ dateRange: DateRange; operator: string }>({ dateRange: { start: null, end: null }, operator: '' });
+
   const [isRightsPopupOpen, setIsRightsPopupOpen] = useState(false);
   const [selectedRightsItem, setSelectedRightsItem] = useState<any>(null);
   const [selectedRightsType, setSelectedRightsType] = useState<'website' | 'app'>('website');
@@ -1252,6 +1269,14 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
         </div>
       ),
     },
+  ];
+
+  const operationLogColumns: CwTableColumn[] = [
+    { key: 'operateTime',   title: '操作時間',   width: '200px' },
+    { key: 'operator',      title: '操作者',     width: '120px' },
+    { key: 'changedField',  title: '異動欄位',   width: '140px' },
+    { key: 'beforeValue',   title: '變更前',     width: '200px' },
+    { key: 'afterValue',    title: '變更後',     width: '200px' },
   ];
 
   const handleEditRelationOpen = (rel: MergeRelation) => {
@@ -2375,7 +2400,64 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
       <CwTable columns={erpDigitalRightsColumns} dataSource={mockDigitalRightsData} emptyText="沒有資料" />
     </div>
   </div>
-) : activeTab === 'relation' ? (() => {
+) : activeTab === 'operation-log' ? (() => {
+  const filteredOpLog = mockOperationLogData.filter(row => {
+    if (opLogApplied.operator && !row.operator.includes(opLogApplied.operator)) return false;
+    if (opLogApplied.dateRange.start || opLogApplied.dateRange.end) {
+      // 從 "YYYY/MM/DD - hh:mm:ss" 解析日期
+      const datePart = row.operateTime.split(' - ')[0].replace(/\//g, '-');
+      const rowDate = new Date(datePart);
+      if (opLogApplied.dateRange.start && rowDate < opLogApplied.dateRange.start) return false;
+      if (opLogApplied.dateRange.end && rowDate > opLogApplied.dateRange.end) return false;
+    }
+    return true;
+  });
+  return (
+    <div className="space-y-[16px]">
+      {/* 搜尋區 */}
+      <div className="flex flex-wrap items-end gap-[12px]">
+        <div className="flex flex-col gap-[4px]">
+          <span className="text-[13px] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 500, color: '#1c1c1c' }}>時間範圍</span>
+          <div className="flex items-center gap-[8px]">
+            <CwDatePicker value={opLogDateStart} onChange={setOpLogDateStart} placeholder="起始日期" className="w-[220px]" />
+            <span className="text-[13px] text-[#7c808c]">～</span>
+            <CwDatePicker value={opLogDateEnd} onChange={setOpLogDateEnd} placeholder="結束日期" className="w-[220px]" />
+          </div>
+        </div>
+        <div className="flex flex-col gap-[4px]">
+          <span className="text-[13px] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 500, color: '#1c1c1c' }}>操作者</span>
+          <CwInput
+            value={opLogOperator}
+            placeholder="輸入操作者名稱"
+            onChange={e => setOpLogOperator(e.target.value)}
+            style={{ width: '220px' }}
+          />
+        </div>
+        <div className="flex gap-[8px]">
+          <CwButton
+            variant="primary"
+            appearance="filled"
+            size="m"
+            onClick={() => setOpLogApplied({ dateRange: { start: opLogDateStart, end: opLogDateEnd }, operator: opLogOperator })}
+          >查詢</CwButton>
+          <CwButton
+            variant="secondary"
+            appearance="outlined"
+            size="m"
+            onClick={() => {
+              setOpLogDateStart(null);
+              setOpLogDateEnd(null);
+              setOpLogOperator('');
+              setOpLogApplied({ dateRange: { start: null, end: null }, operator: '' });
+            }}
+          >重置</CwButton>
+        </div>
+      </div>
+      {/* 列表 */}
+      <CwTable columns={operationLogColumns} dataSource={filteredOpLog} emptyText="沒有符合的操作記錄" />
+    </div>
+  );
+})() : activeTab === 'relation' ? (() => {
   const RELATION_HEADERS = ['父客編', '父客名', '子客編', '子客名', '備註', '生效', '操作'];
   return (
     <div className="flex flex-col gap-[12px]">
