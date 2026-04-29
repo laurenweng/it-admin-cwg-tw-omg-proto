@@ -1552,15 +1552,15 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false, onSav
   const ContactTab = () => (
     <div className="space-y-[16px]">
       <div className="flex flex-col gap-[8px]">
+        <div className="flex items-end justify-between">
         <div className="flex items-center justify-between">
           <CwButton variant="primary" appearance="filled" size="m" leftIcon={<Plus size={13} />} onClick={openAddPersonModal}>
             新增聯絡人
           </CwButton>
         </div>
-        <div className="flex items-end justify-between">
-          <p className="text-[13px] text-[#7c808c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>
+          {/* <p className="text-[13px] text-[#7c808c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>
             共 {localPersons.length} 位聯絡人，{contactsTotal} 筆聯絡方式
-          </p>
+          </p> */}
           {localPersons.length > 0 && (
             <button
               onClick={handleToggleAll}
@@ -1968,15 +1968,16 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false, onSav
   <div className="space-y-[12px]">
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-[6px]">
-        <p
-          className="text-[13px] text-[#7c808c] font-['Noto_Sans_TC',_sans-serif]"
-          style={{ fontWeight: 350 }}
-        >
-          共 {localAddresses.length} 筆地址
-        </p>
-        <CwTooltip content="「主要」表示預設地址，「生效」表示目前可使用">
-          <Info className="w-[14px] h-[14px] text-[#01579b] cursor-help shrink-0" />
-        </CwTooltip>
+    <CwButton
+        variant="primary"
+        appearance="filled"
+        size="m"
+        leftIcon={<Plus size={13} />}
+        onClick={openAddModal}
+      >
+        新增地址
+      </CwButton>
+
         <label className="flex items-center gap-[6px] cursor-pointer select-none ml-[8px]">
           <input
             type="checkbox"
@@ -1989,16 +1990,17 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false, onSav
           </span>
         </label>
       </div>
-
-      <CwButton
-        variant="primary"
-        appearance="filled"
-        size="m"
-        leftIcon={<Plus size={13} />}
-        onClick={openAddModal}
-      >
-        新增地址
-      </CwButton>
+<div className="flex items-center gap-[6px]">
+<p
+          className="text-[13px] text-[#7c808c] font-['Noto_Sans_TC',_sans-serif]"
+          style={{ fontWeight: 350 }}
+        >
+          共 {localAddresses.length} 筆地址
+        </p>
+        <CwTooltip content="「主要」表示預設地址，「生效」表示目前可使用">
+          <Info className="w-[14px] h-[14px] text-[#01579b] cursor-help shrink-0" />
+        </CwTooltip>
+</div>
     </div>
 
     {localAddresses.length > 0 ? (
@@ -2513,7 +2515,7 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false, onSav
   return (
     <div className="flex flex-col gap-[12px]">
       {/* 工具列 */}
-      <div className="flex justify-end">
+      <div className="flex">
         <CwButton variant="primary" appearance="filled" size="m" leftIcon={<Plus size={13} />} onClick={() => { setEditingRelation({ id: '__new__', parentNo: '', parentName: '', childNo: '', childName: '', isActive: true, note: '' }); setEditRelationForm(EMPTY_MERGE_FORM); setEditRelationErrors({}); setNewRelationRole(''); }}>新增關聯</CwButton>
       </div>
       {/* 列表 */}
