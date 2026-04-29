@@ -1,4 +1,4 @@
-import { ERPCustomerDetail } from "./ERPCustomerDetail";
+import { ERPCustomerDetail, DraftCustomer } from "./ERPCustomerDetail";
 
 const EMPTY_CUSTOMER = {
   customerNumber: '',
@@ -17,14 +17,17 @@ const EMPTY_CUSTOMER = {
 
 interface ERPCustomerCreateProps {
   onClose: () => void;
+  onSaveDraft?: (draft: DraftCustomer) => void;
+  initialData?: typeof EMPTY_CUSTOMER;
 }
 
-export function ERPCustomerCreate({ onClose }: ERPCustomerCreateProps) {
+export function ERPCustomerCreate({ onClose, onSaveDraft, initialData }: ERPCustomerCreateProps) {
   return (
     <ERPCustomerDetail
-      customer={EMPTY_CUSTOMER}
+      customer={initialData ?? EMPTY_CUSTOMER}
       onClose={onClose}
       createMode
+      onSaveDraft={onSaveDraft}
     />
   );
 }

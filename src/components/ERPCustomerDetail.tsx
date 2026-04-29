@@ -17,7 +17,6 @@ import { DateRange } from './CwDateRangePicker';
 import { CwPopup } from './CwPopup';
 import { CwToast } from './CwToast';
 import { CwTextButton } from './CwTextButton';
-
 export interface ERPCustomerInfo {
   customerNumber: string;
   customerName: string;
@@ -36,10 +35,20 @@ export interface ERPCustomerInfo {
   invoiceTitle?: string;
 }
 
+export interface DraftCustomer {
+  id: string;
+  customerName: string;
+  taxId: string;
+  customerIdentity: string;
+  savedAt: string;
+  formData: ERPCustomerInfo;
+}
+
 interface ERPCustomerDetailProps {
   customer: ERPCustomerInfo;
   onClose: () => void;
   createMode?: boolean;
+  onSaveDraft?: (draft: DraftCustomer) => void;
 }
 
 const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
@@ -914,11 +923,11 @@ const mockDigitalRightsData = [
 
 // ── 操作記錄 mock 資料 ────────────────────────────────────────
 const mockOperationLogData = [
-  { id: 1, operateTime: '2025/03/15 - 14:32:01', operator: '林小華', changedField: '聯絡電話', beforeValue: '02-2345-6789', afterValue: '02-9876-5432' },
-  { id: 2, operateTime: '2025/03/10 - 09:15:44', operator: '系統', changedField: '訂閱到期日', beforeValue: '2025-03-09', afterValue: '2026-03-09' },
-  { id: 3, operateTime: '2025/02/28 - 16:05:22', operator: '陳美玲', changedField: '電子郵件', beforeValue: 'old.email@example.com', afterValue: 'new.email@example.com' },
-  { id: 4, operateTime: '2025/02/20 - 11:48:09', operator: '王大明', changedField: '客戶名稱', beforeValue: '天下集團採購部舊版', afterValue: '天下集團採購部' },
-  { id: 5, operateTime: '2025/01/08 - 10:00:00', operator: '系統', changedField: '帳號狀態', beforeValue: '停用', afterValue: '啟用' },
+  { id: 1, operateTime: '2025/03/15 - 14:32:01', operator: '林小華', category: '聯絡資訊', changedField: '聯絡電話', beforeValue: '02-2345-6789', afterValue: '02-9876-5432' },
+  { id: 2, operateTime: '2025/03/10 - 09:15:44', operator: '系統',   category: '基本資料', changedField: '訂閱到期日', beforeValue: '2025-03-09', afterValue: '2026-03-09' },
+  { id: 3, operateTime: '2025/02/28 - 16:05:22', operator: '陳美玲', category: '聯絡資訊', changedField: '電子郵件', beforeValue: 'old.email@example.com', afterValue: 'new.email@example.com' },
+  { id: 4, operateTime: '2025/02/20 - 11:48:09', operator: '王大明', category: '基本資料', changedField: '客戶名稱', beforeValue: '天下集團採購部舊版', afterValue: '天下集團採購部' },
+  { id: 5, operateTime: '2025/01/08 - 10:00:00', operator: '系統',   category: '地址',     changedField: '帳號狀態', beforeValue: '停用', afterValue: '啟用' },
 ];
 
 type TabId = 'basic' | 'address' | 'contact' | 'other' | 'subscription' | 'relation' | 'subscriber-rights' | 'operation-log';
@@ -965,7 +974,7 @@ const EMPTY_BASIC_INFO: BasicInfo = {
   lastTransactionDate: '',
 };
 
-export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERPCustomerDetailProps) {
+export function ERPCustomerDetail({ customer, onClose, createMode = false, onSaveDraft }: ERPCustomerDetailProps) {
   const TABS = createMode ? TABS_CREATE : TABS_DEFAULT;
   const [activeTab, setActiveTab] = useState<TabId>(createMode ? 'basic' : 'address');
   const [basicInfo, setBasicInfo] = useState<BasicInfo>(EMPTY_BASIC_INFO);
@@ -1208,7 +1217,8 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
   const [opLogDateStart, setOpLogDateStart] = useState<Date | null>(null);
   const [opLogDateEnd, setOpLogDateEnd] = useState<Date | null>(null);
   const [opLogOperator, setOpLogOperator] = useState('');
-  const [opLogApplied, setOpLogApplied] = useState<{ dateRange: DateRange; operator: string }>({ dateRange: { start: null, end: null }, operator: '' });
+  const [opLogCategory, setOpLogCategory] = useState('');
+  const [opLogApplied, setOpLogApplied] = useState<{ dateRange: DateRange; operator: string; category: string }>({ dateRange: { start: null, end: null }, operator: '', category: '' });
 
   const [isRightsPopupOpen, setIsRightsPopupOpen] = useState(false);
   const [selectedRightsItem, setSelectedRightsItem] = useState<any>(null);
@@ -1217,6 +1227,9 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
   const [rightsToastMessage, setRightsToastMessage] = useState('');
   const [rightsToastType, setRightsToastType] = useState<'success' | 'error' | 'info' | 'warning' | 'question'>('success');
   const [showRightsToast, setShowRightsToast] = useState(false);
+
+  // 暫存 toast
+  const [showDraftToast, setShowDraftToast] = useState(false);
 
   // ── 訂戶權益 handlers ────────────────────────────────────────
   const handleRightsConfirm = () => {
@@ -1271,9 +1284,28 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
     },
   ];
 
+  const CATEGORY_COLORS: Record<string, { bg: string; color: string }> = {
+    '基本資料': { bg: '#e8f0fe', color: '#1a56db' },
+    '地址':     { bg: '#fef3c7', color: '#92400e' },
+    '聯絡資訊': { bg: '#d1fae5', color: '#065f46' },
+    '父子關聯': { bg: '#ede9fe', color: '#5b21b6' },
+  };
+
   const operationLogColumns: CwTableColumn[] = [
     { key: 'operateTime',   title: '操作時間',   width: '200px' },
     { key: 'operator',      title: '操作者',     width: '120px' },
+    { key: 'category',      title: '分類',       width: '120px',
+      render: (val: any) => {
+        const c = CATEGORY_COLORS[val as string] ?? { bg: '#e9ebf2', color: '#1c1c1c' };
+        return (
+          <span
+            style={{ backgroundColor: c.bg, color: c.color, fontFamily: 'var(--font-noto-sans-tc)', fontSize: '13px', fontWeight: 400, borderRadius: '5px', padding: '2px 6px', whiteSpace: 'nowrap', display: 'inline-block' }}
+          >
+            {val}
+          </span>
+        );
+      },
+    },
     { key: 'changedField',  title: '異動欄位',   width: '140px' },
     { key: 'beforeValue',   title: '變更前',     width: '200px' },
     { key: 'afterValue',    title: '變更後',     width: '200px' },
@@ -2403,6 +2435,7 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
 ) : activeTab === 'operation-log' ? (() => {
   const filteredOpLog = mockOperationLogData.filter(row => {
     if (opLogApplied.operator && !row.operator.includes(opLogApplied.operator)) return false;
+    if (opLogApplied.category && row.category !== opLogApplied.category) return false;
     if (opLogApplied.dateRange.start || opLogApplied.dateRange.end) {
       // 從 "YYYY/MM/DD - hh:mm:ss" 解析日期
       const datePart = row.operateTime.split(' - ')[0].replace(/\//g, '-');
@@ -2433,12 +2466,29 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
             style={{ width: '220px' }}
           />
         </div>
+        <div className="flex flex-col gap-[4px]">
+          <span className="text-[13px] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 500, color: '#1c1c1c' }}>分類</span>
+          <div style={{ width: '220px' }}>
+            <CwSelect
+              value={opLogCategory}
+              onChange={v => setOpLogCategory(v as string)}
+              placeholder="請選擇分類"
+              clearable
+              options={[
+                { value: '基本資料', label: '基本資料' },
+                { value: '地址',     label: '地址' },
+                { value: '聯絡資訊', label: '聯絡資訊' },
+                { value: '父子關聯', label: '父子關聯' },
+              ]}
+            />
+          </div>
+        </div>
         <div className="flex gap-[8px]">
           <CwButton
             variant="primary"
             appearance="filled"
             size="m"
-            onClick={() => setOpLogApplied({ dateRange: { start: opLogDateStart, end: opLogDateEnd }, operator: opLogOperator })}
+            onClick={() => setOpLogApplied({ dateRange: { start: opLogDateStart, end: opLogDateEnd }, operator: opLogOperator, category: opLogCategory })}
           >查詢</CwButton>
           <CwButton
             variant="secondary"
@@ -2448,7 +2498,8 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
               setOpLogDateStart(null);
               setOpLogDateEnd(null);
               setOpLogOperator('');
-              setOpLogApplied({ dateRange: { start: null, end: null }, operator: '' });
+              setOpLogCategory('');
+              setOpLogApplied({ dateRange: { start: null, end: null }, operator: '', category: '' });
             }}
           >重置</CwButton>
         </div>
@@ -2690,7 +2741,33 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
         <div className="border-t border-[#e5e7eb]" />
         <div className="flex items-center justify-end gap-[8px] pt-[16px] pb-[40px]">
           <CwButton variant="primary" appearance="outlined" size="m" onClick={onClose}>取消</CwButton>
-          <CwButton variant="primary" appearance="outlined" size="m">暫存</CwButton>
+          <CwButton variant="primary" appearance="outlined" size="m" onClick={() => {
+            const now = new Date();
+            const pad = (n: number) => String(n).padStart(2, '0');
+            const savedAt = `${now.getFullYear()}/${pad(now.getMonth() + 1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+            onSaveDraft?.({
+              id: String(Date.now()),
+              customerName: basicInfo.customerName,
+              taxId: basicInfo.taxId,
+              customerIdentity: basicInfo.customerIdentity,
+              savedAt,
+              formData: {
+                customerNumber: basicInfo.customerNumber,
+                customerName: basicInfo.customerName,
+                taxId: basicInfo.taxId,
+                status: basicInfo.status,
+                customerIdentity: basicInfo.customerIdentity,
+                address: customer.address,
+                contact: customer.contact,
+                email: customer.email,
+                mobile: customer.mobile,
+                phone: customer.phone,
+                marketingConsentDate: basicInfo.marketingConsentDate,
+                lastTransactionDate: basicInfo.lastTransactionDate,
+              },
+            });
+            setShowDraftToast(true);
+          }}>暫存</CwButton>
           <CwButton variant="primary" appearance="filled" size="m" onClick={() => {
             if (!basicInfo.customerName.trim()) { setCustomerNameError('客戶名稱為必填'); return; }
           }}>儲存</CwButton>
@@ -2812,6 +2889,16 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false }: ERP
         message={rightsToastMessage}
         type={rightsToastType}
         onClose={() => setShowRightsToast(false)}
+        duration={3000}
+      />
+    )}
+
+    {/* ── 暫存：Toast 通知 ── */}
+    {showDraftToast && (
+      <CwToast
+        message="已暫存，可至查詢頁「待完成」繼續編輯"
+        type="success"
+        onClose={() => setShowDraftToast(false)}
         duration={3000}
       />
     )}

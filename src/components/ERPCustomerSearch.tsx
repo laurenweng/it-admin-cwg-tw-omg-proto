@@ -7,7 +7,8 @@ import { BreadcrumbItem } from "./CwBreadcrumbs";
 import { CwTable, CwTableColumn } from "./CwTable";
 import { CwSelect, CwSelectOption } from "./CwSelect";
 import { CwRoundButton } from "./CwRoundButton";
-import { ERPCustomerDetail } from "./ERPCustomerDetail";
+import { CwTab } from "./CwTab";
+import { ERPCustomerDetail, DraftCustomer } from "./ERPCustomerDetail";
 import { ERPCustomerCreate } from "./ERPCustomerCreate";
 
 // ── 型別定義 ──────────────────────────────────────────────────
@@ -57,6 +58,26 @@ interface CustomerRow {
   // 用於跳轉詳情
   _raw: ERPCustomerData;
 }
+
+// ── Mock 草稿資料 ──────────────────────────────────────────────
+const mockDraftCustomers: DraftCustomer[] = [
+  {
+    id: 'draft-1',
+    customerName: '新創科技股份有限公司',
+    taxId: '87654321',
+    customerIdentity: '公司',
+    savedAt: '2026/04/28 15:22',
+    formData: { customerNumber: '', customerName: '新創科技股份有限公司', taxId: '87654321', status: '', customerIdentity: '公司', address: '', contact: '', email: '', mobile: '', phone: '', marketingConsentDate: '', lastTransactionDate: '' },
+  },
+  {
+    id: 'draft-2',
+    customerName: '張小芬',
+    taxId: '',
+    customerIdentity: '個人',
+    savedAt: '2026/04/29 09:05',
+    formData: { customerNumber: '', customerName: '張小芬', taxId: '', status: '', customerIdentity: '個人', address: '台北市大安區', contact: '張小芬', email: 'chang@example.com', mobile: '0912000111', phone: '', marketingConsentDate: '', lastTransactionDate: '' },
+  },
+];
 
 // ── Mock 資料 ─────────────────────────────────────────────────
 
@@ -236,6 +257,11 @@ export function ERPCustomerSearch() {
   const [displayCount, setDisplayCount] = useState(10);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const tableContainerRef = useRef<HTMLDivElement>(null);
+
+  // 草稿相關
+  const [draftCustomers, setDraftCustomers] = useState<DraftCustomer[]>(mockDraftCustomers);
+  const [resultTab, setResultTab] = useState<'result' | 'draft'>('result');
+  const [editingDraft, setEditingDraft] = useState<DraftCustomer | null>(null);
 
   const handleInputChange = (key: string, value: string) => {
     setSearchForm(prev => ({ ...prev, [key]: value }));
@@ -437,8 +463,29 @@ export function ERPCustomerSearch() {
     ? columns
     : columns.filter(c => !(['contact', 'mobile', 'phone', 'email', 'address'] as string[]).includes(c.key as string));
 
+  if (editingDraft) {
+    return (
+      <ERPCustomerCreate
+        initialData={editingDraft.formData}
+        onClose={() => setEditingDraft(null)}
+        onSaveDraft={(updated) => {
+          setDraftCustomers(prev => prev.map(d => d.id === editingDraft.id ? { ...updated, id: editingDraft.id } : d));
+          setEditingDraft(null);
+        }}
+      />
+    );
+  }
+
   if (showCreate) {
-    return <ERPCustomerCreate onClose={() => setShowCreate(false)} />;
+    return (
+      <ERPCustomerCreate
+        onClose={() => setShowCreate(false)}
+        onSaveDraft={(draft) => {
+          setDraftCustomers(prev => [...prev, draft]);
+          setShowCreate(false);
+        }}
+      />
+    );
   }
 
   if (selectedCustomer) {
@@ -514,55 +561,101 @@ export function ERPCustomerSearch() {
         </div>
       </form>
 
-      {/* ── 查詢結果 ── */}
-      {hasSearched && (
+      {/* ── 查詢結果 / 待完成 Tab 區 ── */}
+      {(hasSearched || draftCustomers.length > 0) && (
         <div className="space-y-[12px]">
-          <div className="flex items-center justify-between">
-            {/* 展示 地址/聯絡資料 明細 */}
-            <label className="flex items-center gap-[8px] cursor-pointer select-none pb-[4px]">
-              <input
-                type="checkbox"
-                checked={showContactDetail}
-                onChange={(e) => { setShowContactDetail(e.target.checked); setDisplayCount(10); }}
-                className="w-[16px] h-[16px] rounded border-[#c4c9d3] text-[#0078d4] cursor-pointer"
-              />
-              <span className="font-['Noto_Sans_TC',_sans-serif] text-[14px] text-[#1c1c1c]" style={{ fontWeight: 350 }}>
-                展示 地址/聯絡資料 明細
-              </span>
-            </label>
-            <span className="text-[13px] text-[#7c808c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>
-              {countLabel}
-            </span>
-          </div>
+          {/* Tab — 有草稿才顯示 */}
+          {draftCustomers.length > 0 && (
+            <CwTab
+              items={[
+                { id: 'result', label: '查詢結果' },
+                { id: 'draft',  label: `待完成 (${draftCustomers.length})` },
+              ]}
+              activeId={resultTab}
+              onChange={(id) => setResultTab(id as 'result' | 'draft')}
+            />
+          )}
 
-          {/* 開啟明細時顯示說明 */}
-          {showContactDetail && (
-            <p className="text-[12px] text-[#7c808c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>
-              每列為「聯絡人・手機・Email・市話・地址」的不重複組合；<span style={{ background: '#e0f2fe', color: '#0369a1', fontWeight: 600, padding: '1px 4px', borderRadius: 3 }}>主</span> 標示為該客戶的主要聯絡資料
+          {/* ── 查詢結果 tab ── */}
+          {resultTab === 'result' && hasSearched && (
+            <>
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-[8px] cursor-pointer select-none pb-[4px]">
+                  <input
+                    type="checkbox"
+                    checked={showContactDetail}
+                    onChange={(e) => { setShowContactDetail(e.target.checked); setDisplayCount(10); }}
+                    className="w-[16px] h-[16px] rounded border-[#c4c9d3] text-[#0078d4] cursor-pointer"
+                  />
+                  <span className="font-['Noto_Sans_TC',_sans-serif] text-[14px] text-[#1c1c1c]" style={{ fontWeight: 350 }}>
+                    展示 地址/聯絡資料 明細
+                  </span>
+                </label>
+                <span className="text-[13px] text-[#7c808c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>
+                  {countLabel}
+                </span>
+              </div>
+
+              {showContactDetail && (
+                <p className="text-[12px] text-[#7c808c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>
+                  每列為「聯絡人・手機・Email・市話・地址」的不重複組合；<span style={{ background: '#e0f2fe', color: '#0369a1', fontWeight: 600, padding: '1px 4px', borderRadius: 3 }}>主</span> 標示為該客戶的主要聯絡資料
+                </p>
+              )}
+
+              <div ref={tableContainerRef} className="overflow-auto max-h-[calc(100vh-420px)]">
+                <CwTable
+                  columns={visibleColumns}
+                  dataSource={pagedRows}
+                  rowKey="rowId"
+                  emptyText="查無符合條件的客戶資料"
+                />
+              </div>
+
+              {isLoadingMore && (
+                <div className="flex justify-center py-[12px]">
+                  <span className="text-[13px] text-[#7c808c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>載入中…</span>
+                </div>
+              )}
+
+              {!isLoadingMore && displayCount >= tableRows.length && tableRows.length > 0 && (
+                <div className="flex justify-center py-[12px]">
+                  <span className="text-[13px] text-[#7c808c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>
+                    已顯示全部 {tableRows.length} 筆
+                  </span>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* 查詢結果 tab 但尚未查詢 */}
+          {resultTab === 'result' && !hasSearched && (
+            <p className="text-[13px] text-[#7c808c] font-['Noto_Sans_TC',_sans-serif] py-[20px] text-center" style={{ fontWeight: 350 }}>
+              請輸入條件後按「查詢」
             </p>
           )}
 
-          <div ref={tableContainerRef} className="overflow-auto max-h-[calc(100vh-420px)]">
+          {/* ── 待完成 tab ── */}
+          {resultTab === 'draft' && (
             <CwTable
-              columns={visibleColumns}
-              dataSource={pagedRows}
-              rowKey="rowId"
-              emptyText="查無符合條件的客戶資料"
+              columns={[
+                { key: 'customerName', title: '客戶名稱', width: '180px',
+                  render: (v: any) => <span>{v || '—'}</span>,
+                },
+                { key: 'taxId', title: '統編', width: '120px',
+                  render: (v: any) => <span>{v || '—'}</span>,
+                },
+                { key: 'customerIdentity', title: '身分別', width: '100px' },
+                { key: 'savedAt', title: '最後暫存時間', width: '180px' },
+                { key: 'actions', title: '功能', width: '100px', align: 'center', sticky: true,
+                  render: (_v: any, r: any) => (
+                    <CwRoundButton icon="edit" title="繼續編輯" onClick={() => setEditingDraft(r as DraftCustomer)} />
+                  ),
+                },
+              ] as CwTableColumn[]}
+              dataSource={draftCustomers}
+              rowKey="id"
+              emptyText="目前沒有待完成的客戶資料"
             />
-          </div>
-
-          {isLoadingMore && (
-            <div className="flex justify-center py-[12px]">
-              <span className="text-[13px] text-[#7c808c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>載入中…</span>
-            </div>
-          )}
-
-          {!isLoadingMore && displayCount >= tableRows.length && tableRows.length > 0 && (
-            <div className="flex justify-center py-[12px]">
-              <span className="text-[13px] text-[#7c808c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>
-                已顯示全部 {tableRows.length} 筆
-              </span>
-            </div>
           )}
         </div>
       )}
