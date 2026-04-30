@@ -1940,6 +1940,9 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false, onSav
         <OtherTextField label="發票抬頭" fKey="invoiceTitle" value={otherDraft.invoiceTitle} onChange={setOtherField} error={otherErrors.invoiceTitle} />
         <OtherTextField label="公司名稱" fKey="companyName" value={otherDraft.companyName} onChange={setOtherField} />
 
+        {/* 分隔線 */}
+        <div className="col-span-4 border-t border-[#e5e7eb] my-[24px]" />
+
         {/* Row 4: 性別 / 出生日期 / 婚姻 / 子女人數 */}
         <OtherSelectField label="性別" fKey="gender" options={oGenderOptions} value={otherDraft.gender} onChange={setOtherField} />
         <OtherDateField label="出生日期" fKey="birthDate" value={otherDraft.birthDate} onChange={setOtherField} />
