@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { RotateCcw } from "lucide-react";
+import { RotateCcw, Plus } from "lucide-react";
 import { CwButton } from "./CwButton";
 import { CwInput } from "./CwInput";
 import { CwTitle } from "./CwTitle";
@@ -21,6 +21,8 @@ interface ContactRecord {
   phone: string;
   address: string;
   isPrimary: boolean;
+  isPrimaryShipping?: boolean;
+  isPrimaryPayment?: boolean;
 }
 
 // 客戶主資料
@@ -55,6 +57,8 @@ interface CustomerRow {
   phone: string;
   address: string;
   isPrimary: boolean;
+  isPrimaryShipping: boolean;
+  isPrimaryPayment: boolean;
   // 用於跳轉詳情
   _raw: ERPCustomerData;
 }
@@ -95,7 +99,7 @@ const mockERPCustomers: ERPCustomerData[] = [
     updatedAt: '2026-04-18 09:32',
     invoiceTitle: '王小明',
     contacts: [
-      { contact: '王小明', mobile: '0912345678', email: 'wangxm@example.com', phone: '02-25074855', address: '台北市中山區中山北路二段7號', isPrimary: true },
+      { contact: '王小明', mobile: '0912345678', email: 'wangxm@example.com', phone: '02-25074855', address: '台北市中山區中山北路二段7號', isPrimary: true, isPrimaryShipping: true, isPrimaryPayment: true },
       { contact: '王小明', mobile: '0912345678', email: 'wangxm@example.com', phone: '02-25074855', address: '新北市新店區中正路88號', isPrimary: false },
     ],
   },
@@ -112,8 +116,8 @@ const mockERPCustomers: ERPCustomerData[] = [
     updatedAt: '2026-04-15 14:10',
     invoiceTitle: '宏達股份有限公司',
     contacts: [
-      { contact: '李大華', mobile: '0923456789', email: 'contact@htc.com.tw', phone: '02-29538888', address: '新北市板橋區文化路一段188號', isPrimary: true },
-      { contact: '陳秘書', mobile: '0923456700', email: 'secretary@htc.com.tw', phone: '02-29538889', address: '新北市板橋區文化路一段188號', isPrimary: false },
+      { contact: '李大華', mobile: '0923456789', email: 'contact@htc.com.tw', phone: '02-29538888', address: '新北市板橋區文化路一段188號', isPrimary: true, isPrimaryShipping: true },
+      { contact: '陳秘書', mobile: '0923456700', email: 'secretary@htc.com.tw', phone: '02-29538889', address: '新北市板橋區文化路一段188號', isPrimary: false, isPrimaryPayment: true },
       { contact: '林採購', mobile: '0956001234', email: 'purchase@htc.com.tw', phone: '02-29538890', address: '台北市信義區松仁路100號', isPrimary: false },
     ],
   },
@@ -129,7 +133,7 @@ const mockERPCustomers: ERPCustomerData[] = [
     lastTransactionDate: '2024-06-30',
     updatedAt: '2025-03-02 11:05',
     contacts: [
-      { contact: '陳美玲', mobile: '0934567890', email: 'chenml@example.com', phone: '04-22580777', address: '台中市西屯區台灣大道三段99號', isPrimary: true },
+      { contact: '陳美玲', mobile: '0934567890', email: 'chenml@example.com', phone: '04-22580777', address: '台中市西屯區台灣大道三段99號', isPrimary: true, isPrimaryShipping: true, isPrimaryPayment: true },
     ],
   },
   {
@@ -145,9 +149,9 @@ const mockERPCustomers: ERPCustomerData[] = [
     updatedAt: '2026-04-20 08:47',
     invoiceTitle: '志遠國際貿易有限公司',
     contacts: [
-      { contact: '張志遠', mobile: '0945678901', email: 'zhangzr@example.com', phone: '07-33335555', address: '高雄市前鎮區中山三路6號', isPrimary: true },
+      { contact: '張志遠', mobile: '0945678901', email: 'zhangzr@example.com', phone: '07-33335555', address: '高雄市前鎮區中山三路6號', isPrimary: true, isPrimaryShipping: true },
       { contact: '財務部', mobile: '0945000001', email: 'finance@zhiyuan.com', phone: '07-33335556', address: '高雄市前鎮區中山三路6號', isPrimary: false },
-      { contact: '業務部', mobile: '0945000002', email: 'sales@zhiyuan.com',   phone: '07-33335557', address: '台北市大安區忠孝東路四段100號', isPrimary: false },
+      { contact: '業務部', mobile: '0945000002', email: 'sales@zhiyuan.com',   phone: '07-33335557', address: '台北市大安區忠孝東路四段100號', isPrimary: false, isPrimaryPayment: true },
     ],
   },
   {
@@ -162,7 +166,7 @@ const mockERPCustomers: ERPCustomerData[] = [
     lastTransactionDate: '2023-12-01',
     updatedAt: '2024-01-08 16:22',
     contacts: [
-      { contact: '林淑芬', mobile: '0956789012', email: 'linsf@example.com', phone: '06-23456789', address: '台南市東區裕農路198號', isPrimary: true },
+      { contact: '林淑芬', mobile: '0956789012', email: 'linsf@example.com', phone: '06-23456789', address: '台南市東區裕農路198號', isPrimary: true, isPrimaryShipping: true, isPrimaryPayment: true },
     ],
   },
   {
@@ -178,7 +182,7 @@ const mockERPCustomers: ERPCustomerData[] = [
     updatedAt: '2026-03-28 10:00',
     invoiceTitle: '天下文化事業股份有限公司',
     contacts: [
-      { contact: '黃文龍', mobile: '0967890123', email: 'huang.wl@cwgv.com.tw', phone: '02-23560678', address: '台北市中正區重南路1號', isPrimary: true },
+      { contact: '黃文龍', mobile: '0967890123', email: 'huang.wl@cwgv.com.tw', phone: '02-23560678', address: '台北市中正區重南路1號', isPrimary: true, isPrimaryShipping: true, isPrimaryPayment: true },
       { contact: '客服中心', mobile: '0967890000', email: 'service@cwgv.com.tw',  phone: '02-23560679', address: '台北市中正區重南路1號', isPrimary: false },
     ],
   },
@@ -194,7 +198,7 @@ const mockERPCustomers: ERPCustomerData[] = [
     lastTransactionDate: '2025-09-15',
     updatedAt: '2025-10-01 13:38',
     contacts: [
-      { contact: '洪建志', mobile: '0978901234', email: 'hung.jz@example.com', phone: '08-33335566', address: '屏東市民生路55號', isPrimary: true },
+      { contact: '洪建志', mobile: '0978901234', email: 'hung.jz@example.com', phone: '08-33335566', address: '屏東市民生路55號', isPrimary: true, isPrimaryShipping: true, isPrimaryPayment: true },
     ],
   },
   {
@@ -210,8 +214,8 @@ const mockERPCustomers: ERPCustomerData[] = [
     updatedAt: '2024-05-10 09:15',
     invoiceTitle: '邱雅玲國際股份有限公司',
     contacts: [
-      { contact: '邱雅玲', mobile: '0989012345', email: 'chiu.yl@example.com', phone: '04-77778888', address: '彰化市中山路88號', isPrimary: true },
-      { contact: '行政部', mobile: '0989000001', email: 'admin@chiu.com',      phone: '04-77778889', address: '台中市南區建國路200號', isPrimary: false },
+      { contact: '邱雅玲', mobile: '0989012345', email: 'chiu.yl@example.com', phone: '04-77778888', address: '彰化市中山路88號', isPrimary: true, isPrimaryShipping: true },
+      { contact: '行政部', mobile: '0989000001', email: 'admin@chiu.com',      phone: '04-77778889', address: '台中市南區建國路200號', isPrimary: false, isPrimaryPayment: true },
     ],
   },
 ];
@@ -333,12 +337,14 @@ export function ERPCustomerSearch() {
       return [{
         rowId:    `${c.id}_primary`,
         ...base,
-        contact:   primary.contact,
-        mobile:    primary.mobile,
-        email:     primary.email,
-        phone:     primary.phone,
-        address:   primary.address,
-        isPrimary: true,
+        contact:            primary.contact,
+        mobile:             primary.mobile,
+        email:              primary.email,
+        phone:              primary.phone,
+        address:            primary.address,
+        isPrimary:          true,
+        isPrimaryShipping:  !!primary.isPrimaryShipping,
+        isPrimaryPayment:   !!primary.isPrimaryPayment,
       }];
     }
 
@@ -354,12 +360,14 @@ export function ERPCustomerSearch() {
       .map((cr, i) => ({
         rowId:    `${c.id}_${i}`,
         ...base,
-        contact:   cr.contact,
-        mobile:    cr.mobile,
-        email:     cr.email,
-        phone:     cr.phone,
-        address:   cr.address,
-        isPrimary: cr.isPrimary,
+        contact:            cr.contact,
+        mobile:             cr.mobile,
+        email:              cr.email,
+        phone:              cr.phone,
+        address:            cr.address,
+        isPrimary:          cr.isPrimary,
+        isPrimaryShipping:  !!cr.isPrimaryShipping,
+        isPrimaryPayment:   !!cr.isPrimaryPayment,
       }));
   });
 
@@ -389,27 +397,7 @@ export function ERPCustomerSearch() {
   const columns: CwTableColumn<CustomerRow>[] = [
     { key: 'customerNumber', title: '客戶編號', width: '120px', stickyLeft: true },
     { key: 'customerName',   title: '客戶名稱', width: '180px', stickyLeft: true },
-    {
-      key: 'status' as any,
-      title: '客戶狀態',
-      width: '90px',
-      align: 'center',
-      render: (_v, r) => {
-        const map: Record<string, { bg: string; color: string }> = {
-          active:   { bg: '#f0fdf4', color: '#166534' },
-          inactive: { bg: '#f3f4f6', color: '#4b5563' },
-        };
-        const style = map[r.status] ?? { bg: '#f3f4f6', color: '#4b5563' };
-        return (
-          <span
-            className="inline-flex items-center px-[8px] py-[2px] rounded-full text-[12px] whitespace-nowrap font-['Noto_Sans_TC',_sans-serif]"
-            style={{ backgroundColor: style.bg, color: style.color, fontWeight: 500 }}
-          >
-            {r.status}
-          </span>
-        );
-      },
-    },
+
     { key: 'taxId',   title: '統編',   width: '100px' },
 
     { key: 'contact', title: '聯絡人', width: '100px',
@@ -430,7 +418,31 @@ export function ERPCustomerSearch() {
     { key: 'mobile',  title: '手機',   width: '120px' },
     { key: 'phone',   title: '市話',   width: '130px' },
     { key: 'email',   title: 'Email',  width: '200px' },
-    { key: 'address', title: '地址',   width: '260px' },
+    { key: 'address', title: '地址', width: '260px',
+      render: (_v, r) => (
+        <span className="flex items-start gap-[4px] flex-wrap">
+          {r.isPrimaryShipping && (
+            <span
+              className="inline-block px-[4px] py-[1px] rounded text-[10px] shrink-0 mt-[2px]"
+              style={{ background: '#fef9c3', color: '#854d0e', fontWeight: 600 }}
+            >
+              寄
+            </span>
+          )}
+          {r.isPrimaryPayment && (
+            <span
+              className="inline-block px-[4px] py-[1px] rounded text-[10px] shrink-0 mt-[2px]"
+              style={{ background: '#fce7f3', color: '#9d174d', fontWeight: 600 }}
+            >
+              付
+            </span>
+          )}
+          <span className="font-['Noto_Sans_TC',_sans-serif] text-[14px] text-[#1c1c1c] break-words" style={{ fontWeight: 350 }}>
+            {r.address}
+          </span>
+        </span>
+      ),
+    },
     {
       key: 'lastTransactionDate' as any,
       title: '最後交易日期',
@@ -443,6 +455,27 @@ export function ERPCustomerSearch() {
           {r.lastTransactionDate ?? '—'}
         </span>
       ),
+    },
+    {
+      key: 'status' as any,
+      title: '客戶狀態',
+      width: '90px',
+      align: 'center',
+      render: (_v, r) => {
+        const map: Record<string, { bg: string; color: string }> = {
+          active:   { bg: '#f0fdf4', color: '#166534' },
+          inactive: { bg: '#f3f4f6', color: '#4b5563' },
+        };
+        const style = map[r.status] ?? { bg: '#f3f4f6', color: '#4b5563' };
+        return (
+          <span
+            className="inline-flex items-center px-[8px] py-[2px] rounded-full text-[12px] whitespace-nowrap font-['Noto_Sans_TC',_sans-serif]"
+            style={{ backgroundColor: style.bg, color: style.color, fontWeight: 500 }}
+          >
+            {r.status}
+          </span>
+        );
+      },
     },
     {
       key: 'actions' as any,
@@ -553,9 +586,9 @@ export function ERPCustomerSearch() {
 
         {/* ── 底部按鈕 ── */}
         <div className="flex items-center justify-between pt-[4px]">
-          <CwButton variant="primary" appearance="outlined" leftIcon={<RotateCcw size={14} />} onClick={handleReset}>清除</CwButton>
+          <CwButton variant="primary" appearance="filled" leftIcon={<Plus size={14} />} onClick={() => setShowCreate(true)}>新增客戶</CwButton>
           <div className="flex items-center gap-[8px]">
-            <CwButton variant="primary" appearance="filled" onClick={() => setShowCreate(true)}>新增客戶</CwButton>
+            <CwButton variant="primary" appearance="outlined" leftIcon={<RotateCcw size={14} />} onClick={handleReset}>清除</CwButton>
             <CwButton variant="primary" appearance="filled" type="submit">查詢</CwButton>
           </div>
         </div>

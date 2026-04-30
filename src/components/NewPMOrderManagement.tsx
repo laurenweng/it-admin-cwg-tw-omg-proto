@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { RotateCcw, ChevronDown, ChevronUp, Filter, Info, Search, X } from "lucide-react";
+import { RotateCcw, ChevronDown, ChevronUp, Filter, Info, Search, X, Plus } from "lucide-react";
 import { CwButton } from "./CwButton";
 import { CwRoundButton } from "./CwRoundButton";
 import { CwInput } from "./CwInput";
@@ -1352,9 +1352,9 @@ export function NewPMOrderManagement() {
 
         {/* ── 底部按鈕 ── */}
         <div className="flex items-center justify-between pt-[4px]">
-          <CwButton variant="primary" appearance="outlined" leftIcon={<RotateCcw size={14} />} onClick={handleClear}>清除</CwButton>
+          <CwButton variant="primary" appearance="filled" leftIcon={<Plus size={14} />} onClick={() => setShowCreate(true)}>新增訂單</CwButton>
           <div className="flex item-center gap-[10px]">
-            <CwButton variant="primary" appearance="filled" onClick={() => setShowCreate(true)}>新增訂單</CwButton>
+            <CwButton variant="primary" appearance="outlined" leftIcon={<RotateCcw size={14} />} onClick={handleClear}>清除</CwButton>
             <CwButton variant="primary" appearance="filled" type="submit">查詢</CwButton>
           </div>
         </div>

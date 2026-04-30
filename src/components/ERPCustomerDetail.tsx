@@ -806,6 +806,70 @@ const EMPTY_OTHER_INFO: CustomerOtherInfo = {
   autoRenewalInvoice: '',
 };
 
+// ── 基本資料 tab helper 元件（提升至頂層，避免 render 內重建造成 input 失去 focus）──
+
+const basicLabelStyle: React.CSSProperties = { fontFamily: 'var(--font-noto-sans-tc)', fontSize: 'var(--text-base)', fontWeight: 350 };
+
+function BasicField({ label, children, required, error }: { label: string; children: React.ReactNode; required?: boolean; error?: string }) {
+  return (
+    <div className="flex flex-col gap-[4px]">
+      <span style={basicLabelStyle}>
+        {label}
+        {required && <span className="text-[#e53e3e] ml-[2px]">*</span>}
+      </span>
+      {children}
+      {error && <span className="text-[12px] text-[#e53e3e] font-['Noto_Sans_TC',_sans-serif]">{error}</span>}
+    </div>
+  );
+}
+
+function OtherRequiredLabel({ text }: { text: string }) {
+  return (
+    <label className="block text-foreground" style={basicLabelStyle}>{text}<span style={{ color: '#E53E3E' }}> *</span></label>
+  );
+}
+
+function OtherErrorText({ error }: { error?: string }) {
+  return error ? <p className="text-[12px] mt-[2px]" style={{ color: '#E53E3E', fontFamily: 'var(--font-noto-sans-tc)' }}>{error}</p> : null;
+}
+
+function OtherTextField({ label, fKey, required, colSpan, value, onChange, error }: {
+  label: string; fKey: keyof CustomerOtherInfo; required?: boolean; colSpan?: number;
+  value: string; onChange: (fKey: keyof CustomerOtherInfo, val: string) => void; error?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1" style={colSpan ? { gridColumn: `span ${colSpan}` } : undefined}>
+      {required ? <OtherRequiredLabel text={label} /> : <label style={basicLabelStyle}>{label}</label>}
+      <CwInput value={value} onChange={e => onChange(fKey, (e as React.ChangeEvent<HTMLInputElement>).target.value)} error={error} />
+    </div>
+  );
+}
+
+function OtherSelectField({ label, fKey, options, required, disabled, value, onChange, error }: {
+  label: string; fKey: keyof CustomerOtherInfo; options: { value: string; label: string }[]; required?: boolean; disabled?: boolean;
+  value: string; onChange: (fKey: keyof CustomerOtherInfo, val: string) => void; error?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      {required ? <OtherRequiredLabel text={label} /> : <label style={basicLabelStyle}>{label}</label>}
+      <CwSelect options={options} value={value} onChange={v => onChange(fKey, v as string)} clearable error={!!error} disabled={disabled} />
+      <OtherErrorText error={error} />
+    </div>
+  );
+}
+
+function OtherDateField({ label, fKey, value, onChange }: {
+  label: string; fKey: keyof CustomerOtherInfo;
+  value: string; onChange: (fKey: keyof CustomerOtherInfo, val: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label style={basicLabelStyle}>{label}</label>
+      <CwDatePicker value={value ? new Date(value) : null} onChange={d => onChange(fKey, d ? d.toISOString().slice(0, 10) : '')} />
+    </div>
+  );
+}
+
 // ── 訂閱年資資料型別 ──────────────────────────────────────────
 interface PubSeniority {
   firstSubDate: string;
@@ -1717,24 +1781,37 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false, onSav
     if (index <= 2) onClose();
   };
 
-  const statusStyle = STATUS_STYLE[customer.status] ?? { bg: '#f3f4f6', color: '#4b5563' };
+  // 新增模式讀 basicInfo / otherDraft；明細模式讀 customer props
+  const displayInfo = createMode ? {
+    customerNumber:       basicInfo.customerNumber,
+    customerName:         basicInfo.customerName,
+    customerIdentity:     basicInfo.customerIdentity,
+    status:               basicInfo.status,
+    taxId:                basicInfo.taxId,
+    invoiceTitle:         otherDraft.invoiceTitle,
+    agreeMarketing:       basicInfo.agreeMarketing,
+    marketingConsentDate: basicInfo.marketingConsentDate,
+    lastTransactionDate:  '',
+  } : customer;
+
+  const statusStyle = STATUS_STYLE[displayInfo.status] ?? { bg: '#f3f4f6', color: '#4b5563' };
 
   const headerFields: [string, React.ReactNode][] = [
-    ['客戶編號', customer.customerNumber || '—'],
-    ['客戶名稱', customer.customerName || '—'],
-    ['客戶身分', customer.customerIdentity || '—'],
-    ['狀態', (
+    ['客戶編號', displayInfo.customerNumber || '—'],
+    ['客戶名稱', displayInfo.customerName || '—'],
+    ['客戶身分', displayInfo.customerIdentity || '—'],
+    ['狀態', displayInfo.status ? (
       <span
         className="inline-flex w-fit items-center px-[8px] py-[2px] rounded-full text-[12px] whitespace-nowrap font-['Noto_Sans_TC',_sans-serif]"
         style={{ backgroundColor: statusStyle.bg, color: statusStyle.color, fontWeight: 500 }}
       >
-        {customer.status}
+        {displayInfo.status}
       </span>
-    )],
-    ['統一編號', customer.taxId || '—'],
-    ['發票抬頭', customer.invoiceTitle || '—'],
-    ['是否同意行銷(訂單來源)', [customer.agreeMarketing, customer.marketingConsentDate].filter(Boolean).join('　') || '—'],
-    ['最後交易日期', customer.lastTransactionDate || '—'],
+    ) : '—'],
+    ['統一編號', displayInfo.taxId || '—'],
+    ['發票抬頭', displayInfo.invoiceTitle || '—'],
+    ['是否同意行銷(訂單來源)', [displayInfo.agreeMarketing, displayInfo.marketingConsentDate].filter(Boolean).join('　') || '—'],
+    ['最後交易日期', displayInfo.lastTransactionDate || '—'],
   ];
 
   return (
@@ -1747,31 +1824,39 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false, onSav
       />
 
       <div className="space-y-[30px] mx-[30px]">
-        {/* 上方：客戶基本資料（新增模式下隱藏） */}
-        {!createMode && (
-          <div className="grid grid-cols-4 gap-x-[24px] gap-y-[24px] my-[30px] mb-[40px]">
-            {headerFields.map(([label, value]) => (
-              <div key={label as string} className="flex flex-col gap-[4px]">
+        {/* 上方：客戶基本資料 */}
+        <div className="grid grid-cols-4 gap-x-[24px] gap-y-[24px] my-[30px] mb-[40px]">
+          {createMode && (
+            <div className="col-span-4 mb-[-8px]">
+              <span
+                className="text-[12px] text-[#7c808c] font-['Noto_Sans_TC',_sans-serif]"
+                style={{ fontWeight: 350 }}
+              >
+                以下資訊將隨您填寫的內容即時更新
+              </span>
+            </div>
+          )}
+          {headerFields.map(([label, value]) => (
+            <div key={label as string} className="flex flex-col gap-[4px]">
+              <span
+                className="text-[12px] text-[#7c808c] font-['Noto_Sans_TC',_sans-serif]"
+                style={{ fontWeight: 400 }}
+              >
+                {label}
+              </span>
+              {typeof value === 'string' ? (
                 <span
-                  className="text-[12px] text-[#7c808c] font-['Noto_Sans_TC',_sans-serif]"
-                  style={{ fontWeight: 400 }}
+                  className="text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]"
+                  style={{ fontWeight: 350 }}
                 >
-                  {label}
+                  {value}
                 </span>
-                {typeof value === 'string' ? (
-                  <span
-                    className="text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]"
-                    style={{ fontWeight: 350 }}
-                  >
-                    {value}
-                  </span>
-                ) : (
-                  value
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+              ) : (
+                value
+              )}
+            </div>
+          ))}
+        </div>
 
         {/* 下方：頁籤 */}
         <CwTab
@@ -1782,17 +1867,6 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false, onSav
 
         <div className="py-[12px]">
         {activeTab === 'basic' ? (() => {
-  const labelStyle: React.CSSProperties = { fontFamily: 'var(--font-noto-sans-tc)', fontSize: 'var(--text-base)', fontWeight: 350 };
-  const Field = ({ label, children, required, error }: { label: string; children: React.ReactNode; required?: boolean; error?: string }) => (
-    <div className="flex flex-col gap-[4px]">
-      <span style={labelStyle}>
-        {label}
-        {required && <span className="text-[#e53e3e] ml-[2px]">*</span>}
-      </span>
-      {children}
-      {error && <span className="text-[12px] text-[#e53e3e] font-['Noto_Sans_TC',_sans-serif]">{error}</span>}
-    </div>
-  );
   const customerIdentityOptions = [
     { value: '企業', label: '企業' },
     { value: '個人', label: '個人' },
@@ -1825,33 +1899,6 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false, onSav
   ];
   const upd = (key: keyof BasicInfo, val: string) => setBasicInfo(p => ({ ...p, [key]: val }));
 
-  // ── 其他資訊 helpers ──────────────────────────────────────────
-  const otherData = otherDraft;
-  const otherLabelStyle: React.CSSProperties = { fontFamily: 'var(--font-noto-sans-tc)', fontSize: 'var(--text-base)', fontWeight: 350 };
-  const OtherRequiredLabel = ({ text }: { text: string }) => (
-    <label className="block text-foreground" style={otherLabelStyle}>{text}<span style={{ color: '#E53E3E' }}> *</span></label>
-  );
-  const OtherErrorText = ({ fKey }: { fKey: keyof CustomerOtherInfo }) =>
-    otherErrors[fKey] ? <p className="text-[12px] mt-[2px]" style={{ color: '#E53E3E', fontFamily: 'var(--font-noto-sans-tc)' }}>{otherErrors[fKey]}</p> : null;
-  const OtherTextField = ({ label: lbl, fKey, required, colSpan }: { label: string; fKey: keyof CustomerOtherInfo; required?: boolean; colSpan?: number }) => (
-    <div className="flex flex-col gap-1" style={colSpan ? { gridColumn: `span ${colSpan}` } : undefined}>
-      {required ? <OtherRequiredLabel text={lbl} /> : <label style={otherLabelStyle}>{lbl}</label>}
-      <CwInput value={otherData[fKey]} onChange={e => setOtherField(fKey, (e as React.ChangeEvent<HTMLInputElement>).target.value)} error={otherErrors[fKey]} />
-    </div>
-  );
-  const OtherSelectField = ({ label: lbl, fKey, options: opts, required, disabled: dis }: { label: string; fKey: keyof CustomerOtherInfo; options: { value: string; label: string }[]; required?: boolean; disabled?: boolean }) => (
-    <div className="flex flex-col gap-1">
-      {required ? <OtherRequiredLabel text={lbl} /> : <label style={otherLabelStyle}>{lbl}</label>}
-      <CwSelect options={opts} value={otherData[fKey]} onChange={v => setOtherField(fKey, v as string)} clearable error={!!otherErrors[fKey]} disabled={dis} />
-      <OtherErrorText fKey={fKey} />
-    </div>
-  );
-  const OtherDateField = ({ label: lbl, fKey }: { label: string; fKey: keyof CustomerOtherInfo }) => (
-    <div className="flex flex-col gap-1">
-      <label style={otherLabelStyle}>{lbl}</label>
-      <CwDatePicker value={otherData[fKey] ? new Date(otherData[fKey]) : null} onChange={d => setOtherField(fKey, d ? d.toISOString().slice(0, 10) : '')} />
-    </div>
-  );
   const oInvoiceOptions = [{ value: '3', label: '3 隨貨產生' }, { value: '4', label: '4 月結淨額' }, { value: '5', label: '5 月結金額' }, { value: '6', label: '6 電子發票' }, { value: 'N', label: 'N 一般開立' }];
   const oMarketingOptions = [{ value: '1', label: '1 同意' }, { value: '2', label: '2 不同意' }, { value: 'A', label: 'A 不確定' }];
   const oCycleOptions = [{ value: '即期付款', label: '即期付款' }, { value: '廣-月結120天', label: '廣-月結120天' }, { value: '廣-月結45天', label: '廣-月結45天' }, { value: '廣-月結60天', label: '廣-月結60天' }, { value: '廣-月結90天', label: '廣-月結90天' }, { value: '廣告交換', label: '廣告交換' }, { value: '月結-大和', label: '月結-大和' }, { value: '月結-宇泰', label: '月結-宇泰' }, { value: '月結120天', label: '月結120天' }, { value: '月結30天', label: '月結30天' }, { value: '月結45天', label: '月結45天' }, { value: '月結60天', label: '月結60天' }, { value: '月結90天', label: '月結90天' }];
@@ -1871,94 +1918,91 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false, onSav
       /* ── 新增客戶專用 grid ─────────────────────────────────── */
       <div className="grid grid-cols-4 gap-x-[24px] gap-y-[16px]">
         {/* Row 1: 客戶註記（col 1-2）/ 客戶編號（col 3-4） */}
-        <OtherTextField label="客戶註記" fKey="customerNote" colSpan={2} />
-        <Field label="客戶編號">
+        <OtherTextField label="客戶註記" fKey="customerNote" colSpan={2} value={otherDraft.customerNote} onChange={setOtherField} error={otherErrors.customerNote} />
+        <BasicField label="客戶編號">
           <CwInput value={basicInfo.customerNumber} onChange={e => upd('customerNumber', e.target.value)} placeholder="請輸入" disabled />
-        </Field>
+        </BasicField>
         <div />
 
         {/* Row 2: 客戶名稱 / 客戶分類 / 付款條件 / 客戶狀態 */}
-        <Field label="客戶名稱" required error={customerNameError}>
+        <BasicField label="客戶名稱" required error={customerNameError}>
           <CwInput value={basicInfo.customerName} onChange={e => { upd('customerName', e.target.value); if (e.target.value.trim()) setCustomerNameError(''); }} placeholder="請輸入" error={customerNameError || undefined} />
-        </Field>
-        <OtherSelectField label="客戶分類" fKey="customerCategory" options={oCategoryOptions} required />
-        <OtherSelectField label="付款條件" fKey="checkoutCycle" options={oCycleOptions} required />
-        <Field label="客戶狀態">
+        </BasicField>
+        <OtherSelectField label="客戶分類" fKey="customerCategory" options={oCategoryOptions} required value={otherDraft.customerCategory} onChange={setOtherField} error={otherErrors.customerCategory} />
+        <OtherSelectField label="付款條件" fKey="checkoutCycle" options={oCycleOptions} required value={otherDraft.checkoutCycle} onChange={setOtherField} error={otherErrors.checkoutCycle} />
+        <BasicField label="客戶狀態">
           <CwSelect options={statusOptions} value={basicInfo.status} onChange={v => upd('status', v as string)} placeholder="請選擇" clearable />
-        </Field>
+        </BasicField>
 
         {/* Row 3: 發票開立方式 / 統一編號 / 發票抬頭 / 公司名稱 */}
-        <OtherSelectField label="發票開立方式" fKey="invoiceIssueMethod" options={oInvoiceOptions} required />
-        <OtherTextField label="統一編號" fKey="taxIdNumber" />
-        <OtherTextField label="發票抬頭" fKey="invoiceTitle" />
-        <OtherTextField label="公司名稱" fKey="companyName" />
+        <OtherSelectField label="發票開立方式" fKey="invoiceIssueMethod" options={oInvoiceOptions} required value={otherDraft.invoiceIssueMethod} onChange={setOtherField} error={otherErrors.invoiceIssueMethod} />
+        <OtherTextField label="統一編號" fKey="taxIdNumber" value={otherDraft.taxIdNumber} onChange={setOtherField} error={otherErrors.taxIdNumber} />
+        <OtherTextField label="發票抬頭" fKey="invoiceTitle" value={otherDraft.invoiceTitle} onChange={setOtherField} error={otherErrors.invoiceTitle} />
+        <OtherTextField label="公司名稱" fKey="companyName" value={otherDraft.companyName} onChange={setOtherField} />
 
         {/* Row 4: 性別 / 出生日期 / 婚姻 / 子女人數 */}
-        <OtherSelectField label="性別" fKey="gender" options={oGenderOptions} />
-        <OtherDateField label="出生日期" fKey="birthDate" />
-        <OtherSelectField label="婚姻" fKey="maritalStatus" options={oMaritalOptions} />
-        <OtherTextField label="子女人數" fKey="childrenCount" />
+        <OtherSelectField label="性別" fKey="gender" options={oGenderOptions} value={otherDraft.gender} onChange={setOtherField} />
+        <OtherDateField label="出生日期" fKey="birthDate" value={otherDraft.birthDate} onChange={setOtherField} />
+        <OtherSelectField label="婚姻" fKey="maritalStatus" options={oMaritalOptions} value={otherDraft.maritalStatus} onChange={setOtherField} />
+        <OtherTextField label="子女人數" fKey="childrenCount" value={otherDraft.childrenCount} onChange={setOtherField} />
 
         {/* Row 5: 行業別 / 職務別 / 職位別 / 年收入 */}
-        <OtherSelectField label="行業別" fKey="industry" options={oIndustryOptions} />
-        <OtherSelectField label="職務別" fKey="jobTitle" options={oJobTitleOptions} />
-        <OtherSelectField label="職位別" fKey="jobPosition" options={oJobPositionOptions} />
-        <OtherSelectField label="年收入" fKey="annualIncome" options={oIncomeOptions} />
+        <OtherSelectField label="行業別" fKey="industry" options={oIndustryOptions} value={otherDraft.industry} onChange={setOtherField} />
+        <OtherSelectField label="職務別" fKey="jobTitle" options={oJobTitleOptions} value={otherDraft.jobTitle} onChange={setOtherField} />
+        <OtherSelectField label="職位別" fKey="jobPosition" options={oJobPositionOptions} value={otherDraft.jobPosition} onChange={setOtherField} />
+        <OtherSelectField label="年收入" fKey="annualIncome" options={oIncomeOptions} value={otherDraft.annualIncome} onChange={setOtherField} />
 
         {/* Row 6: 教育程度 */}
-        <OtherSelectField label="教育程度" fKey="education" options={oEducationOptions} />
+        <OtherSelectField label="教育程度" fKey="education" options={oEducationOptions} value={otherDraft.education} onChange={setOtherField} />
 
         {/* 其餘保留欄位 */}
-        <OtherSelectField label="每月購書金額" fKey="monthlyBookBudget" options={oBookBudgetOptions} />
-        <OtherTextField label="經常購書種類" fKey="frequentBookCategory" />
-        <Field label="客戶身分">
+        <OtherSelectField label="每月購書金額" fKey="monthlyBookBudget" options={oBookBudgetOptions} value={otherDraft.monthlyBookBudget} onChange={setOtherField} />
+        <OtherTextField label="經常購書種類" fKey="frequentBookCategory" value={otherDraft.frequentBookCategory} onChange={setOtherField} />
+        <BasicField label="客戶身分">
           <CwSelect options={customerIdentityOptions} value={basicInfo.customerIdentity} onChange={v => upd('customerIdentity', v as string)} placeholder="請選擇" clearable />
-        </Field>
-        <Field label="統一編號">
-          <CwInput value={basicInfo.taxId} onChange={e => upd('taxId', e.target.value)} placeholder="請輸入" />
-        </Field>
+        </BasicField>
       </div>
     ) : (
       /* ── ERP 客戶明細（完全不動）────────────────────────────── */
       <>
         <div className="grid grid-cols-4 gap-x-[24px] gap-y-[16px]">
           {/* Row 1: 客戶名稱 / 客戶分類 / 付款條件 / 客戶狀態 */}
-          <Field label="客戶名稱">
+          <BasicField label="客戶名稱">
             <CwInput value={basicInfo.customerName} onChange={e => upd('customerName', e.target.value)} placeholder="請輸入" />
-          </Field>
-          <OtherSelectField label="客戶分類" fKey="customerCategory" options={oCategoryOptions} required />
-          <OtherSelectField label="付款條件" fKey="checkoutCycle" options={oCycleOptions} required />
-          <Field label="客戶狀態">
+          </BasicField>
+          <OtherSelectField label="客戶分類" fKey="customerCategory" options={oCategoryOptions} required value={otherDraft.customerCategory} onChange={setOtherField} error={otherErrors.customerCategory} />
+          <OtherSelectField label="付款條件" fKey="checkoutCycle" options={oCycleOptions} required value={otherDraft.checkoutCycle} onChange={setOtherField} error={otherErrors.checkoutCycle} />
+          <BasicField label="客戶狀態">
             <CwSelect options={statusOptions} value={basicInfo.status} onChange={v => upd('status', v as string)} placeholder="請選擇" clearable />
-          </Field>
+          </BasicField>
 
           {/* Row 2: 發票開立方式 / 統一編號 / 發票抬頭 / 公司名稱 */}
-          <OtherSelectField label="發票開立方式" fKey="invoiceIssueMethod" options={oInvoiceOptions} required />
-          <OtherTextField label="統一編號" fKey="taxIdNumber" />
-          <OtherTextField label="發票抬頭" fKey="invoiceTitle" />
-          <OtherTextField label="公司名稱" fKey="companyName" />
+          <OtherSelectField label="發票開立方式" fKey="invoiceIssueMethod" options={oInvoiceOptions} required value={otherDraft.invoiceIssueMethod} onChange={setOtherField} error={otherErrors.invoiceIssueMethod} />
+          <OtherTextField label="統一編號" fKey="taxIdNumber" value={otherDraft.taxIdNumber} onChange={setOtherField} />
+          <OtherTextField label="發票抬頭" fKey="invoiceTitle" value={otherDraft.invoiceTitle} onChange={setOtherField} />
+          <OtherTextField label="公司名稱" fKey="companyName" value={otherDraft.companyName} onChange={setOtherField} />
 
           {/* Row 3: 客戶註記（整行） */}
-          <OtherTextField label="客戶註記" fKey="customerNote" colSpan={4} />
+          <OtherTextField label="客戶註記" fKey="customerNote" colSpan={4} value={otherDraft.customerNote} onChange={setOtherField} />
 
           {/* Row 4: 性別 / 出生日期 / 婚姻 / 子女人數 */}
-          <OtherSelectField label="性別" fKey="gender" options={oGenderOptions} />
-          <OtherDateField label="出生日期" fKey="birthDate" />
-          <OtherSelectField label="婚姻" fKey="maritalStatus" options={oMaritalOptions} />
-          <OtherTextField label="子女人數" fKey="childrenCount" />
+          <OtherSelectField label="性別" fKey="gender" options={oGenderOptions} value={otherDraft.gender} onChange={setOtherField} />
+          <OtherDateField label="出生日期" fKey="birthDate" value={otherDraft.birthDate} onChange={setOtherField} />
+          <OtherSelectField label="婚姻" fKey="maritalStatus" options={oMaritalOptions} value={otherDraft.maritalStatus} onChange={setOtherField} />
+          <OtherTextField label="子女人數" fKey="childrenCount" value={otherDraft.childrenCount} onChange={setOtherField} />
 
           {/* Row 5: 行業別 / 職務別 / 職位別 / 年收入 */}
-          <OtherSelectField label="行業別" fKey="industry" options={oIndustryOptions} />
-          <OtherSelectField label="職務別" fKey="jobTitle" options={oJobTitleOptions} />
-          <OtherSelectField label="職位別" fKey="jobPosition" options={oJobPositionOptions} />
-          <OtherSelectField label="年收入" fKey="annualIncome" options={oIncomeOptions} />
+          <OtherSelectField label="行業別" fKey="industry" options={oIndustryOptions} value={otherDraft.industry} onChange={setOtherField} />
+          <OtherSelectField label="職務別" fKey="jobTitle" options={oJobTitleOptions} value={otherDraft.jobTitle} onChange={setOtherField} />
+          <OtherSelectField label="職位別" fKey="jobPosition" options={oJobPositionOptions} value={otherDraft.jobPosition} onChange={setOtherField} />
+          <OtherSelectField label="年收入" fKey="annualIncome" options={oIncomeOptions} value={otherDraft.annualIncome} onChange={setOtherField} />
 
           {/* Row 6: 教育程度 */}
-          <OtherSelectField label="教育程度" fKey="education" options={oEducationOptions} />
+          <OtherSelectField label="教育程度" fKey="education" options={oEducationOptions} value={otherDraft.education} onChange={setOtherField} />
 
           {/* 其餘保留欄位 */}
-          <OtherSelectField label="每月購書金額" fKey="monthlyBookBudget" options={oBookBudgetOptions} />
-          <OtherTextField label="經常購書種類" fKey="frequentBookCategory" />
+          <OtherSelectField label="每月購書金額" fKey="monthlyBookBudget" options={oBookBudgetOptions} value={otherDraft.monthlyBookBudget} onChange={setOtherField} />
+          <OtherTextField label="經常購書種類" fKey="frequentBookCategory" value={otherDraft.frequentBookCategory} onChange={setOtherField} />
         </div>
       </>
     )}
