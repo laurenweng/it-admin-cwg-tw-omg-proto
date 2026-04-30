@@ -169,7 +169,7 @@ export function CwTable<T = any>({
                     key={column.key}
                     className="px-[10px] py-[15px] text-left"
                     style={{
-                      borderRight: '1px solid transparent',
+                      borderRight: colIndex < columns.length - 1 ? '1px solid #cdcdcd' : 'none',
                       ...(column.sticky ? {
                         position: 'sticky',
                         right: getStickyColumnRight(colIndex),
@@ -238,6 +238,7 @@ export function CwTable<T = any>({
                         className="px-[10px] py-[15px]"
                         style={{
                           textAlign: column.align || 'left',
+                          borderRight: colIndex < columns.length - 1 ? '1px solid #cdcdcd' : 'none',
                           ...(column.sticky ? {
                             position: 'sticky',
                             right: getStickyColumnRight(colIndex),

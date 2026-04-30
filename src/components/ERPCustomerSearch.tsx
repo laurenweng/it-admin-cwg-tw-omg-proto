@@ -537,8 +537,8 @@ export function ERPCustomerSearch() {
           <div className="grid grid-cols-4 gap-[12px] items-end">
             <CwInput label="客戶編號" placeholder="客戶編號" value={searchForm.客戶編號} onChange={(e) => handleInputChange('客戶編號', e.target.value)} />
             <CwInput label="客戶名稱" placeholder="客戶名稱" value={searchForm.客戶名稱} onChange={(e) => handleInputChange('客戶名稱', e.target.value)} />
-            <CwInput label="統編"     placeholder="統編"     value={searchForm.統編}     onChange={(e) => handleInputChange('統編', e.target.value)} />
             <CwInput label="地址"     placeholder="地址"     value={searchForm.地址}     onChange={(e) => handleInputChange('地址', e.target.value)} />
+            <CwInput label="統編"     placeholder="統編"     value={searchForm.統編}     onChange={(e) => handleInputChange('統編', e.target.value)} />
           </div>
           <div className="grid grid-cols-4 gap-[12px] items-end">
             <CwInput label="聯絡人" placeholder="聯絡人" value={searchForm.聯絡人} onChange={(e) => handleInputChange('聯絡人', e.target.value)} />
