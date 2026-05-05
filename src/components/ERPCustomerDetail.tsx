@@ -17,6 +17,7 @@ import { DateRange } from './CwDateRangePicker';
 import { CwPopup } from './CwPopup';
 import { CwToast } from './CwToast';
 import { CwTextButton } from './CwTextButton';
+import { CwTextarea } from './CwTextarea';
 export interface ERPCustomerInfo {
   customerNumber: string;
   customerName: string;
@@ -86,7 +87,7 @@ interface AddressForm {
   isPrimaryInvoice: boolean;
 }
 
-const EMPTY_FORM: AddressForm = { country: '台灣', postalCode: '', city: '', street: '', isPrimary: false, isActive: true, isPrimaryShipping: false, isPrimaryInvoice: false };
+const EMPTY_FORM: AddressForm = { country: '台灣 Taiwan', postalCode: '', city: '', street: '', isPrimary: false, isActive: true, isPrimaryShipping: false, isPrimaryInvoice: false };
 
 // 國家選項（示範，可依需求擴充）
 const COUNTRY_OPTIONS = ['台灣 Taiwan', '中國 China', '日本 Japan', '美國 USA', '香港 HongKong', '新加坡 Singapore', '馬來西亞 Malaysia'];
@@ -165,7 +166,7 @@ interface ContactPerson {
   updatedAt: string;
 }
 
-interface PersonForm { name: string; phone: string; email: string; }
+interface PersonForm { name: string; phone: string; phoneExt: string; phoneType: string; email: string; }
 interface PhoneForm { countryCode: string; areaCode: string; phone: string; ext: string; type: string; isPrimary: boolean; isActive: boolean; }
 interface EmailForm { email: string; isPrimary: boolean; isActive: boolean; }
 
@@ -173,7 +174,7 @@ const PHONE_TYPE_OPTIONS = ["Tel(O)", "Tel(H)", "Mobile", "Fax(O)", "Fax(H)", "P
 
 const EMPTY_PHONE_FORM: PhoneForm = { countryCode: '886', areaCode: '', phone: '', ext: '', type: 'Tel(O)', isPrimary: false, isActive: true };
 const EMPTY_EMAIL_FORM: EmailForm = { email: '', isPrimary: false, isActive: true };
-const EMPTY_PERSON_FORM: PersonForm = { name: '', phone: '', email: '' };
+const EMPTY_PERSON_FORM: PersonForm = { name: '', phone: '', phoneExt: '', phoneType: 'Tel(O)', email: '' };
 
 // ── Mock 地址資料（以客戶編號為 key）──────────────────────────────
 // isPrimary：全客戶唯一一筆（預設主要地址）
@@ -459,7 +460,7 @@ function AddressFormFields({
           value={form.country}
           onChange={(e) => {
             onChange('country', e.target.value);
-            if (e.target.value !== '台灣') {
+            if (e.target.value !== '台灣 Taiwan') {
               onChange('city', '');
               onChange('postalCode', '');
             }
@@ -472,7 +473,7 @@ function AddressFormFields({
       </div>
 
       {/* 城市、行政區、郵遞區號（合併可搜尋下拉，僅台灣顯示） */}
-      {form.country === '台灣' && (() => {
+      {form.country === '台灣 Taiwan' && (() => {
         const [districtOpen, setDistrictOpen] = useState(false);
         const [districtKeyword, setDistrictKeyword] = useState('');
         const districtRef = useRef<HTMLDivElement>(null);
@@ -643,10 +644,11 @@ function AddressFormFields({
   );
 }
 
-function PersonFormFields({ form, errors, onChange }: {
+function PersonFormFields({ form, errors, onChange, hidePhoneEmail }: {
   form: PersonForm;
   errors: Partial<Record<keyof PersonForm, string>>;
   onChange: (field: keyof PersonForm, value: string) => void;
+  hidePhoneEmail?: boolean;
 }) {
   const fc = "flex flex-col gap-[5px]";
   const lc = "font-['Noto_Sans_TC',_sans-serif] text-[13px] text-[#1c1c1c]";
@@ -658,14 +660,32 @@ function PersonFormFields({ form, errors, onChange }: {
         <CwInput value={form.name} placeholder="王小明" onChange={(e) => onChange('name', e.target.value)} />
         {errors.name && <span className={ec}>{errors.name}</span>}
       </div>
-      <div className={fc}>
-        <label className={lc} style={{ fontWeight: 500 }}>電話</label>
-        <CwInput value={form.phone} placeholder="0912-345-678" onChange={(e) => onChange('phone', e.target.value)} />
-      </div>
-      <div className={fc}>
-        <label className={lc} style={{ fontWeight: 500 }}>Email</label>
-        <CwInput value={form.email} placeholder="user@example.com" onChange={(e) => onChange('email', e.target.value)} />
-      </div>
+      {!hidePhoneEmail && (
+        <>
+          <div className="grid grid-cols-[1fr_110px] gap-[12px]">
+            <div className={fc}>
+              <label className={lc} style={{ fontWeight: 500 }}>電話</label>
+              <CwInput value={form.phone} placeholder="0912-345-678" onChange={(e) => onChange('phone', e.target.value)} />
+            </div>
+            <div className={fc}>
+              <label className={lc} style={{ fontWeight: 500 }}>分機</label>
+              <CwInput value={form.phoneExt} placeholder="123" onChange={(e) => onChange('phoneExt', e.target.value)} />
+            </div>
+          </div>
+          <div className={fc}>
+            <label className={lc} style={{ fontWeight: 500 }}>電話類型</label>
+            <select value={form.phoneType} onChange={(e) => onChange('phoneType', e.target.value)}
+              className="h-[35px] px-[10px] border border-[#c4c9d3] rounded-[4px] text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif] bg-white focus:outline-none focus:border-[#0078d4]"
+              style={{ fontWeight: 350 }}>
+              {PHONE_TYPE_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+          <div className={fc}>
+            <label className={lc} style={{ fontWeight: 500 }}>Email</label>
+            <CwInput value={form.email} placeholder="user@example.com" onChange={(e) => onChange('email', e.target.value)} />
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -841,6 +861,18 @@ function OtherTextField({ label, fKey, required, colSpan, value, onChange, error
     <div className="flex flex-col gap-1" style={colSpan ? { gridColumn: `span ${colSpan}` } : undefined}>
       {required ? <OtherRequiredLabel text={label} /> : <label style={basicLabelStyle}>{label}</label>}
       <CwInput value={value} onChange={e => onChange(fKey, (e as React.ChangeEvent<HTMLInputElement>).target.value)} error={error} />
+    </div>
+  );
+}
+
+function OtherTextareaField({ label, fKey, required, colSpan, value, onChange, error }: {
+  label: string; fKey: keyof CustomerOtherInfo; required?: boolean; colSpan?: number;
+  value: string; onChange: (fKey: keyof CustomerOtherInfo, val: string) => void; error?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1" style={colSpan ? { gridColumn: `span ${colSpan}` } : undefined}>
+      {required ? <OtherRequiredLabel text={label} /> : <label style={basicLabelStyle}>{label}</label>}
+      <CwTextarea value={value} onChange={e => onChange(fKey, e.target.value)} error={error} />
     </div>
   );
 }
@@ -1112,7 +1144,7 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false, onSav
   const handleAddPersonConfirm = () => {
     if (!addPersonForm.name.trim()) { setAddPersonErrors({ name: '聯絡人名稱為必填' }); return; }
     const phones: PhoneEntry[] = addPersonForm.phone.trim()
-      ? [{ id: `ph_${nextPhoneIdRef.current++}`, countryCode: '886', areaCode: '', phone: addPersonForm.phone.trim(), ext: '', type: 'Tel(O)', purpose: '', isPrimary: true, isActive: true, updatedAt: today() }]
+      ? [{ id: `ph_${nextPhoneIdRef.current++}`, countryCode: '886', areaCode: '', phone: addPersonForm.phone.trim(), ext: addPersonForm.phoneExt.trim(), type: addPersonForm.phoneType, purpose: '', isPrimary: true, isActive: true, updatedAt: today() }]
       : [];
     const emails: EmailEntry[] = addPersonForm.email.trim()
       ? [{ id: `em_${nextEmailIdRef.current++}`, email: addPersonForm.email.trim(), purpose: '', isPrimary: true, isActive: true, updatedAt: today() }]
@@ -1917,12 +1949,13 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false, onSav
     {createMode ? (
       /* ── 新增客戶專用 grid ─────────────────────────────────── */
       <div className="grid grid-cols-4 gap-x-[24px] gap-y-[16px]">
-        {/* Row 1: 客戶註記（col 1-2）/ 客戶編號（col 3-4） */}
-        <OtherTextField label="客戶註記" fKey="customerNote" colSpan={2} value={otherDraft.customerNote} onChange={setOtherField} error={otherErrors.customerNote} />
+        {/* 客戶註記（獨立整行） */}
+        <OtherTextareaField label="客戶註記" fKey="customerNote" colSpan={4} value={otherDraft.customerNote} onChange={setOtherField} error={otherErrors.customerNote} />
+        {/* Row 1: 客戶編號 */}
         <BasicField label="客戶編號">
           <CwInput value={basicInfo.customerNumber} onChange={e => upd('customerNumber', e.target.value)} placeholder="請輸入" disabled />
         </BasicField>
-        <div />
+        <div /><div /><div />
 
         {/* Row 2: 客戶名稱 / 客戶分類 / 付款條件 / 客戶狀態 */}
         <BasicField label="客戶名稱" required error={customerNameError}>
@@ -1939,6 +1972,7 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false, onSav
         <OtherTextField label="統一編號" fKey="taxIdNumber" value={otherDraft.taxIdNumber} onChange={setOtherField} error={otherErrors.taxIdNumber} />
         <OtherTextField label="發票抬頭" fKey="invoiceTitle" value={otherDraft.invoiceTitle} onChange={setOtherField} error={otherErrors.invoiceTitle} />
         <OtherTextField label="公司名稱" fKey="companyName" value={otherDraft.companyName} onChange={setOtherField} />
+
 
         {/* 分隔線 */}
         <div className="col-span-4 border-t border-[#e5e7eb] my-[24px]" />
@@ -1966,10 +2000,19 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false, onSav
         </BasicField>
       </div>
     ) : (
-      /* ── ERP 客戶明細（完全不動）────────────────────────────── */
+      /* ── ERP 客戶明細 ────────────────────────────── */
       <>
         <div className="grid grid-cols-4 gap-x-[24px] gap-y-[16px]">
-          {/* Row 1: 客戶名稱 / 客戶分類 / 付款條件 / 客戶狀態 */}
+          {/* Row 1: 客戶註記（整行） */}
+          <OtherTextareaField label="客戶註記" fKey="customerNote" colSpan={4} value={otherDraft.customerNote} onChange={setOtherField} />
+
+          {/* Row 2: 客戶編號（唯讀，不可編輯） */}
+          <BasicField label="客戶編號">
+            <CwInput value={basicInfo.customerNumber} placeholder="—" disabled />
+          </BasicField>
+          <div /><div /><div />
+
+          {/* Row 3: 客戶名稱 / 客戶分類 / 付款條件 / 客戶狀態 */}
           <BasicField label="客戶名稱">
             <CwInput value={basicInfo.customerName} onChange={e => upd('customerName', e.target.value)} placeholder="請輸入" />
           </BasicField>
@@ -1979,33 +2022,34 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false, onSav
             <CwSelect options={statusOptions} value={basicInfo.status} onChange={v => upd('status', v as string)} placeholder="請選擇" clearable />
           </BasicField>
 
-          {/* Row 2: 發票開立方式 / 統一編號 / 發票抬頭 / 公司名稱 */}
+          {/* Row 4: 發票開立方式 / 統一編號 / 發票抬頭 / 公司名稱 */}
           <OtherSelectField label="發票開立方式" fKey="invoiceIssueMethod" options={oInvoiceOptions} required value={otherDraft.invoiceIssueMethod} onChange={setOtherField} error={otherErrors.invoiceIssueMethod} />
           <OtherTextField label="統一編號" fKey="taxIdNumber" value={otherDraft.taxIdNumber} onChange={setOtherField} />
           <OtherTextField label="發票抬頭" fKey="invoiceTitle" value={otherDraft.invoiceTitle} onChange={setOtherField} />
           <OtherTextField label="公司名稱" fKey="companyName" value={otherDraft.companyName} onChange={setOtherField} />
 
-          {/* Row 3: 客戶註記（整行） */}
-          <OtherTextField label="客戶註記" fKey="customerNote" colSpan={4} value={otherDraft.customerNote} onChange={setOtherField} />
+          {/* 分隔線 */}
+          <div className="col-span-4 border-t border-[#e5e7eb] my-[24px]" />
 
-          {/* Row 4: 性別 / 出生日期 / 婚姻 / 子女人數 */}
+          {/* Row 5: 性別 / 出生日期 / 婚姻 / 子女人數 */}
           <OtherSelectField label="性別" fKey="gender" options={oGenderOptions} value={otherDraft.gender} onChange={setOtherField} />
           <OtherDateField label="出生日期" fKey="birthDate" value={otherDraft.birthDate} onChange={setOtherField} />
           <OtherSelectField label="婚姻" fKey="maritalStatus" options={oMaritalOptions} value={otherDraft.maritalStatus} onChange={setOtherField} />
           <OtherTextField label="子女人數" fKey="childrenCount" value={otherDraft.childrenCount} onChange={setOtherField} />
 
-          {/* Row 5: 行業別 / 職務別 / 職位別 / 年收入 */}
+          {/* Row 6: 行業別 / 職務別 / 職位別 / 年收入 */}
           <OtherSelectField label="行業別" fKey="industry" options={oIndustryOptions} value={otherDraft.industry} onChange={setOtherField} />
           <OtherSelectField label="職務別" fKey="jobTitle" options={oJobTitleOptions} value={otherDraft.jobTitle} onChange={setOtherField} />
           <OtherSelectField label="職位別" fKey="jobPosition" options={oJobPositionOptions} value={otherDraft.jobPosition} onChange={setOtherField} />
           <OtherSelectField label="年收入" fKey="annualIncome" options={oIncomeOptions} value={otherDraft.annualIncome} onChange={setOtherField} />
 
-          {/* Row 6: 教育程度 */}
+          {/* Row 7: 教育程度 / 每月購書金額 / 經常購書種類 / 客戶身分（唯讀） */}
           <OtherSelectField label="教育程度" fKey="education" options={oEducationOptions} value={otherDraft.education} onChange={setOtherField} />
-
-          {/* 其餘保留欄位 */}
           <OtherSelectField label="每月購書金額" fKey="monthlyBookBudget" options={oBookBudgetOptions} value={otherDraft.monthlyBookBudget} onChange={setOtherField} />
           <OtherTextField label="經常購書種類" fKey="frequentBookCategory" value={otherDraft.frequentBookCategory} onChange={setOtherField} />
+          <BasicField label="客戶身分">
+            <CwSelect options={customerIdentityOptions} value={basicInfo.customerIdentity ?? ''} placeholder="—" disabled />
+          </BasicField>
         </div>
       </>
     )}
@@ -2570,8 +2614,8 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false, onSav
         <table className="w-full text-[13px] font-['Noto_Sans_TC',_sans-serif]" style={{ borderCollapse: 'collapse' }}>
           <thead>
             <tr className="bg-[#e9ebf2]">
-              {RELATION_HEADERS.map(h => (
-                <th key={h} className="px-[12px] py-[10px] text-left text-[#1c1c1c] border-b border-[#c4c9d3]" style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
+              {RELATION_HEADERS.map((h, i) => (
+                <th key={h} className={`px-[12px] py-[10px] text-left text-[#1c1c1c] border-b border-[#c4c9d3]${i < RELATION_HEADERS.length - 1 ? ' border-r border-[#c4c9d3]' : ''}`} style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -2584,12 +2628,12 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false, onSav
               </tr>
             ) : mergeRelations.map((rel, idx) => (
               <tr key={rel.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-[#f9fafb]'}>
-                <td className="px-[12px] py-[10px] text-[#1c1c1c]" style={{ whiteSpace: 'nowrap' }}>{rel.parentNo}</td>
-                <td className="px-[12px] py-[10px] text-[#1c1c1c]">{rel.parentName}</td>
-                <td className="px-[12px] py-[10px] text-[#1c1c1c]" style={{ whiteSpace: 'nowrap' }}>{rel.childNo}</td>
-                <td className="px-[12px] py-[10px] text-[#1c1c1c]">{rel.childName}</td>
-                <td className="px-[12px] py-[10px] text-[#374151]">{rel.note || '—'}</td>
-                <td className="px-[12px] py-[10px]">
+                <td className="px-[12px] py-[10px] text-[#1c1c1c] border-r border-[#c4c9d3]" style={{ whiteSpace: 'nowrap' }}>{rel.parentNo}</td>
+                <td className="px-[12px] py-[10px] text-[#1c1c1c] border-r border-[#c4c9d3]">{rel.parentName}</td>
+                <td className="px-[12px] py-[10px] text-[#1c1c1c] border-r border-[#c4c9d3]" style={{ whiteSpace: 'nowrap' }}>{rel.childNo}</td>
+                <td className="px-[12px] py-[10px] text-[#1c1c1c] border-r border-[#c4c9d3]">{rel.childName}</td>
+                <td className="px-[12px] py-[10px] text-[#374151] border-r border-[#c4c9d3]">{rel.note || '—'}</td>
+                <td className="px-[12px] py-[10px] border-r border-[#c4c9d3]">
                   <span className={`inline-flex items-center px-[8px] py-[2px] rounded-[4px] text-[12px] font-['Noto_Sans_TC',_sans-serif] ${rel.isActive ? 'bg-[#e6f4ea] text-[#1e7e34]' : 'bg-[#f3f4f6] text-[#7c808c]'}`} style={{ fontWeight: 500 }}>
                     {rel.isActive ? '生效' : '停用'}
                   </span>
@@ -2883,6 +2927,7 @@ export function ERPCustomerDetail({ customer, onClose, createMode = false, onSav
             <PersonFormFields
               form={editPersonForm}
               errors={editPersonErrors}
+              hidePhoneEmail
               onChange={(field, value) => {
                 setEditPersonForm(prev => ({ ...prev, [field]: value }));
                 if (value) setEditPersonErrors(prev => { const n = { ...prev }; delete n[field]; return n; });
