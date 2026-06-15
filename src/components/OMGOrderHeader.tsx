@@ -1473,25 +1473,6 @@ export const OMGOrderHeader = forwardRef<OMGOrderHeaderRef, {
                   ]}
                   required
                 />
-                <div className="col-span-2 flex flex-col gap-1">
-                  <label className="block text-foreground" style={{ fontFamily: 'var(--font-noto-sans-tc)', fontSize: 'var(--text-base)', fontWeight: 350 }}>超商店鋪</label>
-                  <div className="flex gap-[12px]">
-                    <CwInput
-                      placeholder="店名"
-                      value={form.convenienceStoreName}
-                      disabled={!editable}
-                      readOnly={!editable}
-                      onChange={(e) => setField('convenienceStoreName', e.target.value)}
-                    />
-                    <CwInput
-                      placeholder="地址"
-                      value={form.convenienceStoreAddress}
-                      disabled={!editable}
-                      readOnly={!editable}
-                      onChange={(e) => setField('convenienceStoreAddress', e.target.value)}
-                    />
-                  </div>
-                </div>
               </div>
             </div>
           )}
