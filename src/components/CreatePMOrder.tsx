@@ -116,10 +116,11 @@ function ShipInfoTab() {
 // ── Props ──────────────────────────────────────────────────────
 interface CreatePMOrderProps {
   onClose?: () => void;
+  initialHeaderData?: Partial<import('./OMGOrderHeader').OMGOrderHeaderData>;
 }
 
 // ── 元件 ──────────────────────────────────────────────────────
-export function CreatePMOrder({ onClose }: CreatePMOrderProps) {
+export function CreatePMOrder({ onClose, initialHeaderData }: CreatePMOrderProps) {
   const [activeErpTab, setActiveErpTab] = useState<
     'header' | 'items' | 'addressChange' | 'suspendResume' | 'cancel' | 'deliveryChange' | 'returnResend' | 'shipInfo'
   >('header');
@@ -175,13 +176,13 @@ export function CreatePMOrder({ onClose }: CreatePMOrderProps) {
           onChange={id => setActiveErpTab(id as typeof activeErpTab)}
         />
 
-        {activeErpTab === 'header' && <OMGOrderHeader ref={headerRef} defaultExpandAll mode="create" />}
+        {activeErpTab === 'header' && <OMGOrderHeader ref={headerRef} defaultExpandAll mode="create" initialData={initialHeaderData} />}
         {activeErpTab === 'items'  && <CreateOrderItems />}
 
 
         {/* 底部操作按鈕列 */}
         <div className="flex items-center justify-end gap-[8px] border-t border-[#c4c9d3] pt-[16px]">
-          <CwButton variant="primary" appearance="outlined" >取消</CwButton>
+          <CwButton variant="primary" appearance="outlined" onClick={onClose}>取消</CwButton>
           <CwButton variant="primary" appearance="outlined" >暫存</CwButton>
           <CwButton variant="primary" appearance="filled" onClick={() => { setActiveErpTab('header'); setPendingValidate(true); }}>建立訂單</CwButton>
         </div>

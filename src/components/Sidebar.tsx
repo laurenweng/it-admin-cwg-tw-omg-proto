@@ -9,7 +9,6 @@ import {
   Settings, 
   BookOpen,
   Search,
-  Package,
   ShoppingCart,
   Box
 } from "lucide-react";
@@ -77,11 +76,6 @@ const menuItems: MenuItem[] = [
     id: "km",
     label: "KM智庫",
     icon: <BookOpen className="h-4 w-4" />
-  },
-  {
-    id: "component-demo",
-    label: "元件demo",
-    icon: <Package className="h-4 w-4" />
   }
 ];
 

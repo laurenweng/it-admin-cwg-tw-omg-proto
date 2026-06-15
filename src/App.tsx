@@ -14,14 +14,11 @@ import { MemberDeletionStatisticsData } from "./components/MemberDeletionStatist
 import { DeletionTeamContactMaintenance } from "./components/DeletionTeamContactMaintenance";
 import { ContactMaintenance } from "./components/ContactMaintenance";
 import { ContactEdit } from "./components/ContactEdit";
-import { ComponentDemo } from "./components/ComponentDemo";
 import { OrderDetail } from "./components/OrderDetail";
 import { CwFooter } from "./components/CwFooter";
 import { 
   Users, 
-  ShoppingCart, 
-  UserX, 
-  Package
+  ShoppingCart
 } from "lucide-react";
 
 // 菜單項目定義
@@ -42,17 +39,12 @@ const menuItems: CwSidemenuItem[] = [
       { id: "new-pm-order-management", label: "新訂單列表" },
       { id: "erp-customer-search", label: "ERP 客戶查詢" }
     ]
-  },
-  {
-    id: "component-demo",
-    label: "元件demo",
-    icon: <Package className="w-4 h-4" />
   }
 ];
 
 export default function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [currentPage, setCurrentPage] = useState("member-search");
+  const [currentPage, setCurrentPage] = useState("new-pm-order-management");
   const [selectedMemberId, setSelectedMemberId] = useState<number | undefined>(undefined);
   const [selectedOrderNumber, setSelectedOrderNumber] = useState<string | undefined>(undefined);
   const [selectedApplicationNumber, setSelectedApplicationNumber] = useState<string | undefined>(undefined);
@@ -118,8 +110,6 @@ export default function App() {
 
   const renderPage = () => {
     switch (currentPage) {
-      case "component-demo":
-        return <ComponentDemo />;
       case "new-pm-order-management":
         return <NewPMOrderManagement />;
       case "erp-customer-search":

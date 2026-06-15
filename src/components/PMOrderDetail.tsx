@@ -13,9 +13,8 @@ import { CwEmptyState } from "./CwEmptyState";
 import { CwTab } from "./CwTab";
 import { ERPOrderItems } from "./ERPOrderItems";
 import { OMGOrderHeader, OMGOrderHeaderRef } from "./OMGOrderHeader";
-import { CwDrawer } from "./CwDrawer";
 import { CwButton } from "./CwButton";
-import { Info, HelpCircle, ChevronDown, ChevronRight, ArrowRight, Eye, ArrowDown, ChevronLeft } from "lucide-react";
+import { Info, HelpCircle, ChevronDown, ChevronRight, ChevronLeft, ArrowRight, Eye, ArrowDown, Pencil } from "lucide-react";
 
 // 出貨資訊 Tab 獨立元件（state 隔離，避免影響父層重新渲染）
 const allShipData = [
@@ -129,16 +128,6 @@ function OmsProgressTag({ code }: { code: string }) {
   );
 }
 
-function DrawerActions() {
-  return (
-    <>
-      <CwButton variant="secondary" appearance="outlined" disabled>暫存</CwButton>
-      <CwButton variant="secondary" appearance="outlined" disabled>複製訂單</CwButton>
-      <CwButton variant="secondary" appearance="outlined" disabled>清空</CwButton>
-      <CwButton variant="destructive" appearance="outlined" disabled>取消</CwButton>
-    </>
-  );
-}
 
 function ShipInfoTab() {
   const [hideWaiting, setHideWaiting] = useState(false);
@@ -172,7 +161,26 @@ function ShipInfoTab() {
           { key: 'legalEntity', title: '法人', width: '80px' },
           { key: 'orderNo', title: '訂單單號', width: '140px' },
           { key: 'productCode', title: '產品料號', width: '110px' },
-          { key: 'productName', title: '產品名稱', width: '200px' },
+          { key: 'productName', title: '產品名稱', width: '220px', render: (v: any, r: any) => {
+            const execStatusMap: Record<string, { color: string; bg: string }> = {
+              '出貨完成': { color: '#16a34a', bg: '#e8f5e9' },
+              '等待': { color: '#7c808c', bg: '#f0f2f5' },
+            };
+            const cfg = r.omsExecStatus ? (execStatusMap[r.omsExecStatus] ?? { color: '#6b7280', bg: '#f3f4f6' }) : null;
+            return (
+              <span className="inline-flex items-center gap-[6px] flex-wrap">
+                {v}
+                {cfg && (
+                  <span
+                    className="inline-block px-[6px] py-[2px] rounded-[4px] text-[11px] font-[500] shrink-0"
+                    style={{ color: cfg.color, background: cfg.bg }}
+                  >
+                    {r.omsExecStatus}
+                  </span>
+                )}
+              </span>
+            );
+          }},
           { key: 'pickDate', title: '撿貨日期', width: '110px' },
           { key: 'actualShipDate', title: '實際出貨日期', width: '120px' },
           { key: 'shipMethod', title: '出貨方式', width: '130px' },
@@ -182,13 +190,61 @@ function ShipInfoTab() {
           { key: 'owner', title: '貨主', width: '80px' },
           { key: 'setCode', title: '套書碼', width: '90px' },
           { key: 'omsProgress', title: 'OMS進度', width: '100px', align: 'center', render: (v) => <OmsProgressTag code={String(v)} /> },
-          { key: 'omsExecStatus', title: 'OMS執行狀態', width: '120px' },
           { key: 'omsChangeDate', title: 'OMS異動日', width: '110px' },
           { key: 'shipWarehouse', title: '出貨倉', width: '90px' },
         ]}
         rowKey="id"
       />
     </div>
+  );
+}
+
+const AUDIT_CATEGORY_STYLE: Record<string, { bg: string; color: string }> = {
+  '聯絡資訊': { bg: '#e6f7ee', color: '#16a34a' },
+  '基本資料': { bg: '#e3f2fd', color: '#0078d4' },
+  '地址':     { bg: '#fef9c3', color: '#b45309' },
+};
+
+const mockAuditHistory = [
+  { id: 'AH001', time: '2025/03/15 - 14:32:01', operator: '林小華',  category: '聯絡資訊', field: '聯絡電話',   before: '02-2345-6789',          after: '02-9876-5432' },
+  { id: 'AH002', time: '2025/03/10 - 09:15:44', operator: '系統',    category: '基本資料', field: '訂閱到期日', before: '2025-03-09',             after: '2026-03-09' },
+  { id: 'AH003', time: '2025/02/28 - 16:05:22', operator: '陳美玲',  category: '聯絡資訊', field: '電子郵件',   before: 'old.email@example.com', after: 'new.email@example.com' },
+  { id: 'AH004', time: '2025/02/20 - 11:48:09', operator: '王大明',  category: '基本資料', field: '客戶名稱',   before: '天下集團採購部舊版',     after: '天下集團採購部' },
+  { id: 'AH005', time: '2025/01/08 - 10:00:00', operator: '系統',    category: '地址',     field: '帳號狀態',   before: '停用',                  after: '啟用' },
+];
+
+function AuditHistoryTab() {
+  return (
+    <CwTable
+      dataSource={mockAuditHistory}
+      rowKey="id"
+      columns={[
+        { key: 'time',     title: '操作時間', width: '170px' },
+        { key: 'operator', title: '操作者',   width: '90px' },
+        {
+          key: 'category', title: '分類', width: '100px',
+          render: (v: any) => {
+            const s = AUDIT_CATEGORY_STYLE[v as string] ?? { bg: '#f3f4f6', color: '#6b7280' };
+            return (
+              <span
+                className="inline-block px-[8px] py-[2px] rounded-[4px] text-[12px]"
+                style={{ background: s.bg, color: s.color, fontWeight: 500 }}
+              >
+                {v}
+              </span>
+            );
+          },
+        },
+        {
+          key: 'field', title: '異動欄位', width: '120px',
+          render: (v: any) => (
+            <span className="text-[#0078d4] font-['Noto_Sans_TC',_sans-serif] text-[14px]" style={{ fontWeight: 350 }}>{v}</span>
+          ),
+        },
+        { key: 'before', title: '變更前', width: '200px' },
+        { key: 'after',  title: '變更後', width: '200px' },
+      ]}
+    />
   );
 }
 
@@ -299,25 +355,58 @@ export interface OrderHeaderInfo {
   legalEntity: string;
 }
 
+const CHANGE_ORDER_TYPES = [
+  { id: 'CAD', name: '改地址',    desc: '更換收件地址（下次出貨生效）' },
+  { id: 'STP', name: '止寄',      desc: '暫停未來出貨' },
+  { id: 'RSM', name: '復寄',      desc: '恢復止寄中的出貨' },
+  { id: 'CSH', name: '改出貨方式', desc: '更換出貨方式（可能含費用差額）' },
+  { id: 'RSD', name: '補寄',      desc: '補寄已退件商品' },
+  { id: 'PRD', name: '換商品',    desc: '以新商品取代原商品' },
+];
+
+const CHANGE_TYPE_TO_TAB: Record<string, 'addressChange' | 'suspendResume' | 'deliveryChange' | 'returnResend' | 'cancel'> = {
+  CAD: 'addressChange',
+  STP: 'suspendResume',
+  RSM: 'suspendResume',
+  CSH: 'deliveryChange',
+  RSD: 'returnResend',
+  PRD: 'returnResend',
+};
+
+const CHANGE_TYPE_TITLE: Record<string, string> = {
+  CAD: '新增改址單',
+  STP: '新增止寄單',
+  RSM: '新增復寄單',
+  CSH: '新增改出貨方式',
+  RSD: '新增退件補寄單',
+  PRD: '新增換商品單',
+};
+
 export interface PMOrderDetailProps {
   orderId?: number;
-  orderType?: 'service' | 'erp' | 'omg';
-  /** 鎖定顯示的 tab，設定後隱藏主 tab 切換列 */
-  fixedTab?: 'service' | 'erp';
+  orderType?: 'erp' | 'service' | 'omg';
+  /** 訂單的來源類型陣列，決定哪些 tab 有資料 */
+  orderTypes?: ('service' | 'erp' | 'omg')[];
   orderHeaderInfo?: OrderHeaderInfo;
   onClose?: () => void;
   /** 'create' 時改為新增訂單模式（標題／麵包屑不同） */
   mode?: 'view' | 'create';
+  /** 初始編輯模式，預設 true（編輯）；傳 false 可直接開啟檢視模式 */
+  initialEditMode?: boolean;
 }
 
-export function PMOrderDetail({ orderId, orderType = 'service', fixedTab, orderHeaderInfo, onClose, mode = 'view' }: PMOrderDetailProps) {
+export function PMOrderDetail({ orderId, orderType = 'erp', orderTypes, orderHeaderInfo, onClose, mode = 'view', initialEditMode = true }: PMOrderDetailProps) {
+  // 判斷哪些 tab 有實際資料
+  const hasService = !orderTypes || orderTypes.includes('service');
+  const hasOmgOrErp = !orderTypes || orderTypes.includes('omg') || orderTypes.includes('erp');
+
   const [searchKeyword, setSearchKeyword] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [showOrderStatusPopup, setShowOrderStatusPopup] = useState(false);
   const [expandedRows, setExpandedRows] = useState<string[]>([]); // 追蹤展開的行
   const [activeTab, setActiveTab] = useState<'service' | 'erp' | 'omg'>(orderType); // 主 Tab：it-admin / OMG
-  const [activeErpTab, setActiveErpTab] = useState<'header' | 'items' | 'addressChange' | 'suspendResume' | 'cancel' | 'deliveryChange' | 'returnResend' | 'shipInfo'>('header'); // 統一 Tab
+  const [activeErpTab, setActiveErpTab] = useState<'header' | 'items' | 'addressChange' | 'suspendResume' | 'cancel' | 'deliveryChange' | 'returnResend' | 'shipInfo' | 'auditHistory'>('header'); // 統一 Tab
   const [selectedChangeOrderId, setSelectedChangeOrderId] = useState<string | null>(null);
   const [showChangeOrderDetail, setShowChangeOrderDetail] = useState(false);
   const [addressCancelReason, setAddressCancelReason] = useState('');
@@ -330,17 +419,12 @@ export function PMOrderDetail({ orderId, orderType = 'service', fixedTab, orderH
     storeName: '信義門市',
   });
   
-  const [isHeaderEditMode, setIsHeaderEditMode] = useState(false);
-  const [headerResetKey, setHeaderResetKey] = useState(0);
+  const [isEditMode, setIsEditMode] = useState(initialEditMode);
+  const [showNewChangeOrderPopup, setShowNewChangeOrderPopup] = useState(false);
+  const [selectedChangeOrderType, setSelectedChangeOrderType] = useState<string | null>(null);
+  const [isCreatingChangeOrder, setIsCreatingChangeOrder] = useState(false);
   const headerRef = useRef<OMGOrderHeaderRef>(null);
 
-  // 各子 Drawer 上一筆/下一筆導航輔助
-  const navigateDrawer = (dataList: { id: string }[], direction: 'prev' | 'next') => {
-    if (!selectedChangeOrderId) return;
-    const idx = dataList.findIndex((r) => r.id === selectedChangeOrderId);
-    const target = direction === 'prev' ? dataList[idx - 1] : dataList[idx + 1];
-    if (target) setSelectedChangeOrderId(target.id);
-  };
 
   // 訂單明細區域的 ref
   const orderDetailRef = useRef<HTMLDivElement>(null);
@@ -420,38 +504,51 @@ export function PMOrderDetail({ orderId, orderType = 'service', fixedTab, orderH
   return (
     <div className="px-[30px] py-[20px] space-y-[20px]">
       {/* 頁面標題 */}
-      <div className="flex items-center gap-[12px]">
+      <div className="flex items-center gap-[16px]">
         {onClose && (
           <button
             onClick={onClose}
-            className="flex items-center gap-[4px] text-[14px] text-[#0078d4] hover:text-[#106ebe] transition-colors font-['Noto_Sans_TC',_sans-serif] whitespace-nowrap"
-            style={{ fontWeight: 350 }}
+            className="shrink-0 flex items-center justify-center w-[32px] h-[32px] rounded-full border border-[#c4c9d3] bg-white hover:bg-[#f0f2f5] transition-colors"
           >
-            <ChevronLeft size={16} />
-            返回列表
+            <ChevronLeft className="w-[18px] h-[18px] text-[#7c808c]" />
           </button>
         )}
         <CwTitle
           title={mode === 'create' ? "新增訂單" : "訂單詳細記錄"}
           breadcrumbs={breadcrumbs}
           onBreadcrumbNavigate={handleBreadcrumbNavigate}
+          titleRight={mode !== 'create' ? (
+            <label className="flex items-center gap-[8px] cursor-pointer select-none">
+              <div
+                className={`relative w-[40px] h-[22px] rounded-full transition-colors ${isEditMode ? 'bg-[#0078d4]' : 'bg-[#c4c9d3]'}`}
+                onClick={() => setIsEditMode(v => !v)}
+              >
+                <div className={`absolute top-[2px] w-[18px] h-[18px] bg-white rounded-full shadow transition-transform ${isEditMode ? 'translate-x-[20px]' : 'translate-x-[2px]'}`} />
+              </div>
+              <span className="text-[13px] text-[#7c808c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>
+                {isEditMode ? '編輯模式' : '檢視模式'}
+              </span>
+            </label>
+          ) : undefined}
         />
       </div>
 
-      {/* 【主要 Tab 切換：it-admin / OMG】- fixedTab 時隱藏 */}
-      {!fixedTab && (
-        <CwTab
-          items={[
-            { id: 'service', label: '中台訂單' },
-            { id: 'erp', label: 'ERP訂單' },
-          ]}
-          activeId={activeTab}
-          onChange={(id) => setActiveTab(id as 'service' | 'erp' | 'omg')}
-        />
-      )}
+      {/* 【主要 Tab 切換：OMG訂單 / 中台訂單】 */}
+      <CwTab
+        items={[
+          { id: 'erp', label: 'OMG訂單' },
+          { id: 'service', label: '中台訂單' },
+        ]}
+        activeId={activeTab}
+        onChange={(id) => setActiveTab(id as 'erp' | 'service')}
+      />
 
-      {/* ========== it-admin 訂單內容 ========== */}
-      {(fixedTab ? fixedTab === 'service' : activeTab === 'service') && (
+      {/* ========== 中台訂單內容 ========== */}
+      {activeTab === 'service' && (!hasService ? (
+        <div className="flex items-center justify-center" style={{ minHeight: '400px' }}>
+          <span className="text-[14px] text-[#7c808c] font-['Noto_Sans_TC',_sans-serif]">查無資料</span>
+        </div>
+      ) : (
         <div className="space-y-[20px] my-[30px]  mx-[30px]">
           {/* 訂單處理流程 - 只在 it-admin 訂單中顯示 */}
           <OrderProcessFlow steps={processSteps} />
@@ -627,10 +724,14 @@ export function PMOrderDetail({ orderId, orderType = 'service', fixedTab, orderH
             )}
           </div>
         </div>
-      )}
+      ))}
 
       {/* ========== OMG（ERP）訂單內容 ========== */}
-      {(fixedTab ? fixedTab === 'erp' : activeTab === 'erp') && (
+      {activeTab === 'erp' && (!hasOmgOrErp ? (
+        <div className="flex items-center justify-center" style={{ minHeight: '400px' }}>
+          <span className="text-[14px] text-[#7c808c] font-['Noto_Sans_TC',_sans-serif]">查無資料</span>
+        </div>
+      ) : (
         <div className="space-y-[30px] mx-[30px]">
           {/* 訂單基本資訊 */}
           <div className="grid grid-cols-4 gap-x-[24px] gap-y-[24px] my-[30px] mb-[60px]">
@@ -650,6 +751,10 @@ export function PMOrderDetail({ orderId, orderType = 'service', fixedTab, orderH
               </div>
             ))}
           </div>
+          {/* 操作按鈕列 */}
+          <div className="flex justify-end">
+            {isEditMode && <CwButton variant="primary" appearance="filled" onClick={() => { setSelectedChangeOrderType(null); setShowNewChangeOrderPopup(true); }}>＋ 新增異動單</CwButton>}
+          </div>
           {/* OMG 子 Tab + 異動單 Tab 同列顯示 */}
           <CwTab
             items={[
@@ -661,27 +766,19 @@ export function PMOrderDetail({ orderId, orderType = 'service', fixedTab, orderH
               { id: 'deliveryChange', label: '改出貨方式' },
               { id: 'cancel', label: '退訂單' },
               { id: 'shipInfo', label: '出貨資訊' },
+              { id: 'auditHistory', label: '審核歷程' },
             ]}
             activeId={activeErpTab}
             onChange={(id) => setActiveErpTab(id as typeof activeErpTab)}
           />
 
           {activeErpTab === 'header' && (
-            <div className="space-y-[12px]">
-              <div className="flex justify-end gap-[8px]">
-                {isHeaderEditMode ? (
-                  <>
-                    <CwButton variant="secondary" appearance="outlined" onClick={() => { setIsHeaderEditMode(false); setHeaderResetKey(k => k + 1); }}>取消</CwButton>
-                    <CwButton variant="primary" appearance="filled" onClick={() => { if (headerRef.current?.validate()) setIsHeaderEditMode(false); }}>儲存</CwButton>
-                  </>
-                ) : (
-                  <CwButton variant="secondary" appearance="outlined" onClick={() => setIsHeaderEditMode(true)}>編輯</CwButton>
-                )}
-              </div>
-              <OMGOrderHeader ref={headerRef} key={headerResetKey} mode={isHeaderEditMode ? 'edit' : 'view'} />
-            </div>
+            <OMGOrderHeader
+              ref={headerRef}
+              mode={isEditMode ? 'edit' : 'view'}
+            />
           )}
-          {activeErpTab === 'items' && <ERPOrderItems />}
+          {activeErpTab === 'items' && <ERPOrderItems canEdit={isEditMode} />}
 
           {/* 【異動單內容】 */}
           <div>
@@ -708,9 +805,9 @@ export function PMOrderDetail({ orderId, orderType = 'service', fixedTab, orderH
                         width: '80px',
                         align: 'center',
                         render: (_, record: any) => (
-                          <CwTooltip content="檢視詳情">
+                          <CwTooltip content={isEditMode ? '編輯' : '檢視'}>
                             <button onClick={() => { setSelectedChangeOrderId(record.id); setAddressCancelReason(allAddressChangeData.find(x => x.id === record.id)?.cancelReason ?? ''); setShowChangeOrderDetail(true); }} className="w-[32px] h-[32px] rounded-full border border-[#c4c9d3] bg-white hover:bg-[#f0f2f5] flex items-center justify-center transition-colors">
-                              <Eye className="w-[16px] h-[16px] text-[#7c808c]" />
+                              {isEditMode ? <Pencil className="w-[16px] h-[16px] text-[#7c808c]" /> : <Eye className="w-[16px] h-[16px] text-[#7c808c]" />}
                             </button>
                           </CwTooltip>
                         )
@@ -738,9 +835,9 @@ export function PMOrderDetail({ orderId, orderType = 'service', fixedTab, orderH
                       { key: 'suspendStatus', title: '止寄狀態', width: '100px' },
                       { key: 'approvalDate', title: '止寄核單日期', width: '120px' },
                       { key: 'action', title: '功能', width: '80px', align: 'center', render: (_, record: any) => (
-                        <CwTooltip content="檢視詳情">
+                        <CwTooltip content={isEditMode ? '編輯' : '檢視'}>
                           <button onClick={() => { setSelectedChangeOrderId(record.id); setShowChangeOrderDetail(true); }} className="w-[32px] h-[32px] rounded-full border border-[#c4c9d3] bg-white hover:bg-[#f0f2f5] flex items-center justify-center transition-colors">
-                            <Eye className="w-[16px] h-[16px] text-[#7c808c]" />
+                            {isEditMode ? <Pencil className="w-[16px] h-[16px] text-[#7c808c]" /> : <Eye className="w-[16px] h-[16px] text-[#7c808c]" />}
                           </button>
                         </CwTooltip>
                       )}
@@ -764,9 +861,9 @@ export function PMOrderDetail({ orderId, orderType = 'service', fixedTab, orderH
                       { key: 'amount', title: '金額', width: '120px' },
                       { key: 'status', title: '狀態', width: '100px' },
                       { key: 'action', title: '功能', width: '80px', align: 'center', render: (_, record: any) => (
-                        <CwTooltip content="檢視詳情">
+                        <CwTooltip content={isEditMode ? '編輯' : '檢視'}>
                           <button onClick={() => { setSelectedChangeOrderId(record.id); setShowChangeOrderDetail(true); }} className="w-[32px] h-[32px] rounded-full border border-[#c4c9d3] bg-white hover:bg-[#f0f2f5] flex items-center justify-center transition-colors">
-                            <Eye className="w-[16px] h-[16px] text-[#7c808c]" />
+                            {isEditMode ? <Pencil className="w-[16px] h-[16px] text-[#7c808c]" /> : <Eye className="w-[16px] h-[16px] text-[#7c808c]" />}
                           </button>
                         </CwTooltip>
                       )}
@@ -801,9 +898,9 @@ export function PMOrderDetail({ orderId, orderType = 'service', fixedTab, orderH
                       { key: 'amount', title: '金額', width: '90px', align: 'right' },
                       { key: 'status', title: '改出貨方式單狀態', width: '140px' },
                       { key: 'action', title: '功能', width: '80px', align: 'center', render: (_, record: any) => (
-                        <CwTooltip content="檢視詳情">
+                        <CwTooltip content={isEditMode ? '編輯' : '檢視'}>
                           <button onClick={() => { setSelectedChangeOrderId(record.id); setShowChangeOrderDetail(true); }} className="w-[32px] h-[32px] rounded-full border border-[#c4c9d3] bg-white hover:bg-[#f0f2f5] flex items-center justify-center transition-colors">
-                            <Eye className="w-[16px] h-[16px] text-[#7c808c]" />
+                            {isEditMode ? <Pencil className="w-[16px] h-[16px] text-[#7c808c]" /> : <Eye className="w-[16px] h-[16px] text-[#7c808c]" />}
                           </button>
                         </CwTooltip>
                       )}
@@ -843,9 +940,9 @@ export function PMOrderDetail({ orderId, orderType = 'service', fixedTab, orderH
                       { key: 'processStatus', title: '處理狀態', width: '100px' },
                       { key: 'execStatus', title: '執行狀態', width: '100px' },
                       { key: 'action', title: '功能', width: '80px', align: 'center', render: (_, record: any) => (
-                        <CwTooltip content="檢視詳情">
+                        <CwTooltip content={isEditMode ? '編輯' : '檢視'}>
                           <button onClick={() => { setSelectedChangeOrderId(record.id); setShowChangeOrderDetail(true); }} className="w-[32px] h-[32px] rounded-full border border-[#c4c9d3] bg-white hover:bg-[#f0f2f5] flex items-center justify-center transition-colors">
-                            <Eye className="w-[16px] h-[16px] text-[#7c808c]" />
+                            {isEditMode ? <Pencil className="w-[16px] h-[16px] text-[#7c808c]" /> : <Eye className="w-[16px] h-[16px] text-[#7c808c]" />}
                           </button>
                         </CwTooltip>
                       )}
@@ -855,39 +952,48 @@ export function PMOrderDetail({ orderId, orderType = 'service', fixedTab, orderH
                 )}
 
                 {activeErpTab === 'shipInfo' && <ShipInfoTab />}
+                {activeErpTab === 'auditHistory' && <AuditHistoryTab />}
               </div>
             </div>
 
           {/* 底部操作按鈕列 */}
-          <div className="flex items-center justify-end gap-[8px] border-t border-[#c4c9d3] pt-[16px]">
-            <CwButton variant="primary" appearance="filled" disabled>核單</CwButton>
-            <CwButton variant="destructive" appearance="outlined" disabled>刪除</CwButton>
+          <div className="flex items-center justify-between border-t border-[#c4c9d3] pt-[16px]">
+            {onClose && (
+              <CwButton variant="primary" appearance="outlined" onClick={onClose}>
+                {isEditMode ? '取消' : '返回'}
+              </CwButton>
+            )}
+            <div className="flex items-center gap-[8px]">
+              <CwButton variant="primary" appearance="filled" disabled>核單</CwButton>
+              <CwButton variant="primary" appearance="outlined" disabled={!isEditMode} onClick={() => { headerRef.current?.validate(); }}>儲存</CwButton>
+              <CwButton variant="destructive" appearance="outlined" disabled>刪除</CwButton>
+            </div>
           </div>
         </div>
-      )}
+      ))}
 
-      {/* 改址單 Drawer */}
+      {/* 改址單 Popup */}
       {(() => {
         const rec = allAddressChangeData.find(r => r.id === selectedChangeOrderId);
-        const acIdx = allAddressChangeData.findIndex(r => r.id === selectedChangeOrderId);
         return (
-          <CwDrawer
+          <CwPopup
             open={showChangeOrderDetail && activeErpTab === 'addressChange'}
-            onClose={() => setShowChangeOrderDetail(false)}
-            title={`改址詳情 - ${selectedChangeOrderId}`}
-            initialWidth={500}
-            showPrevious
-            showNext
-            disablePrevious={acIdx <= 0}
-            disableNext={acIdx >= allAddressChangeData.length - 1}
-            onPrevious={() => navigateDrawer(allAddressChangeData, 'prev')}
-            onNext={() => navigateDrawer(allAddressChangeData, 'next')}
+            onClose={() => { setShowChangeOrderDetail(false); setIsCreatingChangeOrder(false); }}
+            title={isCreatingChangeOrder ? (CHANGE_TYPE_TITLE[selectedChangeOrderType ?? ''] ?? '新增改址單') : `改址詳情 - ${selectedChangeOrderId}`}
+            size="md"
+            closableByMask={false}
+            buttons={isEditMode ? [
+              { label: '取消', variant: 'secondary', appearance: 'outlined', onClick: () => { setShowChangeOrderDetail(false); setIsCreatingChangeOrder(false); } },
+              { label: '儲存', variant: 'primary', appearance: 'filled', onClick: () => {} },
+            ] : [
+              { label: '關閉', variant: 'secondary', appearance: 'outlined', onClick: () => { setShowChangeOrderDetail(false); setIsCreatingChangeOrder(false); } },
+            ]}
           >
-            {rec && (
+            {(rec !== undefined || isCreatingChangeOrder) && (
               <div className="space-y-[16px]">
 
                 {/* 訂單編號 */}
-                <CwInput label="訂單編號" value={rec.originalOrderNo} disabled readOnly />
+                <CwInput label="訂單編號" value={rec?.originalOrderNo ?? ''} disabled readOnly />
 
                 {/* 解配原因（移至最上方，控制底下欄位） */}
                 <CwSelect
@@ -909,7 +1015,7 @@ export function PMOrderDetail({ orderId, orderType = 'service', fixedTab, orderH
                   <div className="grid grid-cols-2 gap-3">
                     <CwSelect
                       label="改址單狀態"
-                      value={rec.status}
+                      value={rec?.status ?? ''}
                       options={[
                         { label: '輸入', value: '輸入' },
                         { label: '待處理', value: '待處理' },
@@ -918,47 +1024,49 @@ export function PMOrderDetail({ orderId, orderType = 'service', fixedTab, orderH
                       ]}
                       disabled={!addressCancelReason}
                     />
-                    <CwInput label="核單日期" defaultValue={rec.approvalDate} disabled readOnly />
+                    <CwInput label="核單日期" defaultValue={rec?.approvalDate ?? ''} disabled readOnly />
                   </div>
                 </div>
 
                 {/* 原出貨 → 新出貨 流程 */}
                 <div>
-                  {/* 原出貨資訊（唯讀） */}
-                  <div className="rounded-t-[10px] border border-[#e4e7ec] bg-[#f7f8fa] px-4 pt-3 pb-4 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center justify-center w-[20px] h-[20px] rounded-full bg-[#7c808c] text-white text-[10px] font-[600] shrink-0">舊</span>
-                      <p className="text-sm font-[600] text-[#4b5563]" style={{ fontWeight: 700 }}>原出貨資訊</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <CwInput label="原出貨收件人" value={rec.oldRecipient} disabled readOnly />
-                      <CwInput label="原出貨手機" value={rec.oldMobile} disabled readOnly />
-                      <div className="col-span-2">
-                        <CwInput label="原出貨地址" value={rec.oldAddress} disabled readOnly />
+                  {/* 原出貨資訊（唯讀，新增時顯示空白） */}
+                  {!isCreatingChangeOrder && (
+                    <>
+                      <div className="rounded-t-[10px] border border-[#e4e7ec] bg-[#f7f8fa] px-4 pt-3 pb-4 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center justify-center w-[20px] h-[20px] rounded-full bg-[#7c808c] text-white text-[10px] font-[600] shrink-0">舊</span>
+                          <p className="text-sm font-[600] text-[#4b5563]" style={{ fontWeight: 700 }}>原出貨資訊</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <CwInput label="原出貨收件人" value={rec?.oldRecipient ?? ''} disabled readOnly />
+                          <CwInput label="原出貨手機" value={rec?.oldMobile ?? ''} disabled readOnly />
+                          <div className="col-span-2">
+                            <CwInput label="原出貨地址" value={rec?.oldAddress ?? ''} disabled readOnly />
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-
-                  {/* 箭頭分隔 */}
-                  <div className="flex items-center justify-center border-l border-r border-[#e4e7ec] bg-white py-2">
-                    <div className="flex flex-col items-center">
-                      <div className="w-px h-2 bg-[#c4c9d3]" />
-                      <ArrowDown className="w-4 h-4 text-[#0078d4]" />
-                      <div className="w-px h-2 bg-[#c4c9d3]" />
-                    </div>
-                  </div>
+                      <div className="flex items-center justify-center border-l border-r border-[#e4e7ec] bg-white py-2">
+                        <div className="flex flex-col items-center">
+                          <div className="w-px h-2 bg-[#c4c9d3]" />
+                          <ArrowDown className="w-4 h-4 text-[#0078d4]" />
+                          <div className="w-px h-2 bg-[#c4c9d3]" />
+                        </div>
+                      </div>
+                    </>
+                  )}
 
                   {/* 新出貨資訊（可編輯） */}
-                  <div className="rounded-b-[10px] border border-[#bfdbfe] bg-[#f0f7ff] px-4 pt-3 pb-4 space-y-3">
+                  <div className={isCreatingChangeOrder ? 'rounded-[10px] border border-[#bfdbfe] bg-[#f0f7ff] px-4 pt-3 pb-4 space-y-3' : 'rounded-b-[10px] border border-[#bfdbfe] bg-[#f0f7ff] px-4 pt-3 pb-4 space-y-3'}>
                     <div className="flex items-center gap-2">
                       <span className="inline-flex items-center justify-center w-[20px] h-[20px] rounded-full bg-[#0078d4] text-white text-[10px] font-[600] shrink-0">新</span>
                       <p className="text-sm font-[600] text-[#1e3a8a]" style={{ fontWeight: 700 }}>新出貨資訊</p>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
-                      <CwInput label="新出貨收件人" defaultValue={rec.newRecipient} disabled={!addressCancelReason} />
-                      <CwInput label="新出貨手機" defaultValue={rec.newMobile} disabled={!addressCancelReason} />
+                      <CwInput label="新出貨收件人" defaultValue={rec?.newRecipient ?? ''} disabled={!addressCancelReason} />
+                      <CwInput label="新出貨手機" defaultValue={rec?.newMobile ?? ''} disabled={!addressCancelReason} />
                       <div className="col-span-2">
-                        <CwInput label="新出貨地址" defaultValue={rec.newAddress} disabled={!addressCancelReason} />
+                        <CwInput label="新出貨地址" defaultValue={rec?.newAddress ?? ''} disabled={!addressCancelReason} />
                       </div>
                     </div>
                   </div>
@@ -967,40 +1075,39 @@ export function PMOrderDetail({ orderId, orderType = 'service', fixedTab, orderH
                 {/* 備註 */}
                 <div className="rounded-[10px] border border-[#e5e7eb] bg-[#f9fafb] p-4">
                   <p className="text-sm font-[600] text-[#4b5563] mb-3">備註</p>
-                  <CwTextarea defaultValue={rec.remark} rows={3} disabled={!addressCancelReason} />
+                  <CwTextarea defaultValue={rec?.remark ?? ''} rows={3} disabled={!addressCancelReason} />
                 </div>
               </div>
             )}
-          </CwDrawer>
+          </CwPopup>
         );
       })()}
 
-      {/* 止復寄單 Drawer */}
+      {/* 止復寄單 Popup */}
       {(() => {
         const rec = allSuspendResumeData.find(r => r.id === selectedChangeOrderId);
-        const srIdx = allSuspendResumeData.findIndex(r => r.id === selectedChangeOrderId);
         return (
-          <CwDrawer
+          <CwPopup
             open={showChangeOrderDetail && activeErpTab === 'suspendResume'}
-            onClose={() => setShowChangeOrderDetail(false)}
-            title={`止復寄詳情 - ${selectedChangeOrderId}`}
-            initialWidth={520}
-            showPrevious
-            showNext
-            disablePrevious={srIdx <= 0}
-            disableNext={srIdx >= allSuspendResumeData.length - 1}
-            onPrevious={() => navigateDrawer(allSuspendResumeData, 'prev')}
-            onNext={() => navigateDrawer(allSuspendResumeData, 'next')}
+            onClose={() => { setShowChangeOrderDetail(false); setIsCreatingChangeOrder(false); }}
+            title={isCreatingChangeOrder ? (CHANGE_TYPE_TITLE[selectedChangeOrderType ?? ''] ?? '新增止復寄單') : `止復寄詳情 - ${selectedChangeOrderId}`}
+            size="md"
+            closableByMask={false}
+            buttons={isEditMode ? [
+              { label: '取消', variant: 'secondary', appearance: 'outlined', onClick: () => { setShowChangeOrderDetail(false); setIsCreatingChangeOrder(false); } },
+              { label: '儲存', variant: 'primary', appearance: 'filled', onClick: () => {} },
+            ] : [
+              { label: '關閉', variant: 'secondary', appearance: 'outlined', onClick: () => { setShowChangeOrderDetail(false); setIsCreatingChangeOrder(false); } },
+            ]}
           >
-            {rec && (
+            {(rec !== undefined || isCreatingChangeOrder) && (
               <div className="space-y-[20px]">
-                <div className="flex justify-end gap-[8px]"><DrawerActions /></div>
                 {/* 訂單資訊 */}
                     <div className="col-span-2">
                       <p className="text-[13px] text-[#33475b] mb-1" >原訂單號碼</p>
                       <div className="flex gap-2 items-center">
                         <div className="flex-1">
-                          <CwInput defaultValue={rec.originalOrderNo} />
+                          <CwInput defaultValue={rec?.originalOrderNo ?? ''} />
                         </div>
                       </div>
                     </div>
@@ -1010,12 +1117,12 @@ export function PMOrderDetail({ orderId, orderType = 'service', fixedTab, orderH
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="col-span-2">
-                      <CwInput label="止復寄單號碼" value={rec.id} disabled readOnly />
+                      <CwInput label="止復寄單號碼" value={rec?.id ?? ''} disabled readOnly />
                     </div>
-                    <CwInput label="訂單客戶編號" value={rec.customerCode} disabled readOnly />
-                    <CwInput label="訂單客戶名稱" value={rec.customerName} disabled readOnly />
-                    <CwInput label="付款客戶編號" value={rec.payerCode} disabled readOnly />
-                    <CwInput label="付款客戶名稱" value={rec.payerName} disabled readOnly />
+                    <CwInput label="訂單客戶編號" value={rec?.customerCode ?? ''} disabled readOnly />
+                    <CwInput label="訂單客戶名稱" value={rec?.customerName ?? ''} disabled readOnly />
+                    <CwInput label="付款客戶編號" value={rec?.payerCode ?? ''} disabled readOnly />
+                    <CwInput label="付款客戶名稱" value={rec?.payerName ?? ''} disabled readOnly />
                   </div>
                 </div>
 
@@ -1026,22 +1133,22 @@ export function PMOrderDetail({ orderId, orderType = 'service', fixedTab, orderH
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="col-span-2">
-                      <CwInput label="訂單日期" defaultValue={rec.orderDate} />
+                      <CwInput label="訂單日期" defaultValue={rec?.orderDate ?? ''} />
                     </div>
-                    <CwInput label="出貨客戶名稱" value={rec.shipCustomerName} disabled readOnly />
-                    <CwInput label="出貨客戶編號" value={rec.shipCustomerCode} disabled readOnly />
+                    <CwInput label="出貨客戶名稱" value={rec?.shipCustomerName ?? ''} disabled readOnly />
+                    <CwInput label="出貨客戶編號" value={rec?.shipCustomerCode ?? ''} disabled readOnly />
                     <div className="col-span-2">
-                      <CwInput label="出貨地址" value={rec.shipAddress} disabled readOnly />
+                      <CwInput label="出貨地址" value={rec?.shipAddress ?? ''} disabled readOnly />
                     </div>
                   </div>
                 </div>
               </div>
             )}
-          </CwDrawer>
+          </CwPopup>
         );
       })()}
 
-      {/* 退訂單 Drawer */}
+      {/* 退訂單 Popup */}
       {(() => {
         const cancelData = [
           { id: 'CO001', applyDate: '2025-08-01', reason: '客戶不滿意服務品質', amount: '2,500', status: '已完成', applicant: '陳小明 (客服)', refundBank: '國泰世華 (013)', refundAccount: '12345', refundMethod: '匯款' },
@@ -1050,48 +1157,49 @@ export function PMOrderDetail({ orderId, orderType = 'service', fixedTab, orderH
           { id: 'CO004', applyDate: '2025-12-01', reason: '搬家無法收件', amount: '890', status: '已處理', applicant: '張美玲 (客服)', refundBank: '中信銀行 (822)', refundAccount: '44556', refundMethod: '匯款' },
         ];
         const rec = cancelData.find(r => r.id === selectedChangeOrderId);
-        const coIdx = cancelData.findIndex(r => r.id === selectedChangeOrderId);
         return (
-          <CwDrawer
+          <CwPopup
             open={showChangeOrderDetail && activeErpTab === 'cancel'}
-            onClose={() => setShowChangeOrderDetail(false)}
-            title={`退訂單詳情 - ${selectedChangeOrderId}`}
-            initialWidth={520}
-            showPrevious
-            showNext
-            disablePrevious={coIdx <= 0}
-            disableNext={coIdx >= cancelData.length - 1}
-            onPrevious={() => navigateDrawer(cancelData, 'prev')}
-            onNext={() => navigateDrawer(cancelData, 'next')}
+            onClose={() => { setShowChangeOrderDetail(false); setIsCreatingChangeOrder(false); }}
+            title={isCreatingChangeOrder ? '新增退訂單' : `退訂單詳情 - ${selectedChangeOrderId}`}
+            size="md"
+            closableByMask={false}
+            buttons={isEditMode ? [
+              { label: '取消', variant: 'secondary', appearance: 'outlined', onClick: () => { setShowChangeOrderDetail(false); setIsCreatingChangeOrder(false); } },
+              { label: '儲存', variant: 'primary', appearance: 'filled', onClick: () => {} },
+            ] : [
+              { label: '關閉', variant: 'secondary', appearance: 'outlined', onClick: () => { setShowChangeOrderDetail(false); setIsCreatingChangeOrder(false); } },
+            ]}
           >
-            {rec && (
+            {(rec !== undefined || isCreatingChangeOrder) && (
               <div className="space-y-[20px]">
-                <div className="flex justify-end gap-[8px]"><DrawerActions /></div>
 
                 {/* 退訂資訊 */}
                 <div className="rounded-[10px] border border-[#d8e3f1] bg-[#f8fbff] p-4">
                   <p className="text-[14px] text-[#183b78] mb-[12px]" style={{ fontWeight: 700 }}>退訂資訊</p>
                   <div className="grid grid-cols-2 gap-[12px]">
-                    <div className="col-span-2">
-                      <CwInput label="退訂單號碼" value={rec.id} disabled readOnly />
-                    </div>
-                    <CwInput label="退訂日期" value={rec.applyDate} disabled readOnly />
+                    {!isCreatingChangeOrder && (
+                      <div className="col-span-2">
+                        <CwInput label="退訂單號碼" value={rec?.id ?? ''} disabled readOnly />
+                      </div>
+                    )}
+                    <CwInput label="退訂日期" value={rec?.applyDate ?? ''} disabled={!isCreatingChangeOrder} readOnly={!isCreatingChangeOrder} />
                     <CwSelect
                       label="退訂狀態"
-                      value={rec.status}
+                      value={rec?.status ?? ''}
                       options={[
                         { value: '待核准', label: '待核准' },
                         { value: '已完成', label: '已完成' },
                         { value: '已退款', label: '已退款' },
                         { value: '已處理', label: '已處理' },
                       ]}
-                      disabled
+                      disabled={!isCreatingChangeOrder}
                     />
                     <div className="col-span-2">
-                      <CwInput label="退訂原因" value={rec.reason} disabled readOnly />
+                      <CwInput label="退訂原因" value={rec?.reason ?? ''} disabled={!isCreatingChangeOrder} readOnly={!isCreatingChangeOrder} />
                     </div>
-                    <CwInput label="退款金額" value={`NT$ ${rec.amount}`} disabled readOnly />
-                    <CwInput label="申請人" value={rec.applicant} disabled readOnly />
+                    <CwInput label="退款金額" value={`NT$ ${rec?.amount ?? ''}`} disabled={!isCreatingChangeOrder} readOnly={!isCreatingChangeOrder} />
+                    <CwInput label="申請人" value={rec?.applicant ?? ''} disabled readOnly />
                   </div>
                 </div>
 
@@ -1099,53 +1207,44 @@ export function PMOrderDetail({ orderId, orderType = 'service', fixedTab, orderH
                 <div className="rounded-[10px] border border-[#d8e3f1] bg-[#f8fbff] p-4">
                   <p className="text-[14px] text-[#183b78] mb-[12px]" style={{ fontWeight: 700 }}>退款資訊</p>
                   <div className="grid grid-cols-2 gap-[12px]">
-                    <CwInput label="退款銀行" value={rec.refundBank} disabled readOnly />
-                    <CwInput label="帳號後五碼" value={rec.refundAccount} disabled readOnly />
+                    <CwInput label="退款銀行" value={rec?.refundBank ?? ''} disabled={!isCreatingChangeOrder} readOnly={!isCreatingChangeOrder} />
+                    <CwInput label="帳號後五碼" value={rec?.refundAccount ?? ''} disabled={!isCreatingChangeOrder} readOnly={!isCreatingChangeOrder} />
                     <div className="col-span-2">
                       <CwSelect
                         label="退款方式"
-                        value={rec.refundMethod}
+                        value={rec?.refundMethod ?? ''}
                         options={[
                           { value: '匯款', label: '匯款' },
                           { value: '信用卡退刷', label: '信用卡退刷' },
                           { value: '現金', label: '現金' },
                         ]}
-                        disabled
+                        disabled={!isCreatingChangeOrder}
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* 審核歷程 */}
-                <div className="bg-[#f9f9f9] p-4 border rounded">
-                  <p className="text-sm font-medium mb-2">審核歷程：</p>
-                  <div className="space-y-2 text-xs text-[#7c808c]">
-                    <p>2025-08-01 10:00 - 提交退訂申請 (原因: 服務品質)</p>
-                    <p>2025-08-02 14:30 - 客服主管初審通過</p>
-                    <p>2025-08-05 09:00 - 財務部完成退款作業</p>
-                  </div>
-                </div>
-
-                {/* 底部按鈕 */}
-                <div className="flex items-center justify-end gap-[8px] border-t border-[#c4c9d3] pt-[16px]">
-                  <CwButton variant="primary" appearance="filled" disabled>核單</CwButton>
-                  <CwButton variant="destructive" appearance="outlined" disabled>刪除</CwButton>
-                </div>
               </div>
             )}
-          </CwDrawer>
+          </CwPopup>
         );
       })()}
 
-      {/* 改出貨方式單 Drawer */}
-      <CwDrawer
+      {/* 改出貨方式單 Popup */}
+      <CwPopup
         open={showChangeOrderDetail && activeErpTab === 'deliveryChange'}
-        onClose={() => setShowChangeOrderDetail(false)}
-        title={`改出貨方式 - ${selectedChangeOrderId}`}
-        initialWidth={520}
+        onClose={() => { setShowChangeOrderDetail(false); setIsCreatingChangeOrder(false); }}
+        title={isCreatingChangeOrder ? '新增改出貨方式' : `改出貨方式 - ${selectedChangeOrderId}`}
+        size="md"
+        closableByMask={false}
+        buttons={isEditMode ? [
+          { label: '取消', variant: 'secondary', appearance: 'outlined', onClick: () => { setShowChangeOrderDetail(false); setIsCreatingChangeOrder(false); } },
+          { label: '儲存', variant: 'primary', appearance: 'filled', onClick: () => {} },
+        ] : [
+          { label: '關閉', variant: 'secondary', appearance: 'outlined', onClick: () => { setShowChangeOrderDetail(false); setIsCreatingChangeOrder(false); } },
+        ]}
       >
         <div className="space-y-6">
-          <div className="flex justify-end gap-[8px] pb-[4px]"><DrawerActions /></div>
           <p className="text-sm text-[#7c808c]">變更物流管道與配送規則</p>
           <div className="space-y-4">
             <div className="p-4 bg-[#fcfcff] border border-[#d9e2ef] rounded-lg">
@@ -1209,35 +1308,33 @@ export function PMOrderDetail({ orderId, orderType = 'service', fixedTab, orderH
             </div>
           </div>
         </div>
-      </CwDrawer>
+      </CwPopup>
 
-      {/* 退件補寄單 Drawer */}
+      {/* 退件補寄單 Popup */}
       {(() => {
         const rec = allReturnResendData.find(r => r.id === selectedChangeOrderId);
-        const rrIdx = allReturnResendData.findIndex(r => r.id === selectedChangeOrderId);
         return (
-          <CwDrawer
+          <CwPopup
             open={showChangeOrderDetail && activeErpTab === 'returnResend'}
-            onClose={() => setShowChangeOrderDetail(false)}
-            title={`退件補寄詳情 - ${selectedChangeOrderId}`}
-            initialWidth={560}
-            showPrevious
-            showNext
-            disablePrevious={rrIdx <= 0}
-            disableNext={rrIdx >= allReturnResendData.length - 1}
-            onPrevious={() => navigateDrawer(allReturnResendData, 'prev')}
-            onNext={() => navigateDrawer(allReturnResendData, 'next')}
+            onClose={() => { setShowChangeOrderDetail(false); setIsCreatingChangeOrder(false); }}
+            title={isCreatingChangeOrder ? (CHANGE_TYPE_TITLE[selectedChangeOrderType ?? ''] ?? '新增退件補寄單') : `退件補寄詳情 - ${selectedChangeOrderId}`}
+            size="md"
+            closableByMask={false}
+            buttons={isEditMode ? [
+              { label: '取消', variant: 'secondary', appearance: 'outlined', onClick: () => { setShowChangeOrderDetail(false); setIsCreatingChangeOrder(false); } },
+              { label: '儲存', variant: 'primary', appearance: 'filled', onClick: () => {} },
+            ] : [
+              { label: '關閉', variant: 'secondary', appearance: 'outlined', onClick: () => { setShowChangeOrderDetail(false); setIsCreatingChangeOrder(false); } },
+            ]}
           >
-            {rec && (
+            {(rec !== undefined || isCreatingChangeOrder) && (
               <div className="space-y-[16px]">
-                <div className="flex justify-end gap-[8px]"><DrawerActions /></div>
                     <div className="col-span-2">
                       <p className="text-[13px] text-[#1c1c1c] mb-1" style={{ fontWeight: 500 }}>原訂單號碼</p>
                       <div className="flex gap-2 items-center">
                         <div className="flex-1">
-                          <CwInput defaultValue={rec.originalOrderNo} />
+                          <CwInput defaultValue={rec?.originalOrderNo ?? ''} />
                         </div>
-
                       </div>
                     </div>
                 {/* 退件資訊 */}
@@ -1246,23 +1343,23 @@ export function PMOrderDetail({ orderId, orderType = 'service', fixedTab, orderH
                     <p className="text-sm font-[600] text-[#d97706]">退件資訊</p>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <CwInput label="退件補寄單號" value={rec.id} disabled readOnly />
-                    <CwInput label="退件補寄單日期" value={rec.applyDate} disabled readOnly />
-                    <CwInput label="退件補寄單狀態" value={rec.status} disabled readOnly />
-                    <CwInput label="訂單客戶編號" value={rec.customerCode} disabled readOnly />
-                    <CwInput label="退件原因" defaultValue={rec.returnReason} />
-                    <CwInput label="實際退件單日期" defaultValue={rec.actualReturnDate} />
+                    {!isCreatingChangeOrder && <CwInput label="退件補寄單號" value={rec?.id ?? ''} disabled readOnly />}
+                    {!isCreatingChangeOrder && <CwInput label="退件補寄單日期" value={rec?.applyDate ?? ''} disabled readOnly />}
+                    {!isCreatingChangeOrder && <CwInput label="退件補寄單狀態" value={rec?.status ?? ''} disabled readOnly />}
+                    <CwInput label="訂單客戶編號" value={rec?.customerCode ?? ''} disabled readOnly />
+                    <CwInput label="退件原因" defaultValue={rec?.returnReason ?? ''} />
+                    <CwInput label="實際退件單日期" defaultValue={rec?.actualReturnDate ?? ''} />
                     <CwSelect
                       label="暫停處理"
-                      value={rec.suspended}
+                      value={rec?.suspended ?? ''}
                       options={[
                         { label: '否', value: '' },
                         { label: '是', value: '是' },
                       ]}
                     />
-                    <CwInput label="暫止原因" defaultValue={rec.suspendReason} />
+                    <CwInput label="暫止原因" defaultValue={rec?.suspendReason ?? ''} />
                     <div className="col-span-2">
-                      <CwInput label="出貨注意事項" defaultValue={rec.shipNote} />
+                      <CwInput label="出貨注意事項" defaultValue={rec?.shipNote ?? ''} />
                     </div>
                   </div>
                 </div>
@@ -1273,19 +1370,19 @@ export function PMOrderDetail({ orderId, orderType = 'service', fixedTab, orderH
                     <p className="text-sm font-[600] text-[#1e3a8a]">出貨資訊</p>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <CwInput label="核單日期" defaultValue={rec.approvalDate} />
-                    <CwInput label="訂單類型" value={rec.orderType} disabled readOnly />
-                    <CwInput label="訂單客戶名稱" value={rec.customerName} disabled readOnly />
-                    <CwInput label="聯絡方式" defaultValue={rec.contact} />
-                    <CwInput label="出貨方式" value={rec.shipMethod} disabled readOnly />
-                    <CwInput label="出貨客戶名稱" value={rec.shipCustomerName} disabled readOnly />
+                    <CwInput label="核單日期" defaultValue={rec?.approvalDate ?? ''} />
+                    <CwInput label="訂單類型" value={rec?.orderType ?? ''} disabled readOnly />
+                    <CwInput label="訂單客戶名稱" value={rec?.customerName ?? ''} disabled readOnly />
+                    <CwInput label="聯絡方式" defaultValue={rec?.contact ?? ''} />
+                    <CwInput label="出貨方式" value={rec?.shipMethod ?? ''} disabled readOnly />
+                    <CwInput label="出貨客戶名稱" value={rec?.shipCustomerName ?? ''} disabled readOnly />
                     <div className="col-span-2">
-                      <CwInput label="出貨地址" value={rec.shipAddress} disabled readOnly />
+                      <CwInput label="出貨地址" value={rec?.shipAddress ?? ''} disabled readOnly />
                     </div>
-                    <CwInput label="出貨客戶編號" value={rec.shipCustomerCode} disabled readOnly />
-                    <CwInput label="出貨收件人" defaultValue={rec.shipRecipient} />
+                    <CwInput label="出貨客戶編號" value={rec?.shipCustomerCode ?? ''} disabled readOnly />
+                    <CwInput label="出貨收件人" defaultValue={rec?.shipRecipient ?? ''} />
                     <div className="col-span-2">
-                      <CwInput label="補寄原因" defaultValue={rec.resendReason} />
+                      <CwInput label="補寄原因" defaultValue={rec?.resendReason ?? ''} />
                     </div>
                   </div>
                 </div>
@@ -1293,13 +1390,73 @@ export function PMOrderDetail({ orderId, orderType = 'service', fixedTab, orderH
                 {/* 備註 */}
                 <div className="rounded-[10px] border border-[#e5e7eb] bg-[#f9fafb] p-4">
                   <p className="text-sm font-[600] text-[#4b5563] mb-3">備註</p>
-                  <CwTextarea defaultValue={rec.remark} rows={3} />
+                  <CwTextarea defaultValue={rec?.remark ?? ''} rows={3} />
                 </div>
               </div>
             )}
-          </CwDrawer>
+          </CwPopup>
         );
       })()}
+
+      {/* 新增異動單 - 選擇異動類型 Popup */}
+      <CwPopup
+        open={showNewChangeOrderPopup}
+        onClose={() => setShowNewChangeOrderPopup(false)}
+        title="選擇異動類型"
+        size="lg"
+        closableByMask={false}
+        buttons={[
+          { label: '取消', variant: 'secondary', appearance: 'outlined', onClick: () => setShowNewChangeOrderPopup(false) },
+          { label: '下一步 →', variant: 'primary', appearance: 'filled', onClick: () => {
+            if (!selectedChangeOrderType) return;
+            const targetTab = CHANGE_TYPE_TO_TAB[selectedChangeOrderType];
+            setShowNewChangeOrderPopup(false);
+            setSelectedChangeOrderId(null);
+            setIsCreatingChangeOrder(true);
+            setActiveErpTab(targetTab);
+            setShowChangeOrderDetail(true);
+          }},
+        ]}
+      >
+        <div className="space-y-[16px]">
+          <p className="text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>
+            針對訂單{' '}
+            <span className="inline-block px-[8px] py-[2px] rounded-[4px] bg-[#f0f2f5] text-[#1c1c1c] text-[13px]" style={{ fontWeight: 500 }}>
+              {orderHeaderInfo?.orderNumber ?? 'OMG-2026-000001'}
+            </span>
+            {' '}申請異動。 選擇異動類型後將進入對應的填寫介面。
+          </p>
+          <div className="space-y-[8px]">
+            {CHANGE_ORDER_TYPES.map((type) => {
+              const selected = selectedChangeOrderType === type.id;
+              return (
+                <div
+                  key={type.id}
+                  onClick={() => setSelectedChangeOrderType(type.id)}
+                  className="flex items-center gap-[12px] px-[16px] py-[14px] rounded-[8px] border cursor-pointer transition-colors"
+                  style={{
+                    borderColor: selected ? '#0078d4' : '#e0e4ef',
+                    background: selected ? '#eff6ff' : '#ffffff',
+                  }}
+                >
+                  {/* Radio circle */}
+                  <div
+                    className="shrink-0 w-[20px] h-[20px] rounded-full border-[2px] flex items-center justify-center"
+                    style={{ borderColor: selected ? '#0078d4' : '#c4c9d3', background: 'white' }}
+                  >
+                    {selected && <div className="w-[10px] h-[10px] rounded-full bg-[#0078d4]" />}
+                  </div>
+                  {/* Text */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 600 }}>{type.name}</p>
+                    <p className="text-[13px] text-[#7c808c] font-['Noto_Sans_TC',_sans-serif] mt-[2px]" style={{ fontWeight: 350 }}>{type.desc}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </CwPopup>
 
       {/* 訂單狀態說明 Popup */}
       <CwPopup

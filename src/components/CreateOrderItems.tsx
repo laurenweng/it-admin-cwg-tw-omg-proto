@@ -106,6 +106,44 @@ const HEADER_DEFAULTS = {
 
 const today = () => new Date().toISOString().slice(0, 10);
 
+interface PromoItem extends Omit<CreateOrderItemData, 'id'> {}
+
+interface PromoPlan {
+  code: string;
+  description: string;
+  totalAmount: number;
+  items: PromoItem[];
+}
+
+const mockPromoPlans: PromoPlan[] = [
+  {
+    code: 'GC17070009',
+    description: '天下雜誌5期=275元',
+    totalAmount: 275,
+    items: [
+      { productCode: 'GCV00001', productName: '天下雜誌 1 年期（26 期）', startPeriod: '2025-01', endPeriod: '2025-05', quantity: 5, unitPrice: 55, discount: '0', sellPrice: 55, actualAmount: 275, transactionType: '新訂', taxType: '內含稅', requireDate: today(), agreeMarketing: '1', agreeMarketingDate: '', shipCustomerCode: HEADER_DEFAULTS.shipCustomerCode, shipCustomerName: HEADER_DEFAULTS.shipCustomerName, shipAddress: HEADER_DEFAULTS.shipAddress, shipRecipient: '', shipMethod: HEADER_DEFAULTS.shipMethod, grade: '', discountMark: 'N', reserver: '', shipWarehouse: '', bookShowLocation: '', autoRenew: 'N', planCode: 'GC17070009', planName: '天下雜誌5期=275元', isShipped: false },
+    ],
+  },
+  {
+    code: 'CH18030012',
+    description: '康健雜誌3期+贈品組=480元',
+    totalAmount: 480,
+    items: [
+      { productCode: 'CHV00002', productName: '康健雜誌 半年期（6 期）', startPeriod: '2025-03', endPeriod: '2025-05', quantity: 3, unitPrice: 160, discount: '0', sellPrice: 160, actualAmount: 480, transactionType: '新訂', taxType: '內含稅', requireDate: today(), agreeMarketing: '1', agreeMarketingDate: '', shipCustomerCode: HEADER_DEFAULTS.shipCustomerCode, shipCustomerName: HEADER_DEFAULTS.shipCustomerName, shipAddress: HEADER_DEFAULTS.shipAddress, shipRecipient: '', shipMethod: HEADER_DEFAULTS.shipMethod, grade: '', discountMark: 'N', reserver: '', shipWarehouse: '', bookShowLocation: '', autoRenew: 'N', planCode: 'CH18030012', planName: '康健雜誌3期+贈品組=480元', isShipped: false },
+      { productCode: 'P005',      productName: '康健雜誌紙本季訂',         startPeriod: '',         endPeriod: '',         quantity: 1, unitPrice: 0,   discount: '0', sellPrice: 0,   actualAmount: 0,   transactionType: '加訂',  taxType: '內含稅', requireDate: today(), agreeMarketing: '1', agreeMarketingDate: '', shipCustomerCode: HEADER_DEFAULTS.shipCustomerCode, shipCustomerName: HEADER_DEFAULTS.shipCustomerName, shipAddress: HEADER_DEFAULTS.shipAddress, shipRecipient: '', shipMethod: HEADER_DEFAULTS.shipMethod, grade: '', discountMark: 'N', reserver: '', shipWarehouse: '', bookShowLocation: '', autoRenew: 'N', planCode: 'CH18030012', planName: '康健雜誌3期+贈品組=480元', isShipped: false },
+    ],
+  },
+  {
+    code: 'PC20250601',
+    description: '親子天下半年訂+數位閱讀=990元',
+    totalAmount: 990,
+    items: [
+      { productCode: 'P003', productName: '親子天下紙本半年訂', startPeriod: '2025-06', endPeriod: '2025-11', quantity: 1, unitPrice: 780, discount: '0', sellPrice: 780, actualAmount: 780, transactionType: '新訂', taxType: '內含稅', requireDate: today(), agreeMarketing: '1', agreeMarketingDate: '', shipCustomerCode: HEADER_DEFAULTS.shipCustomerCode, shipCustomerName: HEADER_DEFAULTS.shipCustomerName, shipAddress: HEADER_DEFAULTS.shipAddress, shipRecipient: '', shipMethod: HEADER_DEFAULTS.shipMethod, grade: '', discountMark: 'N', reserver: '', shipWarehouse: '', bookShowLocation: '', autoRenew: 'N', planCode: 'PC20250601', planName: '親子天下半年訂+數位閱讀=990元', isShipped: false },
+      { productCode: 'P004', productName: '親子天下數位年訂',   startPeriod: '2025-06', endPeriod: '2026-05', quantity: 1, unitPrice: 210, discount: '0', sellPrice: 210, actualAmount: 210, transactionType: '加訂',  taxType: '內含稅', requireDate: today(), agreeMarketing: '1', agreeMarketingDate: '', shipCustomerCode: HEADER_DEFAULTS.shipCustomerCode, shipCustomerName: HEADER_DEFAULTS.shipCustomerName, shipAddress: HEADER_DEFAULTS.shipAddress, shipRecipient: '', shipMethod: HEADER_DEFAULTS.shipMethod, grade: '', discountMark: 'N', reserver: '', shipWarehouse: '', bookShowLocation: '', autoRenew: 'N', planCode: 'PC20250601', planName: '親子天下半年訂+數位閱讀=990元', isShipped: false },
+    ],
+  },
+];
+
 const emptyForm = (): Omit<CreateOrderItemData, 'id'> => ({
   productCode: '', productName: '',
   startPeriod: '', endPeriod: '',
@@ -224,11 +262,14 @@ export function CreateOrderItems() {
   const [shippingKeyword,   setShippingKeyword]   = useState('');
   const [showPlanPopup,     setShowPlanPopup]     = useState(false);
   const [planKeyword,       setPlanKeyword]       = useState('');
+  const [showPromoAddPopup, setShowPromoAddPopup] = useState(false);
+  const [promoAddKeyword,   setPromoAddKeyword]   = useState('');
 
   const productPopupRef  = useRef<HTMLDivElement>(null);
   const customerPopupRef = useRef<HTMLDivElement>(null);
   const shippingPopupRef = useRef<HTMLDivElement>(null);
   const planPopupRef     = useRef<HTMLDivElement>(null);
+  const promoAddPopupRef = useRef<HTMLDivElement>(null);
 
   // 點擊外部關閉各 popup
   useEffect(() => {
@@ -238,16 +279,20 @@ export function CreateOrderItems() {
       if (showCustomerPopup && customerPopupRef.current && !customerPopupRef.current.contains(t)) { setShowCustomerPopup(false); setCustomerKeyword(''); }
       if (showShippingPopup && shippingPopupRef.current && !shippingPopupRef.current.contains(t)) { setShowShippingPopup(false); setShippingKeyword(''); }
       if (showPlanPopup     && planPopupRef.current     && !planPopupRef.current.contains(t))     { setShowPlanPopup(false);     setPlanKeyword(''); }
+      if (showPromoAddPopup && promoAddPopupRef.current && !promoAddPopupRef.current.contains(t)) { setShowPromoAddPopup(false); setPromoAddKeyword(''); }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [showProductPopup, showCustomerPopup, showShippingPopup, showPlanPopup]);
+  }, [showProductPopup, showCustomerPopup, showShippingPopup, showPlanPopup, showPromoAddPopup]);
 
   // ── 過濾清單 ──
   const filteredProducts  = productKeyword  ? mockProducts.filter(p => p.code.toLowerCase().includes(productKeyword.toLowerCase()) || p.name.includes(productKeyword))  : mockProducts;
   const filteredCustomers = customerKeyword ? mockCustomers.filter(c => c.code.includes(customerKeyword) || c.name.includes(customerKeyword)) : mockCustomers;
   const filteredShipping  = shippingKeyword ? mockShippingMethods.filter(s => s.code.includes(shippingKeyword) || s.name.includes(shippingKeyword)) : mockShippingMethods;
   const filteredPlans     = planKeyword     ? mockPlans.filter(p => p.code.toLowerCase().includes(planKeyword.toLowerCase()) || p.name.includes(planKeyword)) : mockPlans;
+  const filteredPromoPlans = promoAddKeyword
+    ? mockPromoPlans.filter(p => p.code.toLowerCase().includes(promoAddKeyword.toLowerCase()) || p.description.includes(promoAddKeyword))
+    : mockPromoPlans;
 
   // ── form 更新輔助 ──
   const setF = <K extends keyof typeof form>(key: K, value: typeof form[K]) => {
@@ -303,6 +348,13 @@ export function CreateOrderItems() {
   const handleSelectPlan = (code: string, name: string) => {
     setForm(prev => ({ ...prev, planCode: code, planName: name }));
     setShowPlanPopup(false); setPlanKeyword('');
+  };
+
+  const handleSelectPromoAdd = (promo: PromoPlan) => {
+    const newItems: CreateOrderItemData[] = promo.items.map(item => ({ id: nextId.current++, ...item }));
+    setItems(prev => [...prev, ...newItems]);
+    setShowPromoAddPopup(false);
+    setPromoAddKeyword('');
   };
 
   // ── 開啟 / 關閉 Modal ──
@@ -398,7 +450,7 @@ export function CreateOrderItems() {
     <div className="space-y-[12px]">
 
       {/* 工具列 */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center gap-[8px]">
         <button
           onClick={openModal}
           className="flex items-center gap-[6px] px-[14px] py-[8px] bg-[#0078d4] text-white rounded-[6px] text-[14px] font-[500] font-['Noto_Sans_TC',_sans-serif] hover:bg-[#106ebe] transition-colors"
@@ -406,31 +458,43 @@ export function CreateOrderItems() {
           <Plus size={16} />
           新增明細
         </button>
+        <button
+          onClick={() => { setPromoAddKeyword(''); setShowPromoAddPopup(true); }}
+          className="flex items-center gap-[6px] px-[14px] py-[8px] bg-white border border-[#0078d4] text-[#0078d4] rounded-[6px] text-[14px] font-[500] font-['Noto_Sans_TC',_sans-serif] hover:bg-[#e8f3fb] transition-colors"
+        >
+          <Plus size={16} />
+          以方案新增明細
+        </button>
       </div>
 
-      {/* 定價表格 */}
-      <div>
-        <SectionTitle>定價</SectionTitle>
-        <div className="overflow-x-auto">
-          <CwTable dataSource={displayItems} columns={pricingCols} rowKey="id" emptyText="尚無資料" />
-        </div>
-      </div>
+      {/* 定價、出貨、其他表格：有明細才顯示 */}
+      {items.length > 0 && (
+        <>
+          {/* 定價表格 */}
+          <div>
+            <SectionTitle>定價</SectionTitle>
+            <div className="overflow-x-auto">
+              <CwTable dataSource={displayItems} columns={pricingCols} rowKey="id" emptyText="尚無資料" />
+            </div>
+          </div>
 
-      {/* 出貨表格 */}
-      <div>
-        <SectionTitle>出貨</SectionTitle>
-        <div className="overflow-x-auto">
-          <CwTable dataSource={displayItems} columns={shippingCols} rowKey="id" emptyText="尚無資料" />
-        </div>
-      </div>
+          {/* 出貨表格 */}
+          <div>
+            <SectionTitle>出貨</SectionTitle>
+            <div className="overflow-x-auto">
+              <CwTable dataSource={displayItems} columns={shippingCols} rowKey="id" emptyText="尚無資料" />
+            </div>
+          </div>
 
-      {/* 其他表格 */}
-      <div>
-        <SectionTitle>其他</SectionTitle>
-        <div className="overflow-x-auto">
-          <CwTable dataSource={displayItems} columns={otherCols} rowKey="id" emptyText="尚無資料" />
-        </div>
-      </div>
+          {/* 其他表格 */}
+          <div>
+            <SectionTitle>其他</SectionTitle>
+            <div className="overflow-x-auto">
+              <CwTable dataSource={displayItems} columns={otherCols} rowKey="id" emptyText="尚無資料" />
+            </div>
+          </div>
+        </>
+      )}
 
       {/* ═══════════════════════════════════════════════════════
           新增明細 Modal
@@ -887,6 +951,57 @@ export function CreateOrderItems() {
                     </tr>
                   )) : (
                     <tr><td colSpan={5} className="px-[16px] py-[32px] text-center text-[#7c808c]">查無符合資料</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════
+          以方案新增明細 Popup
+      ════════════════════════════════════════════════════════ */}
+      {showPromoAddPopup && (
+        <div className="fixed inset-0 bg-black/40 z-[1200] flex items-center justify-center" onClick={() => { setShowPromoAddPopup(false); setPromoAddKeyword(''); }}>
+          <div ref={promoAddPopupRef} className="bg-white rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.16)] w-[640px] max-h-[520px] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-[20px] py-[16px] border-b border-[#e5e7eb]">
+              <h3 className="text-[16px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 600 }}>以方案新增明細</h3>
+              <button onClick={() => { setShowPromoAddPopup(false); setPromoAddKeyword(''); }} className="w-[32px] h-[32px] rounded-[4px] flex items-center justify-center hover:bg-[#f5f7fa] text-[#7c808c] transition-colors"><X size={20} /></button>
+            </div>
+            <div className="px-[20px] py-[12px] border-b border-[#e5e7eb]">
+              <input
+                type="text"
+                placeholder="搜尋方案代碼或方案描述"
+                value={promoAddKeyword}
+                onChange={(e) => setPromoAddKeyword(e.target.value)}
+                autoFocus
+                className="w-full h-[36px] px-[12px] border border-[#c4c9d3] rounded-[4px] text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]"
+                style={{ fontWeight: 350 }}
+              />
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <table className="w-full border-collapse text-[14px] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>
+                <thead className="sticky top-0 bg-[#f5f7fa] border-b border-[#e5e7eb]">
+                  <tr>
+                    <th className="px-[16px] py-[12px] text-left text-[#7c808c] font-[500]">方案代碼</th>
+                    <th className="px-[16px] py-[12px] text-left text-[#7c808c] font-[500]">方案描述</th>
+                    <th className="px-[16px] py-[12px] text-right text-[#7c808c] font-[500]">方案總金額</th>
+                    <th className="px-[16px] py-[12px] text-center text-[#7c808c] font-[500]">動作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredPromoPlans.length > 0 ? filteredPromoPlans.map(p => (
+                    <tr key={p.code} className="border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors">
+                      <td className="px-[16px] py-[12px] text-[#1c1c1c] font-[500]">{p.code}</td>
+                      <td className="px-[16px] py-[12px] text-[#1c1c1c]">{p.description}</td>
+                      <td className="px-[16px] py-[12px] text-right text-[#1c1c1c]">{p.totalAmount.toLocaleString()}</td>
+                      <td className="px-[16px] py-[12px] text-center">
+                        <button onClick={() => handleSelectPromoAdd(p)} className="px-[12px] py-[6px] bg-[#0078d4] text-white rounded-[4px] font-[500] hover:bg-[#106ebe] transition-colors">選擇</button>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr><td colSpan={4} className="px-[16px] py-[32px] text-center text-[#7c808c]">查無符合資料</td></tr>
                   )}
                 </tbody>
               </table>
