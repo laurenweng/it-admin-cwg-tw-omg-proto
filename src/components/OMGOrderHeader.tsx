@@ -744,6 +744,17 @@ export const OMGOrderHeader = forwardRef<OMGOrderHeaderRef, {
   const [toast, setToast] = useState<{ type: 'error' | 'warning'; message: string } | null>(null);
 
   // ── 點擊外部關閉 popup ──
+  // 有全螢幕 overlay 的 popup 開啟時，鎖定 body 捲動
+  useEffect(() => {
+    const anyOpen = !!activeCustomerPopup || showAddressPopup || showInvoiceAddressPopup ||
+      showContactPopup || showInvoiceContactPopup || showShippingPopup ||
+      showPlanPopup || showTrackingCodePopup || showSalespersonPopup;
+    document.body.style.overflow = anyOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [activeCustomerPopup, showAddressPopup, showInvoiceAddressPopup,
+      showContactPopup, showInvoiceContactPopup, showShippingPopup,
+      showPlanPopup, showTrackingCodePopup, showSalespersonPopup]);
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (activeCustomerPopup && customerPopupRef.current && !customerPopupRef.current.contains(e.target as Node)) {
