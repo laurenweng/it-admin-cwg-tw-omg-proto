@@ -4,7 +4,7 @@ export type TooltipPlacement = 'top' | 'bottom' | 'left' | 'right';
 
 export interface CwTooltipProps {
   /** 提示文字內容 */
-  content: string;
+  content: ReactNode;
   /** Tooltip 出現位置（預設：top） */
   placement?: TooltipPlacement;
   /** 觸發元素 */
@@ -157,7 +157,7 @@ export function CwTooltip({
       {isVisible && !disabled && (
         <div
           ref={tooltipRef}
-          className="fixed z-[3000] bg-[rgba(28,28,28,0.8)] rounded-[4px] px-[5px] py-[2px] max-w-[150px] pointer-events-none"
+          className="fixed z-[3000] bg-[rgba(28,28,28,0.8)] rounded-[4px] px-[5px] py-[2px] max-w-[220px] pointer-events-none"
           style={{
             top: `${position.top}px`,
             left: `${position.left}px`,

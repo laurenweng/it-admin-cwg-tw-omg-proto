@@ -10,6 +10,8 @@ export interface CwTableColumn<T = any> {
   key: string;
   /** 欄位標題 */
   title: string;
+  /** 自訂表頭渲染（優先於 title 文字） */
+  titleRender?: ReactNode;
   /** 
    * 欄位寬度設定
    * - 設定固定寬度時使用像素值（例如 "60px" 或 "120px"）
@@ -51,6 +53,8 @@ export interface CwTableProps<T = any> {
   className?: string;
   /** 自訂列樣式 */
   rowStyle?: (record: T, index: number) => React.CSSProperties;
+  /** 表頭 sticky（交由外層容器處理 overflow-x，CwTable 不再自行設定）*/
+  stickyHeader?: boolean;
 }
 
 /**
@@ -99,6 +103,7 @@ export function CwTable<T = any>({
   emptyText = '沒有資料',
   className = '',
   rowStyle,
+  stickyHeader = false,
 }: CwTableProps<T>) {
   // 計算 sticky 欄位的 right 位置
   const getStickyColumnRight = (columnIndex: number): string => {
@@ -148,7 +153,7 @@ export function CwTable<T = any>({
   };
 
   return (
-    <div className={`w-full overflow-x-auto ${className}`}>
+    <div className={`w-full ${stickyHeader ? '' : 'overflow-x-auto'} ${className}`}>
       <div className="bg-white relative rounded-[var(--radius)] border border-[#c4c9d3] min-w-full inline-block">
         <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
           <colgroup>
@@ -161,7 +166,7 @@ export function CwTable<T = any>({
           </colgroup>
           
           {/* 表頭 */}
-          <thead>
+          <thead className="sticky top-0 z-20">
             <tr className="bg-[#e9ebf2] border-b border-[#cdcdcd]">
               {columns.map((column, colIndex) => {
                 return (
@@ -185,18 +190,20 @@ export function CwTable<T = any>({
                     }}
                   >
                     <div className={`flex gap-[4px] items-center w-full ${column.align === 'center' ? 'justify-center' : column.align === 'right' ? 'justify-end' : ''}`}>
-                      <span 
-                        className="whitespace-nowrap"
-                        style={{
-                          fontFamily: 'var(--font-noto-sans-tc)',
-                          fontSize: '14px',
-                          fontWeight: 'var(--font-weight-500)',
-                          lineHeight: '19.6px',
-                          color: '#1c1c1c',
-                        }}
-                      >
-                        {column.title}
-                      </span>
+                      {column.titleRender ?? (
+                        <span
+                          className="whitespace-nowrap"
+                          style={{
+                            fontFamily: 'var(--font-noto-sans-tc)',
+                            fontSize: '14px',
+                            fontWeight: 'var(--font-weight-500)',
+                            lineHeight: '19.6px',
+                            color: '#1c1c1c',
+                          }}
+                        >
+                          {column.title}
+                        </span>
+                      )}
                     </div>
                   </th>
                 );

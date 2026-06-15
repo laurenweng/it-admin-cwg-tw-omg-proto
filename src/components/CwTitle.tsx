@@ -8,6 +8,8 @@ interface CwTitleProps {
   breadcrumbs?: BreadcrumbItem[];
   /** 麵包屑點擊回調 */
   onBreadcrumbNavigate?: (href: string, index: number) => void;
+  /** 緊接大標題右側的額外內容（如 toggle switch） */
+  titleRight?: React.ReactNode;
 }
 
 /**
@@ -25,37 +27,41 @@ interface CwTitleProps {
  * @param breadcrumbs - 麵包屑導航項目陣列
  * @param onBreadcrumbNavigate - 麵包屑點擊時的回調函數
  */
-export function CwTitle({ 
-  title, 
-  breadcrumbs, 
-  onBreadcrumbNavigate 
+export function CwTitle({
+  title,
+  breadcrumbs,
+  onBreadcrumbNavigate,
+  titleRight,
 }: CwTitleProps) {
   return (
-    <div 
+    <div
       className="flex items-center justify-between w-full"
       style={{
         paddingTop: '10px',
         paddingBottom: '10px'
       }}
     >
-      {/* 頁面標題 */}
-      <h2 
-        className="text-foreground"
-        style={{
-          fontFamily: 'var(--font-inter)',
-          fontSize: 'var(--text-xl)',
-          fontWeight: 'var(--font-weight-medium)',
-          lineHeight: 'normal'
-        }}
-      >
-        {title}
-      </h2>
+      {/* 大標題 + 緊接右側內容 */}
+      <div className="flex items-center gap-[12px]">
+        <h2
+          className="text-foreground"
+          style={{
+            fontFamily: 'var(--font-inter)',
+            fontSize: 'var(--text-xl)',
+            fontWeight: 'var(--font-weight-medium)',
+            lineHeight: 'normal'
+          }}
+        >
+          {title}
+        </h2>
+        {titleRight}
+      </div>
 
       {/* 麵包屑導航 */}
       {breadcrumbs && breadcrumbs.length > 0 && (
-        <CwBreadcrumbs 
-          items={breadcrumbs} 
-          onNavigate={onBreadcrumbNavigate} 
+        <CwBreadcrumbs
+          items={breadcrumbs}
+          onNavigate={onBreadcrumbNavigate}
         />
       )}
     </div>

@@ -3,7 +3,7 @@ import svgPaths from "../imports/svg-werpgt9qjc";
 
 export interface CwRoundButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** 按鈕圖標類型 */
-  icon: 'refresh' | 'view' | 'edit' | 'search' | 'delete' | 'send';
+  icon: 'refresh' | 'view' | 'edit' | 'search' | 'delete' | 'send' | 'copy';
   /** 是否為危險操作 */
   destructive?: boolean;
   /** 刪除確認說明文字（icon="delete" 時有效，不填使用預設文字） */
@@ -87,6 +87,18 @@ function DeleteIcon({ color }: { color: string }) {
   );
 }
 
+// 複製圖標
+function CopyIcon({ color }: { color: string }) {
+  return (
+    <div className="relative shrink-0 size-[14px]">
+      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 14 14">
+        <rect x="5" y="1" width="8" height="9" rx="1" stroke={color} strokeWidth="1.2" />
+        <rect x="1" y="4" width="8" height="9" rx="1" fill="white" stroke={color} strokeWidth="1.2" />
+      </svg>
+    </div>
+  );
+}
+
 // 發送圖標
 function SendIcon({ color }: { color: string }) {
   return (
@@ -133,6 +145,7 @@ export const CwRoundButton = forwardRef<HTMLButtonElement, CwRoundButtonProps>(
         case 'search':  return <SearchIcon color={currentColor} />;
         case 'delete':  return <DeleteIcon color={currentColor} />;
         case 'send':    return <SendIcon color={currentColor} />;
+        case 'copy':    return <CopyIcon color={currentColor} />;
         default:        return null;
       }
     };
