@@ -1066,6 +1066,7 @@ export const OMGOrderHeader = forwardRef<OMGOrderHeaderRef, {
   const isElectronicInvoice = form.invoiceIssueMethod === '6' && !form.taxIdNumber;
   const isRemittance = form.paymentMethod === '2';
   const isCreditCard = form.paymentMethod === '1' || form.paymentMethod === '4';
+  const isNoteReceivable = form.paymentMethod === '3';
   const isTransfer = form.paymentMethod === '7'; // 互轉單
   const isFreeReading = form.freeReading === 'Y';
   const isPaused = form.pauseProcessing === 'Y';
@@ -1170,7 +1171,6 @@ export const OMGOrderHeader = forwardRef<OMGOrderHeaderRef, {
         } else if (!/^\d{2}\/\d{2}$/.test(form.creditCardExpiry)) {
           e.creditCardExpiry = '格式錯誤，應為 YY/MM';
         }
-        if (!form.authReplyCode) e.authReplyCode = ERR;
       }
       if (isTransfer && !form.advancePaymentNumber) e.advancePaymentNumber = ERR;
       if (form.paymentMethod === '6') {
@@ -1635,28 +1635,42 @@ export const OMGOrderHeader = forwardRef<OMGOrderHeaderRef, {
                     { value: 'E', label: 'E：綠界' },
                   ]}
                 />
-                <TextField label="劃撥單號" fKey="remittanceNumber" required={isRemittance} readOnlyInEdit />
-                <DateField label="劃撥日期" fKey="remittanceDate" required={isRemittance} readOnlyInEdit />
-                <SelectField
-                  label="信用卡類型"
-                  fKey="creditCardType"
-                  required={isCreditCard}
-                  readOnlyInEdit
-                  options={[
-                    { value: 'AMEX',      label: 'American Express' },
-                    { value: 'DINERS',    label: "Diner's Club" },
-                    { value: 'DISCOVER',  label: 'Discover' },
-                    { value: 'JCB',       label: 'JCB' },
-                    { value: 'MC',        label: 'Master Card' },
-                    { value: 'OTHERS',    label: 'Others' },
-                    { value: 'UN',        label: '聯合信用卡' },
-                    { value: 'VISA',      label: 'Visa' },
-                  ]}
-                />
-                <TextField label="信用卡卡號" fKey="creditCardNumber" required={isCreditCard} readOnlyInEdit />
-                <TextField label="信用卡有效期" fKey="creditCardExpiry" required={isCreditCard} readOnlyInEdit />
-                <TextField label="信用卡持有者" fKey="creditCardHolder" readOnlyInEdit />
-                <TextField label="授權回覆碼" fKey="authReplyCode" required={isCreditCard} readOnlyInEdit />
+                {isRemittance && (
+                  <TextField label="劃撥單號" fKey="remittanceNumber" required readOnlyInEdit />
+                )}
+                {isRemittance && (
+                  <DateField label="劃撥日期" fKey="remittanceDate" required readOnlyInEdit />
+                )}
+                {isCreditCard && (
+                  <SelectField
+                    label="信用卡類型"
+                    fKey="creditCardType"
+                    required
+                    readOnlyInEdit
+                    options={[
+                      { value: 'AMEX',      label: 'American Express' },
+                      { value: 'DINERS',    label: "Diner's Club" },
+                      { value: 'DISCOVER',  label: 'Discover' },
+                      { value: 'JCB',       label: 'JCB' },
+                      { value: 'MC',        label: 'Master Card' },
+                      { value: 'OTHERS',    label: 'Others' },
+                      { value: 'UN',        label: '聯合信用卡' },
+                      { value: 'VISA',      label: 'Visa' },
+                    ]}
+                  />
+                )}
+                {isCreditCard && (
+                  <TextField label="信用卡卡號" fKey="creditCardNumber" required readOnlyInEdit />
+                )}
+                {isCreditCard && (
+                  <TextField label="信用卡有效期" fKey="creditCardExpiry" required readOnlyInEdit />
+                )}
+                {isCreditCard && (
+                  <TextField label="信用卡持有者" fKey="creditCardHolder" readOnlyInEdit />
+                )}
+                {isCreditCard && (
+                  <TextField label="授權回覆碼" fKey="authReplyCode" />
+                )}
                 <TextField label="預收款單號" fKey="advancePaymentNumber" required={isTransfer} readOnlyInEdit />
                 <ReadField label="訂單金額" fKey="orderAmount" />
                 <SelectField
@@ -1680,9 +1694,11 @@ export const OMGOrderHeader = forwardRef<OMGOrderHeaderRef, {
                   ]}
                 />
                 <ReadField label="預收款餘額" fKey="advancePaymentBalance" />
-                <div className="col-span-2">
-                  <TextField label="沖銷紀錄" fKey="writeOffRecord" />
-                </div>
+                {isNoteReceivable && (
+                  <div className="col-span-2">
+                    <TextField label="沖帳紀錄" fKey="writeOffRecord" />
+                  </div>
+                )}
               </div>
             </div>
           )}

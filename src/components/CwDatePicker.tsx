@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import svgPaths from "../imports/svg-y9qoi4ez0u";
 
 // 日期選擇器 Props
@@ -118,14 +118,20 @@ export function CwDatePicker({
   const [isOpen, setIsOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(value ? value.getMonth() : new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(value ? value.getFullYear() : new Date().getFullYear());
+  const [popupStyle, setPopupStyle] = useState<React.CSSProperties>({});
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
 
   const today = new Date();
 
   // 點擊外部關閉日曆
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const inContainer = containerRef.current?.contains(target);
+      const inPopup = popupRef.current?.contains(target);
+      if (!inContainer && !inPopup) {
         setIsOpen(false);
       }
     }
@@ -133,6 +139,15 @@ export function CwDatePicker({
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isOpen]);
+
+  // 捲動時關閉（fixed 定位不跟隨觸發元素）
+  useEffect(() => {
+    if (isOpen) {
+      const handleScroll = () => setIsOpen(false);
+      window.addEventListener('scroll', handleScroll, true);
+      return () => window.removeEventListener('scroll', handleScroll, true);
     }
   }, [isOpen]);
 
@@ -247,23 +262,12 @@ export function CwDatePicker({
       
       {/* 日曆面板 */}
       {isOpen && (
-        <div 
-          className={`bg-white content-stretch flex flex-col items-start absolute rounded-[8px] shrink-0 w-[250px] shadow-lg z-[3200] ${
-            direction === 'top' ? 'bottom-[calc(100%+8px)]' : 'top-[calc(100%+8px)]'
-          }`}
+        <div
+          ref={popupRef}
+          className="bg-white content-stretch flex flex-col items-start rounded-[8px] shrink-0 w-[250px] shadow-lg z-[3200]"
+          style={popupStyle}
         >
           <div aria-hidden="true" className="absolute border border-slate-300 border-solid inset-0 pointer-events-none rounded-[8px]" />
-          
-          {/* 箭頭指示 */}
-          <div className={`absolute flex h-[16.971px] items-center justify-center left-[16px] w-[16.971px] ${
-            direction === 'top' ? 'bottom-[-8px]' : 'top-[-8px]'
-          }`}>
-            <div className={`flex-none ${direction === 'top' ? 'rotate-[225deg]' : 'rotate-[45deg]'}`}>
-              <div className="bg-white relative size-[12px]">
-                <div aria-hidden="true" className="absolute border-[1px_0px_0px_1px] border-slate-300 border-solid inset-0 pointer-events-none" />
-              </div>
-            </div>
-          </div>
           
           {/* 月份年份導航 */}
           <div className="absolute box-border content-stretch flex flex-col items-start left-0 pb-0 pt-[10px] px-0 right-0 top-0">
@@ -332,7 +336,22 @@ export function CwDatePicker({
       
       {/* 輸入框 */}
       <button
-        onClick={() => !disabled && setIsOpen(!isOpen)}
+        ref={triggerRef}
+        onClick={() => {
+          if (disabled) return;
+          if (!isOpen && triggerRef.current) {
+            const rect = triggerRef.current.getBoundingClientRect();
+            const POPUP_HEIGHT = 330;
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const openUp = direction === 'top' || (direction === 'bottom' && spaceBelow < POPUP_HEIGHT && rect.top > POPUP_HEIGHT);
+            if (openUp) {
+              setPopupStyle({ position: 'fixed', bottom: window.innerHeight - rect.top + 8, left: rect.left, width: 250 });
+            } else {
+              setPopupStyle({ position: 'fixed', top: rect.bottom + 8, left: rect.left, width: 250 });
+            }
+          }
+          setIsOpen(prev => !prev);
+        }}
         disabled={disabled}
         className={`h-[35px] relative rounded-[var(--radius)] shrink-0 w-full ${
           disabled ? 'bg-[#e9ebf2] cursor-not-allowed' : 'bg-white cursor-pointer'

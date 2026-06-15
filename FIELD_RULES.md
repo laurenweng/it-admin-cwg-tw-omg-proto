@@ -567,16 +567,16 @@
 | Tab lookup | `handleOrderNameBlur`：查無 → error toast；同名多筆 → warning toast；查到唯一 → `syncOrderCustomer` |
 | 備註 | `syncOrderCustomer` 只設定 code + name（訂單客戶無獨立地址欄位）。 |
 
-### 沖銷紀錄（writeOffRecord）
+### 沖帳紀錄（writeOffRecord）
 
 | 項目 | 內容 |
 |------|------|
 | 元件位置 | `OMGOrderHeader.tsx` → `writeOffRecord` |
-| 建立模式 | 文字輸入（`TextField`），選填，自行輸入財務沖帳備註 |
-| 編輯模式 | 可修改（無 `readOnlyInEdit`，建單後仍可編輯） |
+| 建立模式 | 文字輸入（`TextField`），選填，自行輸入財務沖帳備註；**僅當付款方式為「應收票據」（`paymentMethod === '3'`）時才顯示** |
+| 編輯模式 | 可修改（無 `readOnlyInEdit`，建單後仍可編輯）；同樣僅應收票據付款方式下顯示 |
 | 查詢/唯讀模式 | 唯讀 |
 | 驗證規則 | 非必填 |
-| 備註 | 不分付款方式皆顯示；位於付款資訊區塊，`col-span-2`。 |
+| 備註 | 條件渲染 `{isNoteReceivable && ...}`（`isNoteReceivable = form.paymentMethod === '3'`）；位於付款資訊區塊，`col-span-2`。 |
 
 ### 付款方式（paymentMethod）
 
@@ -590,7 +590,7 @@
 | 前端顯示 | `1：信用卡`、`2：劃撥`、`3：應收票據`、`4：信用卡-網路`、`5：ATM`、`6：贈閱`、`7：互轉`、`8：消費券`、`9：LINEPAY`、`E：綠界`（建立與查詢頁相同選項） |
 | 自動行為 | `orderAmount === '0'` 時，`useEffect` 強制設定為 `'6'`（贈閱），同步 `freeReading: 'Y'` |
 | 驗證規則 | 必填；若 `orderAmount === '0'` 且 `paymentMethod !== '6'` → 錯誤「訂單金額為 0 時，付款方式必須選「贈閱」」 |
-| 備註 | `isTransfer`（`paymentMethod === '7'`）、`isRemittance`（`=== '2'`）、`isCreditCard`（`=== '1' \|\| '4'`）三個 derived state 控制其他欄位的 disabled/required/條件必填邏輯。Mock 資料使用數字碼作為值（例 `'1'`），不使用中文文字（例 `'信用卡'`）。 |
+| 備註 | `isTransfer`（`paymentMethod === '7'`）、`isRemittance`（`=== '2'`）、`isCreditCard`（`=== '1' \|\| '4'`）、`isNoteReceivable`（`=== '3'`）四個 derived state 控制其他欄位的條件渲染與 required 邏輯。Mock 資料使用數字碼作為值（例 `'1'`），不使用中文文字（例 `'信用卡'`）。 |
 
 ### 付款條件（paymentCondition）
 
@@ -608,76 +608,81 @@
 | 項目 | 內容 |
 |------|------|
 | 元件位置 | `OMGOrderHeader.tsx` → `remittanceNumber` |
-| 建立模式 | 文字輸入（`TextField readOnlyInEdit`），條件必填，付款方式為「劃撥」時顯示並必填 |
-| 編輯模式 | 唯讀，建單後不可修改（`readOnlyInEdit`） |
+| 建立模式 | 文字輸入（`TextField required readOnlyInEdit`），必填；**付款方式為「劃撥」時才顯示**（條件渲染） |
+| 編輯模式 | 唯讀，建單後不可修改（`readOnlyInEdit`）；同樣僅劃撥付款方式下顯示 |
 | 查詢/唯讀模式 | 唯讀 |
 | 驗證規則 | 條件必填：`isRemittance`（`paymentMethod === '2'`）成立時必填 |
+| 備註 | 條件渲染 `{isRemittance && ...}`，未選劃撥時欄位整體不顯示。 |
 
 ### 劃撥日期（remittanceDate）
 
 | 項目 | 內容 |
 |------|------|
 | 元件位置 | `OMGOrderHeader.tsx` → `remittanceDate` |
-| 建立模式 | 日期選擇器（`DateField readOnlyInEdit`），條件必填，付款方式為「劃撥」時顯示並必填 |
-| 編輯模式 | 唯讀，建單後不可修改（`readOnlyInEdit`） |
+| 建立模式 | 日期選擇器（`DateField required readOnlyInEdit`），必填；**付款方式為「劃撥」時才顯示**（條件渲染） |
+| 編輯模式 | 唯讀，建單後不可修改（`readOnlyInEdit`）；同樣僅劃撥付款方式下顯示 |
 | 查詢/唯讀模式 | 唯讀 |
 | 驗證規則 | 條件必填：`isRemittance`（`paymentMethod === '2'`）成立時必填 |
+| 備註 | 條件渲染 `{isRemittance && ...}`，未選劃撥時欄位整體不顯示。 |
 
 ### 信用卡類型（creditCardType）
 
 | 項目 | 內容 |
 |------|------|
 | 元件位置 | `OMGOrderHeader.tsx` → `creditCardType` |
-| 建立模式 | 下拉選單（`SelectField readOnlyInEdit`），條件必填，付款方式為「信用卡」時顯示並必填 |
-| 編輯模式 | 唯讀，建單後不可修改（`readOnlyInEdit`） |
+| 建立模式 | 下拉選單（`SelectField required readOnlyInEdit`），必填；**付款方式為「信用卡」時才顯示**（條件渲染） |
+| 編輯模式 | 唯讀，建單後不可修改（`readOnlyInEdit`）；同樣僅信用卡付款方式下顯示 |
 | 查詢/唯讀模式 | 唯讀 |
 | 後端值 | 代碼字串：`AMEX`、`DINERS`、`DISCOVER`、`JCB`、`MC`、`OTHERS`、`UN`、`VISA` |
 | 前端顯示 | 僅顯示類型名稱（不顯示代碼）：`American Express`、`Diner's Club`、`Discover`、`JCB`、`Master Card`、`Others`、`聯合信用卡`、`Visa` |
 | 驗證規則 | 條件必填：`isCreditCard`（`paymentMethod === '1' \|\| paymentMethod === '4'`）成立時必填 |
+| 備註 | 條件渲染 `{isCreditCard && ...}`，未選信用卡時欄位整體不顯示。 |
 
 ### 信用卡卡號（creditCardNumber）
 
 | 項目 | 內容 |
 |------|------|
 | 元件位置 | `OMGOrderHeader.tsx` → `creditCardNumber` |
-| 建立模式 | 文字輸入（`TextField readOnlyInEdit`），條件必填，付款方式為「信用卡」時必填 |
-| 編輯模式 | 唯讀，建單後不可修改（`readOnlyInEdit`） |
+| 建立模式 | 文字輸入（`TextField required readOnlyInEdit`），必填；**付款方式為「信用卡」時才顯示**（條件渲染） |
+| 編輯模式 | 唯讀，建單後不可修改（`readOnlyInEdit`）；同樣僅信用卡付款方式下顯示 |
 | 查詢/唯讀模式 | 唯讀 |
 | 驗證規則 | 條件必填：`isCreditCard` 成立時必填 |
+| 備註 | 條件渲染 `{isCreditCard && ...}`。 |
 
 ### 信用卡有效期（creditCardExpiry）
 
 | 項目 | 內容 |
 |------|------|
 | 元件位置 | `OMGOrderHeader.tsx` → `creditCardExpiry` |
-| 建立模式 | 文字輸入（`TextField readOnlyInEdit`），條件必填，付款方式為「信用卡」時必填 |
-| 編輯模式 | 唯讀，建單後不可修改（`readOnlyInEdit`） |
+| 建立模式 | 文字輸入（`TextField required readOnlyInEdit`），必填；**付款方式為「信用卡」時才顯示**（條件渲染） |
+| 編輯模式 | 唯讀，建單後不可修改（`readOnlyInEdit`）；同樣僅信用卡付款方式下顯示 |
 | 查詢/唯讀模式 | 唯讀 |
 | 後端值 | 字串，格式 `YY/MM`，例：`'27/12'` |
 | 格式驗證 | 正則 `^\d{2}\/\d{2}$`；不符合時顯示錯誤「格式錯誤，應為 YY/MM」 |
 | 驗證規則 | 條件必填：`isCreditCard` 成立時必填；格式必須為 YY/MM |
-| 備註 | 原為 `DateField`（日期選擇器），已改為 `TextField` 自行輸入，以符合 YY/MM 格式要求。 |
+| 備註 | 原為 `DateField`（日期選擇器），已改為 `TextField` 自行輸入，以符合 YY/MM 格式要求。條件渲染 `{isCreditCard && ...}`。 |
 
 ### 信用卡持有者（creditCardHolder）
 
 | 項目 | 內容 |
 |------|------|
 | 元件位置 | `OMGOrderHeader.tsx` → `creditCardHolder` |
-| 建立模式 | 文字輸入（`TextField readOnlyInEdit`），選填，付款方式為「信用卡」時顯示 |
-| 編輯模式 | 唯讀，建單後不可修改（`readOnlyInEdit`） |
+| 建立模式 | 文字輸入（`TextField readOnlyInEdit`），選填；**付款方式為「信用卡」時才顯示**（條件渲染） |
+| 編輯模式 | 唯讀，建單後不可修改（`readOnlyInEdit`）；同樣僅信用卡付款方式下顯示 |
 | 查詢/唯讀模式 | 唯讀 |
 | 驗證規則 | 非必填 |
+| 備註 | 條件渲染 `{isCreditCard && ...}`。 |
 
 ### 授權回覆碼（authReplyCode）
 
 | 項目 | 內容 |
 |------|------|
 | 元件位置 | `OMGOrderHeader.tsx` → `authReplyCode` |
-| 建立模式 | 文字輸入（`TextField required={isCreditCard} readOnlyInEdit`），條件必填，付款方式為「信用卡」時必填 |
-| 編輯模式 | 唯讀，建單後不可修改（`readOnlyInEdit`） |
+| 建立模式 | 文字輸入（`TextField`），選填；**付款方式為「信用卡」時才顯示**（條件渲染）；系統自動帶入，使用者可修改 |
+| 編輯模式 | 可修改（移除 `readOnlyInEdit`，建單後仍可編輯） |
 | 查詢/唯讀模式 | 唯讀 |
-| 驗證規則 | 條件必填：`isCreditCard` 成立時必填（`if (!form.authReplyCode) e.authReplyCode = ERR`，位於 `isCreditCard` block 內） |
-| 備註 | 必填但未輸入狀態可暫存：validate() 僅在按下「建立訂單」時觸發，暫存流程不卡驗證。 |
+| 驗證規則 | 非必填；系統帶入值，不卡必填驗證 |
+| 備註 | 條件渲染 `{isCreditCard && ...}`。原為「條件必填」，已改為「系統帶入可修改」—驗證 block 中已移除 `if (!form.authReplyCode) e.authReplyCode = ERR`。與其他信用卡欄位不同，此欄不加 `readOnlyInEdit`，edit mode 下仍可修改。 |
 
 ### 信用卡號後 4 碼（creditCardLast4）
 
