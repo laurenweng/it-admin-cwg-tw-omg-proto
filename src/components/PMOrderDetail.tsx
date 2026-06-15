@@ -39,6 +39,25 @@ const allShipData = [
   },
   {
     id: 'SI002',
+    legalEntity: '天下',
+    orderNo: 'CW2025010001',
+    productCode: 'GCV00002',
+    productName: '天下雜誌 加購禮（限定版）',
+    pickDate: '2025-05-18',
+    actualShipDate: '2025-05-19',
+    shipMethod: '廠商直送',
+    trackingNo: 'VD456789123',
+    batchNo: 'B20250519002',
+    shipQty: 1,
+    owner: '廠商',
+    setCode: '',
+    omsProgress: 'S',
+    omsExecStatus: '廠商出貨',
+    omsChangeDate: '2025-05-19',
+    shipWarehouse: '',
+  },
+  {
+    id: 'SI004',
     legalEntity: '康健',
     orderNo: 'CW2025010001',
     productCode: 'CHV00002',
@@ -57,7 +76,7 @@ const allShipData = [
     shipWarehouse: 'A01',
   },
   {
-    id: 'SI003',
+    id: 'SI005',
     legalEntity: '親子',
     orderNo: 'CW2025010001',
     productCode: 'PCT00003',
@@ -164,7 +183,8 @@ function ShipInfoTab() {
           { key: 'productName', title: '產品名稱', width: '220px', render: (v: any, r: any) => {
             const execStatusMap: Record<string, { color: string; bg: string }> = {
               '出貨完成': { color: '#16a34a', bg: '#e8f5e9' },
-              '等待': { color: '#7c808c', bg: '#f0f2f5' },
+              '廠商出貨': { color: '#7c3aed', bg: '#f3e8ff' },
+              '等待':     { color: '#7c808c', bg: '#f0f2f5' },
             };
             const cfg = r.omsExecStatus ? (execStatusMap[r.omsExecStatus] ?? { color: '#6b7280', bg: '#f3f4f6' }) : null;
             return (
@@ -243,6 +263,144 @@ function AuditHistoryTab() {
         },
         { key: 'before', title: '變更前', width: '200px' },
         { key: 'after',  title: '變更後', width: '200px' },
+      ]}
+    />
+  );
+}
+
+// ── 串接紀錄 ──────────────────────────────────────────────────────────────
+interface ApiRecordData {
+  id: string;
+  time: string;
+  eventName: string;
+  direction: '呼出' | '呼入';
+  targetSystem: string;
+  status: '成功' | '失敗' | '逾時';
+  httpCode: number;
+  duration: number; // ms
+  requestPayload?: string;
+  responsePayload?: string;
+}
+
+const API_STATUS_STYLE: Record<string, { bg: string; color: string }> = {
+  '成功': { bg: '#e6f7ee', color: '#16a34a' },
+  '失敗': { bg: '#fef2f2', color: '#dc2626' },
+  '逾時': { bg: '#fff7ed', color: '#c2410c' },
+};
+
+const mockApiRecords: ApiRecordData[] = [
+  {
+    id: 'AR001',
+    time: '2025/05/14 - 10:23:41',
+    eventName: '建立訂單',
+    direction: '呼出',
+    targetSystem: 'ERP',
+    status: '成功',
+    httpCode: 200,
+    duration: 312,
+    requestPayload:  '{"orderNo":"CW2025010001","productCode":"GCV00001","quantity":1}',
+    responsePayload: '{"success":true,"erpOrderId":"ERP-88001"}',
+  },
+  {
+    id: 'AR002',
+    time: '2025/05/14 - 10:24:05',
+    eventName: '付款授權',
+    direction: '呼出',
+    targetSystem: '金流',
+    status: '成功',
+    httpCode: 200,
+    duration: 876,
+    requestPayload:  '{"amount":2142,"currency":"TWD","cardToken":"tok_xxx"}',
+    responsePayload: '{"authCode":"A00123","status":"approved"}',
+  },
+  {
+    id: 'AR003',
+    time: '2025/05/16 - 08:10:00',
+    eventName: '出貨通知',
+    direction: '呼入',
+    targetSystem: '物流',
+    status: '成功',
+    httpCode: 200,
+    duration: 54,
+    requestPayload:  '{"trackingNo":"TW123456789","shipDate":"2025-05-17"}',
+    responsePayload: '{"received":true}',
+  },
+  {
+    id: 'AR004',
+    time: '2025/05/17 - 14:55:22',
+    eventName: '會員資料同步',
+    direction: '呼出',
+    targetSystem: '會員系統',
+    status: '失敗',
+    httpCode: 500,
+    duration: 3001,
+    requestPayload:  '{"memberId":"1679128","fields":["email","mobile"]}',
+    responsePayload: '{"error":"Internal Server Error"}',
+  },
+  {
+    id: 'AR005',
+    time: '2025/05/18 - 09:02:11',
+    eventName: '會員資料同步',
+    direction: '呼出',
+    targetSystem: '會員系統',
+    status: '成功',
+    httpCode: 200,
+    duration: 198,
+    requestPayload:  '{"memberId":"1679128","fields":["email","mobile"]}',
+    responsePayload: '{"success":true}',
+  },
+];
+
+function ApiRecordsTab() {
+  return (
+    <CwTable
+      dataSource={mockApiRecords}
+      rowKey="id"
+      columns={[
+        { key: 'time',       title: '時間',     width: '170px', render: (v: any) => <span className="text-[#7c808c]">{v}</span> },
+        { key: 'eventName',  title: '事件名稱', width: '130px', render: (v: any) => <span style={{ fontWeight: 500 }}>{v}</span> },
+        {
+          key: 'direction', title: '方向', width: '80px',
+          render: (v: any) => (
+            <span
+              className="inline-block px-[8px] py-[2px] rounded-[4px] text-[12px]"
+              style={{
+                background: v === '呼出' ? '#eff6ff' : '#f0fdf4',
+                color:      v === '呼出' ? '#2563eb' : '#16a34a',
+                fontWeight: 500,
+              }}
+            >
+              {v}
+            </span>
+          ),
+        },
+        { key: 'targetSystem', title: '對象系統', width: '110px' },
+        {
+          key: 'status', title: '狀態', width: '90px',
+          render: (v: any) => {
+            const s = API_STATUS_STYLE[v as string] ?? { bg: '#f3f4f6', color: '#6b7280' };
+            return (
+              <span
+                className="inline-block px-[8px] py-[2px] rounded-[4px] text-[12px]"
+                style={{ background: s.bg, color: s.color, fontWeight: 500 }}
+              >
+                {v}
+              </span>
+            );
+          },
+        },
+        {
+          key: 'httpCode', title: 'HTTP', width: '70px', align: 'center',
+          render: (v: any) => <span style={{ color: (v as number) >= 400 ? '#dc2626' : '#1c1c1c' }}>{v}</span>,
+        },
+        {
+          key: 'duration', title: '耗時', width: '90px', align: 'right',
+          render: (v: any) => (
+            <span style={{ color: (v as number) >= 1000 ? '#c2410c' : '#7c808c' }}>
+              {(v as number).toLocaleString()} ms
+            </span>
+          ),
+        },
       ]}
     />
   );
@@ -395,7 +553,7 @@ export interface PMOrderDetailProps {
   initialEditMode?: boolean;
 }
 
-export function PMOrderDetail({ orderId, orderType = 'erp', orderTypes, orderHeaderInfo, onClose, mode = 'view', initialEditMode = true }: PMOrderDetailProps) {
+export function PMOrderDetail({ orderId: _orderId, orderType = 'erp', orderTypes, orderHeaderInfo, onClose, mode = 'view', initialEditMode = true }: PMOrderDetailProps) {
   // 判斷哪些 tab 有實際資料
   const hasService = !orderTypes || orderTypes.includes('service');
   const hasOmgOrErp = !orderTypes || orderTypes.includes('omg') || orderTypes.includes('erp');
@@ -406,7 +564,7 @@ export function PMOrderDetail({ orderId, orderType = 'erp', orderTypes, orderHea
   const [showOrderStatusPopup, setShowOrderStatusPopup] = useState(false);
   const [expandedRows, setExpandedRows] = useState<string[]>([]); // 追蹤展開的行
   const [activeTab, setActiveTab] = useState<'service' | 'erp' | 'omg'>(orderType); // 主 Tab：it-admin / OMG
-  const [activeErpTab, setActiveErpTab] = useState<'header' | 'items' | 'addressChange' | 'suspendResume' | 'cancel' | 'deliveryChange' | 'returnResend' | 'shipInfo' | 'auditHistory'>('header'); // 統一 Tab
+  const [activeErpTab, setActiveErpTab] = useState<'header' | 'items' | 'addressChange' | 'suspendResume' | 'cancel' | 'deliveryChange' | 'returnResend' | 'shipInfo' | 'auditHistory' | 'apiRecords'>('header'); // 統一 Tab
   const [selectedChangeOrderId, setSelectedChangeOrderId] = useState<string | null>(null);
   const [showChangeOrderDetail, setShowChangeOrderDetail] = useState(false);
   const [addressCancelReason, setAddressCancelReason] = useState('');
@@ -752,7 +910,7 @@ export function PMOrderDetail({ orderId, orderType = 'erp', orderTypes, orderHea
             ))}
           </div>
           {/* 操作按鈕列 */}
-          <div className="flex justify-end">
+          <div className="flex justify-start">
             {isEditMode && <CwButton variant="primary" appearance="filled" onClick={() => { setSelectedChangeOrderType(null); setShowNewChangeOrderPopup(true); }}>＋ 新增異動單</CwButton>}
           </div>
           {/* OMG 子 Tab + 異動單 Tab 同列顯示 */}
@@ -767,6 +925,7 @@ export function PMOrderDetail({ orderId, orderType = 'erp', orderTypes, orderHea
               { id: 'cancel', label: '退訂單' },
               { id: 'shipInfo', label: '出貨資訊' },
               { id: 'auditHistory', label: '審核歷程' },
+              { id: 'apiRecords',   label: '串接紀錄' },
             ]}
             activeId={activeErpTab}
             onChange={(id) => setActiveErpTab(id as typeof activeErpTab)}
@@ -953,6 +1112,7 @@ export function PMOrderDetail({ orderId, orderType = 'erp', orderTypes, orderHea
 
                 {activeErpTab === 'shipInfo' && <ShipInfoTab />}
                 {activeErpTab === 'auditHistory' && <AuditHistoryTab />}
+                {activeErpTab === 'apiRecords'   && <ApiRecordsTab />}
               </div>
             </div>
 
