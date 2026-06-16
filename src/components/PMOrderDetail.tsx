@@ -881,6 +881,22 @@ export function PMOrderDetail({ orderId: _orderId, orderType = 'erp', orderTypes
               />
             )}
           </div>
+
+          {/* 金額總計 */}
+          <div className="rounded-[6px] overflow-hidden">
+            <div className="flex items-center justify-between px-[20px] py-[12px] bg-[#f5f7fa] border-b border-[#e5e7eb]">
+              <span className="text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>明細總計（不含運費）：</span>
+              <span className="text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>8,060 元</span>
+            </div>
+            <div className="flex items-center justify-between px-[20px] py-[12px] bg-[#f5f7fa] border-b border-[#e5e7eb]">
+              <span className="text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>運費：</span>
+              <span className="text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>0 元</span>
+            </div>
+            <div className="flex items-center justify-between px-[20px] py-[12px] bg-[#f5f7fa]">
+              <span className="text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>訂單總金額（含運費）：</span>
+              <span className="text-[14px] text-[#0078d4] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 700 }}>8,060 元</span>
+            </div>
+          </div>
         </div>
       ))}
 
@@ -932,10 +948,31 @@ export function PMOrderDetail({ orderId: _orderId, orderType = 'erp', orderTypes
           />
 
           {activeErpTab === 'header' && (
-            <OMGOrderHeader
-              ref={headerRef}
-              mode={isEditMode ? 'edit' : 'view'}
-            />
+            <>
+              <OMGOrderHeader
+                ref={headerRef}
+                mode={isEditMode ? 'edit' : 'view'}
+              />
+              {/* 金額總計 */}
+              <div className="mt-[16px] rounded-[6px] overflow-hidden">
+                <div className="flex items-center justify-between px-[20px] py-[12px] bg-[#f5f7fa] border-b border-[#e5e7eb]">
+                  <span className="text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>訂單金額（未稅）：</span>
+                  <span className="text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>8,320 元</span>
+                </div>
+                <div className="flex items-center justify-between px-[20px] py-[12px] bg-[#f5f7fa] border-b border-[#e5e7eb]">
+                  <span className="text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>5%稅額：</span>
+                  <span className="text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>416 元</span>
+                </div>
+                <div className="flex items-center justify-between px-[20px] py-[12px] bg-[#f5f7fa] border-b border-[#e5e7eb]">
+                  <span className="text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>運費：</span>
+                  <span className="text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>0 元</span>
+                </div>
+                <div className="flex items-center justify-between px-[20px] py-[12px] bg-[#f5f7fa]">
+                  <span className="text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>訂單總金額（含運費）：</span>
+                  <span className="text-[14px] text-[#0078d4] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 700 }}>8,736 元</span>
+                </div>
+              </div>
+            </>
           )}
           {activeErpTab === 'items' && <ERPOrderItems canEdit={isEditMode} />}
 

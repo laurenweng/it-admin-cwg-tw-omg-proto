@@ -855,3 +855,32 @@
 | 信用卡請款銀行（`creditCardPaymentBank`） | 已從付款資訊 section JSX 移除（建單/編輯不顯示）；欄位仍保留於 `OMGOrderHeaderData` interface 及 mock 資料，查詢/檢視模式可視需要加回 |
 | 推薦客戶編號（`recommendCustomerCode`） | 已從其他訂單資訊 section JSX 移除；欄位仍保留於 `OMGOrderHeaderData` interface 及 mock 資料 |
 | 推薦客戶名稱（`recommendCustomerName`） | 已從其他訂單資訊 section JSX 移除；欄位仍保留於 `OMGOrderHeaderData` interface 及 mock 資料 |
+
+---
+
+## 新增訂單明細 — 出貨欄位預設帶入（CreateOrderItems）
+
+> **跨元件預設值規則：** 在「新增訂單」頁面（`CreatePMOrder`）的訂單明細 tab 中，每次透過「新增明細」新增一筆明細時，出貨相關欄位應自動帶入當前訂單表頭（`OMGOrderHeader`）已填寫的對應出貨資料，不使用寫死的預設值。
+>
+> 元件路徑：`CreatePMOrder` → props → `CreateOrderItems`
+
+### 新增明細時出貨欄位預設帶入對照
+
+| 訂單明細出貨欄位 | 來源（OMGOrderHeader 欄位） |
+|---|---|
+| 出貨客戶編號（`shipCustomerCode`） | `shipCustomerCode` |
+| 出貨客戶名稱（`shipCustomerName`） | `shipCustomerName` |
+| 出貨地址（`shipAddress`） | `shipAddress` |
+| 出貨方式（`shipMethod`） | `shipMethod` |
+| 出貨收件人（`shipRecipient`） | `shipRecipient` |
+| 同意行銷（`agreeMarketing`） | `agreeMarketing` |
+| 同意行銷日期（`agreeMarketingDate`） | `agreeMarketingDate` |
+
+### 實作說明
+
+| 項目 | 內容 |
+|------|------|
+| 資料流 | `CreatePMOrder` 持有表頭 state，透過 props（例：`headerShipDefaults`）傳入 `CreateOrderItems` |
+| 觸發時機 | 使用者點擊「新增明細」開啟 popup 時（`openModal()`），以當下表頭值作為 `emptyForm()` 的出貨欄位初始值 |
+| 目前狀態 | `CreateOrderItems.tsx` 中 `HEADER_DEFAULTS` 為寫死 mock 值，上線前需替換為動態 props 取值 |
+| 備註 | 使用者在明細 popup 確認後仍可於出貨 table 的 inline 編輯欄位手動修改各筆明細的出貨資料 |

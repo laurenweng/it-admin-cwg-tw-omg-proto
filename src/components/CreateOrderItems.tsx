@@ -41,32 +41,7 @@ export interface CreateOrderItemData {
   isShipped?: boolean;
 }
 
-// ── Mock 資料 ────────────────────────────────────────────────
-
-const mockProducts = [
-  { id: 1, code: 'GCV00001', name: '天下雜誌 1 年期（26 期）' },
-  { id: 2, code: 'CHV00002', name: '康健雜誌 半年期（6 期）' },
-  { id: 3, code: 'P003',     name: '親子天下紙本半年訂' },
-  { id: 4, code: 'P004',     name: '親子天下數位年訂' },
-  { id: 5, code: 'P005',     name: '康健雜誌紙本季訂' },
-  { id: 6, code: 'P008',     name: '遠見雜誌紙本年訂' },
-];
-
-
-const mockPlans = [
-  { id: 1, code: 'PROMO2025',  name: '天下雜誌年訂優惠',  discount: '10%', startDate: '2025-01-01', endDate: '2025-12-31' },
-  { id: 2, code: 'SPRING2025', name: '春季特惠專案',       discount: '15%', startDate: '2025-03-01', endDate: '2025-05-31' },
-  { id: 3, code: 'VIP15',      name: 'VIP 會員專享',       discount: '15%', startDate: '2025-01-01', endDate: '2025-12-31' },
-  { id: 4, code: 'NEWUSER25',  name: '新用戶首購優惠',     discount: '25%', startDate: '2025-01-01', endDate: '2025-12-31' },
-  { id: 5, code: 'GCV-Y',      name: '天下雜誌年訂方案',   discount: '0%',  startDate: '2025-01-01', endDate: '2025-12-31' },
-];
-
 // ── 業務規則對照表 ───────────────────────────────────────────
-
-const PRODUCT_DEFAULT_TRANSACTION: Record<string, string> = {
-  'GCV00001': '新訂', 'CHV00002': '新訂',
-  'P003': '新訂', 'P004': '新訂', 'P005': '新訂', 'P008': '新訂',
-};
 
 const TRANSACTION_TAX_MAP: Record<string, string> = {
   '訂閱': '內含稅', '新訂': '內含稅', '續訂': '內含稅', '加訂': '內含稅',
@@ -87,6 +62,46 @@ const HEADER_DEFAULTS = {
 
 const today = () => new Date().toISOString().slice(0, 10);
 
+// ── 方案 Mock 資料（每個方案帶自己的產品明細）────────────────
+
+interface MockPlan {
+  id: number;
+  code: string;
+  name: string;
+  discount: string;
+  startDate: string;
+  endDate: string;
+  items: Omit<CreateOrderItemData, 'id'>[];
+}
+
+const mockPlans: MockPlan[] = [
+  {
+    id: 1, code: 'GC17070009', name: '天下雜誌5期=275元', discount: '0%', startDate: '2025-01-01', endDate: '2025-12-31',
+    items: [
+      { productCode: 'GCV00001', productName: '天下雜誌 1 年期（26 期）', startPeriod: '2025-01', endPeriod: '2025-05', quantity: 5, unitPrice: 55, discount: '0', sellPrice: 55, actualAmount: 275, transactionType: '新訂', taxType: '內含稅', requireDate: today(), agreeMarketing: HEADER_DEFAULTS.agreeMarketing, agreeMarketingDate: '', shipCustomerCode: HEADER_DEFAULTS.shipCustomerCode, shipCustomerName: HEADER_DEFAULTS.shipCustomerName, shipAddress: HEADER_DEFAULTS.shipAddress, shipRecipient: '', shipMethod: HEADER_DEFAULTS.shipMethod, grade: '', discountMark: 'N', reserver: '', shipWarehouse: '', bookShowLocation: '', autoRenew: 'N', planCode: 'GC17070009', planName: '天下雜誌5期=275元', isShipped: false },
+    ],
+  },
+  {
+    id: 2, code: 'CH18030012', name: '康健雜誌3期+贈品組=480元', discount: '0%', startDate: '2025-01-01', endDate: '2025-12-31',
+    items: [
+      { productCode: 'CHV00002', productName: '康健雜誌 半年期（6 期）', startPeriod: '2025-03', endPeriod: '2025-05', quantity: 3, unitPrice: 160, discount: '0', sellPrice: 160, actualAmount: 480, transactionType: '新訂', taxType: '內含稅', requireDate: today(), agreeMarketing: HEADER_DEFAULTS.agreeMarketing, agreeMarketingDate: '', shipCustomerCode: HEADER_DEFAULTS.shipCustomerCode, shipCustomerName: HEADER_DEFAULTS.shipCustomerName, shipAddress: HEADER_DEFAULTS.shipAddress, shipRecipient: '', shipMethod: HEADER_DEFAULTS.shipMethod, grade: '', discountMark: 'N', reserver: '', shipWarehouse: '', bookShowLocation: '', autoRenew: 'N', planCode: 'CH18030012', planName: '康健雜誌3期+贈品組=480元', isShipped: false },
+      { productCode: 'P005',     productName: '康健雜誌紙本季訂',         startPeriod: '',         endPeriod: '',         quantity: 1, unitPrice: 0,   discount: '0', sellPrice: 0,   actualAmount: 0,   transactionType: '加訂', taxType: '內含稅', requireDate: today(), agreeMarketing: HEADER_DEFAULTS.agreeMarketing, agreeMarketingDate: '', shipCustomerCode: HEADER_DEFAULTS.shipCustomerCode, shipCustomerName: HEADER_DEFAULTS.shipCustomerName, shipAddress: HEADER_DEFAULTS.shipAddress, shipRecipient: '', shipMethod: HEADER_DEFAULTS.shipMethod, grade: '', discountMark: 'N', reserver: '', shipWarehouse: '', bookShowLocation: '', autoRenew: 'N', planCode: 'CH18030012', planName: '康健雜誌3期+贈品組=480元', isShipped: false },
+    ],
+  },
+  {
+    id: 3, code: 'PC20250601', name: '親子天下半年訂+數位閱讀=990元', discount: '0%', startDate: '2025-01-01', endDate: '2025-12-31',
+    items: [
+      { productCode: 'P003', productName: '親子天下紙本半年訂', startPeriod: '2025-06', endPeriod: '2025-11', quantity: 1, unitPrice: 780, discount: '0', sellPrice: 780, actualAmount: 780,  transactionType: '新訂', taxType: '內含稅', requireDate: today(), agreeMarketing: HEADER_DEFAULTS.agreeMarketing, agreeMarketingDate: '', shipCustomerCode: HEADER_DEFAULTS.shipCustomerCode, shipCustomerName: HEADER_DEFAULTS.shipCustomerName, shipAddress: HEADER_DEFAULTS.shipAddress, shipRecipient: '', shipMethod: HEADER_DEFAULTS.shipMethod, grade: '', discountMark: 'N', reserver: '', shipWarehouse: '', bookShowLocation: '', autoRenew: 'N', planCode: 'PC20250601', planName: '親子天下半年訂+數位閱讀=990元', isShipped: false },
+      { productCode: 'P004', productName: '親子天下數位年訂',   startPeriod: '2025-06', endPeriod: '2026-05', quantity: 1, unitPrice: 210, discount: '0', sellPrice: 210, actualAmount: 210,  transactionType: '加訂', taxType: '內含稅', requireDate: today(), agreeMarketing: HEADER_DEFAULTS.agreeMarketing, agreeMarketingDate: '', shipCustomerCode: HEADER_DEFAULTS.shipCustomerCode, shipCustomerName: HEADER_DEFAULTS.shipCustomerName, shipAddress: HEADER_DEFAULTS.shipAddress, shipRecipient: '', shipMethod: HEADER_DEFAULTS.shipMethod, grade: '', discountMark: 'N', reserver: '', shipWarehouse: '', bookShowLocation: '', autoRenew: 'N', planCode: 'PC20250601', planName: '親子天下半年訂+數位閱讀=990元', isShipped: false },
+    ],
+  },
+  {
+    id: 4, code: 'PROMO2025', name: '天下雜誌年訂優惠', discount: '10%', startDate: '2025-01-01', endDate: '2025-12-31',
+    items: [
+      { productCode: 'GCV00001', productName: '天下雜誌 1 年期（26 期）', startPeriod: '', endPeriod: '', quantity: 1, unitPrice: 2380, discount: '10', sellPrice: 2142, actualAmount: 2142, transactionType: '新訂', taxType: '內含稅', requireDate: today(), agreeMarketing: HEADER_DEFAULTS.agreeMarketing, agreeMarketingDate: '', shipCustomerCode: HEADER_DEFAULTS.shipCustomerCode, shipCustomerName: HEADER_DEFAULTS.shipCustomerName, shipAddress: HEADER_DEFAULTS.shipAddress, shipRecipient: '', shipMethod: HEADER_DEFAULTS.shipMethod, grade: '', discountMark: 'N', reserver: '', shipWarehouse: '', bookShowLocation: '', autoRenew: 'N', planCode: 'PROMO2025', planName: '天下雜誌年訂優惠', isShipped: false },
+    ],
+  },
+];
 
 const emptyForm = (): Omit<CreateOrderItemData, 'id'> => ({
   productCode: '', productName: '',
@@ -188,23 +203,23 @@ export function CreateOrderItems() {
   const nextId = useRef(1);
 
   // ── popup states ──
-  const [showProductPopup, setShowProductPopup] = useState(false);
-  const [productKeyword,   setProductKeyword]   = useState('');
+  const [showPlanPopup, setShowPlanPopup] = useState(false);
+  const [planKeyword,   setPlanKeyword]   = useState('');
 
-  const productPopupRef = useRef<HTMLDivElement>(null);
+  const planPopupRef = useRef<HTMLDivElement>(null);
 
-  // 點擊外部關閉產品 popup
+  // 點擊外部關閉方案 popup
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       const t = e.target as Node;
-      if (showProductPopup && productPopupRef.current && !productPopupRef.current.contains(t)) { setShowProductPopup(false); setProductKeyword(''); }
+      if (showPlanPopup && planPopupRef.current && !planPopupRef.current.contains(t)) { setShowPlanPopup(false); setPlanKeyword(''); }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [showProductPopup]);
+  }, [showPlanPopup]);
 
   // ── 過濾清單 ──
-  const filteredProducts = productKeyword ? mockProducts.filter(p => p.code.toLowerCase().includes(productKeyword.toLowerCase()) || p.name.includes(productKeyword)) : mockProducts;
+  const filteredPlans = planKeyword ? mockPlans.filter(p => p.code.toLowerCase().includes(planKeyword.toLowerCase()) || p.name.includes(planKeyword)) : mockPlans;
 
   // ── form 更新輔助 ──
   const setF = <K extends keyof typeof form>(key: K, value: typeof form[K]) => {
@@ -233,15 +248,10 @@ export function CreateOrderItems() {
   // ── 訂閱類判斷 ──
 
   // ── 選擇 Popup 項目 ──
-  const handleSelectProduct = (code: string, name: string) => {
-    const transactionType = PRODUCT_DEFAULT_TRANSACTION[code] ?? '';
-    const taxType = TRANSACTION_TAX_MAP[transactionType] ?? '';
-    setForm(prev => {
-      const { sellPrice, actualAmount } = calcPrices(prev.unitPrice, prev.discount, prev.quantity);
-      return { ...prev, productCode: code, productName: name, transactionType, taxType, sellPrice, actualAmount };
-    });
-    setFormErrors(prev => { const n = { ...prev }; delete n.productCode; delete n.transactionType; return n; });
-    setShowProductPopup(false); setProductKeyword('');
+  const handleSelectPlan = (code: string, name: string) => {
+    setForm(prev => ({ ...prev, planCode: code, planName: name }));
+    setFormErrors(prev => { const n = { ...prev }; delete n.planCode; return n; });
+    setShowPlanPopup(false); setPlanKeyword('');
   };
 
   // ── 開啟 / 關閉 Modal ──
@@ -255,9 +265,13 @@ export function CreateOrderItems() {
 
   const handleConfirm = () => {
     const errs: FormErrors = {};
-    if (!form.productCode) errs.productCode = '此欄位為必填';
+    if (!form.planCode) errs.planCode = '此欄位為必填';
     if (Object.keys(errs).length > 0) { setFormErrors(errs); return; }
-    setItems(prev => [...prev, { id: nextId.current++, ...form }]);
+    const plan = mockPlans.find(p => p.code === form.planCode);
+    if (plan) {
+      const newItems = plan.items.map(item => ({ id: nextId.current++, ...item }));
+      setItems(prev => [...prev, ...newItems]);
+    }
     setShowModal(false);
     setFormErrors({});
   };
@@ -423,15 +437,15 @@ export function CreateOrderItems() {
             <div className="px-[24px] py-[20px]">
               <div className="grid grid-cols-2 gap-x-[20px] gap-y-[16px]">
                 <PopupSearchInput
-                  label="產品料號"
+                  label="方案代碼"
                   required
-                  value={form.productCode}
-                  error={formErrors.productCode}
-                  onChange={(v) => setF('productCode', v)}
-                  onOpen={() => { setShowProductPopup(true); setProductKeyword(''); }}
-                  onClear={() => { setForm(prev => ({ ...prev, productCode: '', productName: '' })); setFormErrors(p => { const n = {...p}; delete n.productCode; return n; }); }}
+                  value={form.planCode}
+                  error={formErrors.planCode}
+                  onChange={(v) => setF('planCode', v)}
+                  onOpen={() => { setShowPlanPopup(true); setPlanKeyword(''); }}
+                  onClear={() => { setForm(prev => ({ ...prev, planCode: '', planName: '' })); setFormErrors(p => { const n = {...p}; delete n.planCode; return n; }); }}
                 />
-                <CwInput label="產品名稱" value={form.productName} disabled readOnly />
+                <CwInput label="方案名稱" value={form.planName} disabled readOnly />
               </div>
             </div>
 
@@ -455,38 +469,42 @@ export function CreateOrderItems() {
         </div>
       )}
 
-      {/* 產品搜尋 Popup */}
-      {showProductPopup && (
-        <div className="fixed inset-0 bg-black/40 z-[1400] flex items-center justify-center" onClick={() => { setShowProductPopup(false); setProductKeyword(''); }}>
-          <div ref={productPopupRef} className="bg-white rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.16)] w-[560px] max-h-[520px] flex flex-col" onClick={(e) => e.stopPropagation()}>
+      {/* 方案搜尋 Popup */}
+      {showPlanPopup && (
+        <div className="fixed inset-0 bg-black/40 z-[1400] flex items-center justify-center" onClick={() => { setShowPlanPopup(false); setPlanKeyword(''); }}>
+          <div ref={planPopupRef} className="bg-white rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.16)] w-[620px] max-h-[560px] flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-[20px] py-[16px] border-b border-[#e5e7eb]">
-              <h3 className="text-[16px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 600 }}>選擇產品</h3>
-              <button onClick={() => { setShowProductPopup(false); setProductKeyword(''); }} className="w-[32px] h-[32px] rounded-[4px] flex items-center justify-center hover:bg-[#f5f7fa] text-[#7c808c]"><X size={20} /></button>
+              <h3 className="text-[16px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 600 }}>選擇方案</h3>
+              <button onClick={() => { setShowPlanPopup(false); setPlanKeyword(''); }} className="w-[32px] h-[32px] rounded-[4px] flex items-center justify-center hover:bg-[#f5f7fa] text-[#7c808c]"><X size={20} /></button>
             </div>
             <div className="px-[20px] py-[12px] border-b border-[#e5e7eb]">
-              <input type="text" placeholder="搜尋料號或名稱" value={productKeyword} onChange={(e) => setProductKeyword(e.target.value)} autoFocus
+              <input type="text" placeholder="搜尋方案代碼或名稱" value={planKeyword} onChange={(e) => setPlanKeyword(e.target.value)} autoFocus
                 className="w-full h-[36px] px-[12px] border border-[#c4c9d3] rounded-[4px] text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }} />
             </div>
             <div className="flex-1 overflow-y-auto">
               <table className="w-full border-collapse text-[14px] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>
                 <thead className="sticky top-0 bg-[#f5f7fa] border-b border-[#e5e7eb]">
                   <tr>
-                    <th className="px-[16px] py-[12px] text-left text-[#7c808c] font-[500]">料號</th>
-                    <th className="px-[16px] py-[12px] text-left text-[#7c808c] font-[500]">產品名稱</th>
+                    <th className="px-[16px] py-[12px] text-left text-[#7c808c] font-[500]">方案代碼</th>
+                    <th className="px-[16px] py-[12px] text-left text-[#7c808c] font-[500]">方案名稱</th>
+                    <th className="px-[16px] py-[12px] text-center text-[#7c808c] font-[500]">折扣</th>
+                    <th className="px-[16px] py-[12px] text-center text-[#7c808c] font-[500]">有效期</th>
                     <th className="px-[16px] py-[12px] text-center text-[#7c808c] font-[500]">動作</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredProducts.length > 0 ? filteredProducts.map(p => (
+                  {filteredPlans.length > 0 ? filteredPlans.map(p => (
                     <tr key={p.id} className="border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors">
                       <td className="px-[16px] py-[12px] text-[#1c1c1c] font-[500]">{p.code}</td>
                       <td className="px-[16px] py-[12px] text-[#1c1c1c]">{p.name}</td>
+                      <td className="px-[16px] py-[12px] text-center text-[#0078d4]">{p.discount}</td>
+                      <td className="px-[16px] py-[12px] text-center text-[#7c808c]">{p.startDate} ~ {p.endDate}</td>
                       <td className="px-[16px] py-[12px] text-center">
-                        <button onClick={() => handleSelectProduct(p.code, p.name)} className="px-[12px] py-[6px] bg-[#0078d4] text-white rounded-[4px] font-[500] hover:bg-[#106ebe] transition-colors">選擇</button>
+                        <button onClick={() => handleSelectPlan(p.code, p.name)} className="px-[12px] py-[6px] bg-[#0078d4] text-white rounded-[4px] font-[500] hover:bg-[#106ebe] transition-colors">選擇</button>
                       </td>
                     </tr>
                   )) : (
-                    <tr><td colSpan={3} className="px-[16px] py-[32px] text-center text-[#7c808c]">查無符合資料</td></tr>
+                    <tr><td colSpan={5} className="px-[16px] py-[32px] text-center text-[#7c808c]">查無符合資料</td></tr>
                   )}
                 </tbody>
               </table>
