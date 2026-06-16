@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from "react";
 import { Plus, X, Search } from "lucide-react";
 import { CwInput } from "./CwInput";
 import { CwSelect } from "./CwSelect";
-import { CwDatePicker } from "./CwDatePicker";
 import { CwTable, CwTableColumn } from "./CwTable";
 
 // ── 型別定義 ────────────────────────────────────────────────
@@ -53,23 +52,6 @@ const mockProducts = [
   { id: 6, code: 'P008',     name: '遠見雜誌紙本年訂' },
 ];
 
-const mockCustomers = [
-  { id: 1, code: 'C001234', name: '王小明', address: '台北市中山區中山北路二段7號' },
-  { id: 2, code: 'C002345', name: '李大華', address: '新北市板橋區文化路一段188號' },
-  { id: 3, code: 'C003456', name: '陳美玲', address: '台中市西屯區台灣大道三段99號' },
-  { id: 4, code: '1679128', name: 'JEFF',   address: '台北市大同區民權西路103號' },
-  { id: 5, code: 'C005678', name: '林淑芬', address: '台南市東區裕農路198號' },
-];
-
-const mockShippingMethods = [
-  { id: 1, code: '1001', name: '郵寄一般' },
-  { id: 2, code: '1002', name: '郵寄限時' },
-  { id: 3, code: '1005', name: '郵寄-一般航空' },
-  { id: 4, code: '1006', name: '郵寄-掛號水陸' },
-  { id: 5, code: '1007', name: '郵寄-掛號航空' },
-  { id: 6, code: '1009', name: '郵寄-指定宅配' },
-  { id: 7, code: '2001', name: '宅配' },
-];
 
 const mockPlans = [
   { id: 1, code: 'PROMO2025',  name: '天下雜誌年訂優惠',  discount: '10%', startDate: '2025-01-01', endDate: '2025-12-31' },
@@ -90,7 +72,6 @@ const TRANSACTION_TAX_MAP: Record<string, string> = {
   '訂閱': '內含稅', '新訂': '內含稅', '續訂': '內含稅', '加訂': '內含稅',
 };
 
-const SUBSCRIPTION_TYPES = new Set(['訂閱', '新訂', '續訂', '加訂']);
 
 // ── 表頭預設值（從 OMGOrderHeader mock 資料同步）────────────────
 
@@ -106,43 +87,6 @@ const HEADER_DEFAULTS = {
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-interface PromoItem extends Omit<CreateOrderItemData, 'id'> {}
-
-interface PromoPlan {
-  code: string;
-  description: string;
-  totalAmount: number;
-  items: PromoItem[];
-}
-
-const mockPromoPlans: PromoPlan[] = [
-  {
-    code: 'GC17070009',
-    description: '天下雜誌5期=275元',
-    totalAmount: 275,
-    items: [
-      { productCode: 'GCV00001', productName: '天下雜誌 1 年期（26 期）', startPeriod: '2025-01', endPeriod: '2025-05', quantity: 5, unitPrice: 55, discount: '0', sellPrice: 55, actualAmount: 275, transactionType: '新訂', taxType: '內含稅', requireDate: today(), agreeMarketing: '1', agreeMarketingDate: '', shipCustomerCode: HEADER_DEFAULTS.shipCustomerCode, shipCustomerName: HEADER_DEFAULTS.shipCustomerName, shipAddress: HEADER_DEFAULTS.shipAddress, shipRecipient: '', shipMethod: HEADER_DEFAULTS.shipMethod, grade: '', discountMark: 'N', reserver: '', shipWarehouse: '', bookShowLocation: '', autoRenew: 'N', planCode: 'GC17070009', planName: '天下雜誌5期=275元', isShipped: false },
-    ],
-  },
-  {
-    code: 'CH18030012',
-    description: '康健雜誌3期+贈品組=480元',
-    totalAmount: 480,
-    items: [
-      { productCode: 'CHV00002', productName: '康健雜誌 半年期（6 期）', startPeriod: '2025-03', endPeriod: '2025-05', quantity: 3, unitPrice: 160, discount: '0', sellPrice: 160, actualAmount: 480, transactionType: '新訂', taxType: '內含稅', requireDate: today(), agreeMarketing: '1', agreeMarketingDate: '', shipCustomerCode: HEADER_DEFAULTS.shipCustomerCode, shipCustomerName: HEADER_DEFAULTS.shipCustomerName, shipAddress: HEADER_DEFAULTS.shipAddress, shipRecipient: '', shipMethod: HEADER_DEFAULTS.shipMethod, grade: '', discountMark: 'N', reserver: '', shipWarehouse: '', bookShowLocation: '', autoRenew: 'N', planCode: 'CH18030012', planName: '康健雜誌3期+贈品組=480元', isShipped: false },
-      { productCode: 'P005',      productName: '康健雜誌紙本季訂',         startPeriod: '',         endPeriod: '',         quantity: 1, unitPrice: 0,   discount: '0', sellPrice: 0,   actualAmount: 0,   transactionType: '加訂',  taxType: '內含稅', requireDate: today(), agreeMarketing: '1', agreeMarketingDate: '', shipCustomerCode: HEADER_DEFAULTS.shipCustomerCode, shipCustomerName: HEADER_DEFAULTS.shipCustomerName, shipAddress: HEADER_DEFAULTS.shipAddress, shipRecipient: '', shipMethod: HEADER_DEFAULTS.shipMethod, grade: '', discountMark: 'N', reserver: '', shipWarehouse: '', bookShowLocation: '', autoRenew: 'N', planCode: 'CH18030012', planName: '康健雜誌3期+贈品組=480元', isShipped: false },
-    ],
-  },
-  {
-    code: 'PC20250601',
-    description: '親子天下半年訂+數位閱讀=990元',
-    totalAmount: 990,
-    items: [
-      { productCode: 'P003', productName: '親子天下紙本半年訂', startPeriod: '2025-06', endPeriod: '2025-11', quantity: 1, unitPrice: 780, discount: '0', sellPrice: 780, actualAmount: 780, transactionType: '新訂', taxType: '內含稅', requireDate: today(), agreeMarketing: '1', agreeMarketingDate: '', shipCustomerCode: HEADER_DEFAULTS.shipCustomerCode, shipCustomerName: HEADER_DEFAULTS.shipCustomerName, shipAddress: HEADER_DEFAULTS.shipAddress, shipRecipient: '', shipMethod: HEADER_DEFAULTS.shipMethod, grade: '', discountMark: 'N', reserver: '', shipWarehouse: '', bookShowLocation: '', autoRenew: 'N', planCode: 'PC20250601', planName: '親子天下半年訂+數位閱讀=990元', isShipped: false },
-      { productCode: 'P004', productName: '親子天下數位年訂',   startPeriod: '2025-06', endPeriod: '2026-05', quantity: 1, unitPrice: 210, discount: '0', sellPrice: 210, actualAmount: 210, transactionType: '加訂',  taxType: '內含稅', requireDate: today(), agreeMarketing: '1', agreeMarketingDate: '', shipCustomerCode: HEADER_DEFAULTS.shipCustomerCode, shipCustomerName: HEADER_DEFAULTS.shipCustomerName, shipAddress: HEADER_DEFAULTS.shipAddress, shipRecipient: '', shipMethod: HEADER_DEFAULTS.shipMethod, grade: '', discountMark: 'N', reserver: '', shipWarehouse: '', bookShowLocation: '', autoRenew: 'N', planCode: 'PC20250601', planName: '親子天下半年訂+數位閱讀=990元', isShipped: false },
-    ],
-  },
-];
 
 const emptyForm = (): Omit<CreateOrderItemData, 'id'> => ({
   productCode: '', productName: '',
@@ -219,15 +163,6 @@ function PopupSearchInput({
   );
 }
 
-// ── RequiredLabel ──────────────────────────────────────────────
-
-function RequiredLabel({ children }: { children: string }) {
-  return (
-    <label className="text-[#1c1c1c] text-[12px] font-[500] font-['Noto_Sans_TC',_sans-serif]">
-      {children}<span style={{ color: '#E53E3E' }}> *</span>
-    </label>
-  );
-}
 
 // ── SectionTitle ──────────────────────────────────────────────
 
@@ -247,52 +182,29 @@ type FormErrors = Partial<Record<keyof Omit<CreateOrderItemData, 'id'>, string>>
 export function CreateOrderItems() {
   const [items, setItems] = useState<CreateOrderItemData[]>([]);
   const [showModal, setShowModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'pricing' | 'shipping' | 'other'>('pricing');
   const [form, setForm] = useState<Omit<CreateOrderItemData, 'id'>>(emptyForm());
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [searchKeyword, setSearchKeyword] = useState('');
   const nextId = useRef(1);
 
   // ── popup states ──
-  const [showProductPopup,  setShowProductPopup]  = useState(false);
-  const [productKeyword,    setProductKeyword]    = useState('');
-  const [showCustomerPopup, setShowCustomerPopup] = useState(false);
-  const [customerKeyword,   setCustomerKeyword]   = useState('');
-  const [showShippingPopup, setShowShippingPopup] = useState(false);
-  const [shippingKeyword,   setShippingKeyword]   = useState('');
-  const [showPlanPopup,     setShowPlanPopup]     = useState(false);
-  const [planKeyword,       setPlanKeyword]       = useState('');
-  const [showPromoAddPopup, setShowPromoAddPopup] = useState(false);
-  const [promoAddKeyword,   setPromoAddKeyword]   = useState('');
+  const [showProductPopup, setShowProductPopup] = useState(false);
+  const [productKeyword,   setProductKeyword]   = useState('');
 
-  const productPopupRef  = useRef<HTMLDivElement>(null);
-  const customerPopupRef = useRef<HTMLDivElement>(null);
-  const shippingPopupRef = useRef<HTMLDivElement>(null);
-  const planPopupRef     = useRef<HTMLDivElement>(null);
-  const promoAddPopupRef = useRef<HTMLDivElement>(null);
+  const productPopupRef = useRef<HTMLDivElement>(null);
 
-  // 點擊外部關閉各 popup
+  // 點擊外部關閉產品 popup
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       const t = e.target as Node;
-      if (showProductPopup  && productPopupRef.current  && !productPopupRef.current.contains(t))  { setShowProductPopup(false);  setProductKeyword(''); }
-      if (showCustomerPopup && customerPopupRef.current && !customerPopupRef.current.contains(t)) { setShowCustomerPopup(false); setCustomerKeyword(''); }
-      if (showShippingPopup && shippingPopupRef.current && !shippingPopupRef.current.contains(t)) { setShowShippingPopup(false); setShippingKeyword(''); }
-      if (showPlanPopup     && planPopupRef.current     && !planPopupRef.current.contains(t))     { setShowPlanPopup(false);     setPlanKeyword(''); }
-      if (showPromoAddPopup && promoAddPopupRef.current && !promoAddPopupRef.current.contains(t)) { setShowPromoAddPopup(false); setPromoAddKeyword(''); }
+      if (showProductPopup && productPopupRef.current && !productPopupRef.current.contains(t)) { setShowProductPopup(false); setProductKeyword(''); }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [showProductPopup, showCustomerPopup, showShippingPopup, showPlanPopup, showPromoAddPopup]);
+  }, [showProductPopup]);
 
   // ── 過濾清單 ──
-  const filteredProducts  = productKeyword  ? mockProducts.filter(p => p.code.toLowerCase().includes(productKeyword.toLowerCase()) || p.name.includes(productKeyword))  : mockProducts;
-  const filteredCustomers = customerKeyword ? mockCustomers.filter(c => c.code.includes(customerKeyword) || c.name.includes(customerKeyword)) : mockCustomers;
-  const filteredShipping  = shippingKeyword ? mockShippingMethods.filter(s => s.code.includes(shippingKeyword) || s.name.includes(shippingKeyword)) : mockShippingMethods;
-  const filteredPlans     = planKeyword     ? mockPlans.filter(p => p.code.toLowerCase().includes(planKeyword.toLowerCase()) || p.name.includes(planKeyword)) : mockPlans;
-  const filteredPromoPlans = promoAddKeyword
-    ? mockPromoPlans.filter(p => p.code.toLowerCase().includes(promoAddKeyword.toLowerCase()) || p.description.includes(promoAddKeyword))
-    : mockPromoPlans;
+  const filteredProducts = productKeyword ? mockProducts.filter(p => p.code.toLowerCase().includes(productKeyword.toLowerCase()) || p.name.includes(productKeyword)) : mockProducts;
 
   // ── form 更新輔助 ──
   const setF = <K extends keyof typeof form>(key: K, value: typeof form[K]) => {
@@ -319,8 +231,6 @@ export function CreateOrderItems() {
   };
 
   // ── 訂閱類判斷 ──
-  const isSubscription = SUBSCRIPTION_TYPES.has(form.transactionType);
-  const isShipped = !!form.isShipped;
 
   // ── 選擇 Popup 項目 ──
   const handleSelectProduct = (code: string, name: string) => {
@@ -334,34 +244,10 @@ export function CreateOrderItems() {
     setShowProductPopup(false); setProductKeyword('');
   };
 
-  const handleSelectCustomer = (code: string, name: string, address: string) => {
-    setForm(prev => ({ ...prev, shipCustomerCode: code, shipCustomerName: name, shipAddress: address }));
-    setFormErrors(prev => { const n = { ...prev }; delete n.shipCustomerCode; delete n.shipAddress; return n; });
-    setShowCustomerPopup(false); setCustomerKeyword('');
-  };
-
-  const handleSelectShipping = (code: string, name: string) => {
-    setF('shipMethod', `${code} ${name}`);
-    setShowShippingPopup(false); setShippingKeyword('');
-  };
-
-  const handleSelectPlan = (code: string, name: string) => {
-    setForm(prev => ({ ...prev, planCode: code, planName: name }));
-    setShowPlanPopup(false); setPlanKeyword('');
-  };
-
-  const handleSelectPromoAdd = (promo: PromoPlan) => {
-    const newItems: CreateOrderItemData[] = promo.items.map(item => ({ id: nextId.current++, ...item }));
-    setItems(prev => [...prev, ...newItems]);
-    setShowPromoAddPopup(false);
-    setPromoAddKeyword('');
-  };
-
   // ── 開啟 / 關閉 Modal ──
   const openModal = () => {
     setForm(emptyForm());
     setFormErrors({});
-    setActiveTab('pricing');
     setShowModal(true);
   };
 
@@ -369,26 +255,23 @@ export function CreateOrderItems() {
 
   const handleConfirm = () => {
     const errs: FormErrors = {};
-    const REQ = '此欄位為必填';
-    if (!form.productCode) errs.productCode = REQ;
-    if (isSubscription && !form.startPeriod) errs.startPeriod = REQ;
-    if (isSubscription && !form.endPeriod) errs.endPeriod = REQ;
-    if (!form.requireDate) errs.requireDate = REQ;
-    if (!form.shipCustomerCode) errs.shipCustomerCode = REQ;
-    if (!form.shipAddress) errs.shipAddress = REQ;
-    if (!form.shipRecipient) errs.shipRecipient = REQ;
-    if (!form.shipMethod) errs.shipMethod = REQ;
-    if (!form.shipWarehouse) errs.shipWarehouse = REQ;
-    if (Object.keys(errs).length > 0) {
-      setFormErrors(errs);
-      if (errs.productCode || errs.startPeriod || errs.endPeriod) setActiveTab('pricing');
-      else setActiveTab('shipping');
-      return;
-    }
+    if (!form.productCode) errs.productCode = '此欄位為必填';
+    if (Object.keys(errs).length > 0) { setFormErrors(errs); return; }
     setItems(prev => [...prev, { id: nextId.current++, ...form }]);
     setShowModal(false);
     setFormErrors({});
   };
+
+  // ── inline 更新明細欄位 ──
+  const updateItem = (id: number, field: keyof CreateOrderItemData, value: string | number) => {
+    setItems(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
+  };
+
+  const editCell = (r: CreateOrderItemData, field: keyof CreateOrderItemData) =>
+    <CwInput value={String(r[field] ?? '')} onChange={(e) => updateItem(r.id, field, e.target.value)} />;
+
+  const selectCell = (r: CreateOrderItemData, field: keyof CreateOrderItemData, options: { value: string; label: string }[]) =>
+    <CwSelect value={String(r[field] ?? '')} options={options} onChange={(v) => updateItem(r.id, field, Array.isArray(v) ? v[0] ?? '' : v)} />;
 
   // ── 搜尋過濾明細列表 ──
   const keyword = searchKeyword.trim().toLowerCase();
@@ -404,45 +287,68 @@ export function CreateOrderItems() {
 
   const pricingCols: CwTableColumn<CreateOrderItemData>[] = [
     ...fixedCols,
-    { key: 'startPeriod',     title: '訂閱起期',     width: '100px' },
-    { key: 'endPeriod',       title: '訂閱迄期',     width: '100px' },
-    { key: 'quantity',        title: '數量',          width: '70px',  align: 'center' },
-    { key: 'unitPrice',       title: '單位定價',      width: '110px', align: 'right', render: (v: any) => `NT$ ${(v as number).toLocaleString()}` },
-    { key: 'discount',        title: '折扣',          width: '70px',  align: 'center', render: (v: any) => `${v}%` },
-    { key: 'sellPrice',       title: '單位售價',      width: '110px', align: 'right', render: (v: any) => `NT$ ${(v as number).toLocaleString()}` },
-    { key: 'actualAmount',    title: '實際銷售金額',  width: '130px', align: 'right', render: (v: any) => `NT$ ${(v as number).toLocaleString()}` },
-    { key: 'transactionType', title: '交易型態',      width: '90px' },
-    { key: 'taxType',         title: '稅別',          width: '80px' },
+    {
+      key: 'transactionType', title: '交易型態', width: '110px',
+      render: (_: any, r: CreateOrderItemData) => selectCell(r, 'transactionType', [
+        { value: '訂閱', label: '訂閱' }, { value: '新訂', label: '新訂' },
+        { value: '續訂', label: '續訂' }, { value: '加訂', label: '加訂' },
+      ]),
+    },
+    { key: 'startPeriod',  title: '訂閱起期',    width: '110px', render: (_: any, r: CreateOrderItemData) => editCell(r, 'startPeriod') },
+    { key: 'endPeriod',    title: '訂閱迄期',    width: '110px', render: (_: any, r: CreateOrderItemData) => editCell(r, 'endPeriod') },
+    { key: 'quantity',     title: '數量',         width: '90px',  render: (_: any, r: CreateOrderItemData) =>
+        <CwInput value={String(r.quantity)} onChange={(e) => updateItem(r.id, 'quantity', Number(e.target.value) || 0)} /> },
+    { key: 'unitPrice',    title: '單位定價',     width: '110px', align: 'right', render: (v: any) => `NT$ ${(v as number).toLocaleString()}` },
+    { key: 'discount',     title: '折扣',         width: '90px',  render: (_: any, r: CreateOrderItemData) => editCell(r, 'discount') },
+    { key: 'sellPrice',    title: '單位售價',     width: '110px', align: 'right', render: (v: any) => `NT$ ${(v as number).toLocaleString()}` },
+    { key: 'actualAmount', title: '實際銷售金額', width: '130px', align: 'right', render: (v: any) => `NT$ ${(v as number).toLocaleString()}` },
+    {
+      key: 'taxType', title: '稅別', width: '110px',
+      render: (_: any, r: CreateOrderItemData) => selectCell(r, 'taxType', [
+        { value: '內含稅', label: '內含稅' }, { value: '外加稅', label: '外加稅' }, { value: '免稅', label: '免稅' },
+      ]),
+    },
   ];
 
   const shippingCols: CwTableColumn<CreateOrderItemData>[] = [
     ...fixedCols,
-    { key: 'requireDate',      title: '需求日',       width: '110px' },
-    { key: 'agreeMarketing',   title: '同意行銷',     width: '100px', align: 'center', render: (v: any) => ({ '1': '1 同意', '2': '2 不同意', 'A': 'A 不確定' }[v as string] ?? v) },
-    { key: 'shipCustomerCode', title: '出貨客戶編號', width: '120px' },
-    { key: 'shipCustomerName', title: '出貨客戶名稱', width: '120px' },
-    { key: 'shipAddress',      title: '出貨地址',     width: '200px' },
-    { key: 'shipRecipient',    title: '出貨收件人',   width: '110px' },
-    { key: 'shipMethod',       title: '出貨方式',     width: '130px' },
-    { key: 'grade',            title: '品級',          width: '70px',  align: 'center' },
-    { key: 'discountMark',     title: '折扣標',       width: '80px',  align: 'center' },
-    { key: 'reserver',         title: '保留者',       width: '100px' },
-    { key: 'shipWarehouse',    title: '出貨倉',       width: '90px' },
-    { key: 'bookShowLocation', title: '書展儲位',     width: '100px' },
+    { key: 'requireDate',        title: '需求日',       width: '130px', render: (_: any, r: CreateOrderItemData) => editCell(r, 'requireDate') },
+    {
+      key: 'agreeMarketing', title: '同意行銷', width: '120px',
+      render: (_: any, r: CreateOrderItemData) => selectCell(r, 'agreeMarketing', [
+        { value: '1', label: '1 同意' }, { value: '2', label: '2 不同意' }, { value: 'A', label: 'A 不確定' },
+      ]),
+    },
+    { key: 'agreeMarketingDate', title: '同意行銷日期', width: '130px', render: (_: any, r: CreateOrderItemData) => editCell(r, 'agreeMarketingDate') },
+    { key: 'shipCustomerCode',   title: '出貨客戶編號', width: '130px', render: (_: any, r: CreateOrderItemData) => editCell(r, 'shipCustomerCode') },
+    { key: 'shipCustomerName',   title: '出貨客戶名稱', width: '130px', render: (_: any, r: CreateOrderItemData) => editCell(r, 'shipCustomerName') },
+    { key: 'shipAddress',        title: '出貨地址',     width: '200px', render: (_: any, r: CreateOrderItemData) => editCell(r, 'shipAddress') },
+    { key: 'shipRecipient',      title: '出貨收件人',   width: '120px', render: (_: any, r: CreateOrderItemData) => editCell(r, 'shipRecipient') },
+    { key: 'shipMethod',         title: '出貨方式',     width: '130px', render: (_: any, r: CreateOrderItemData) => editCell(r, 'shipMethod') },
+    { key: 'grade',              title: '品級',         width: '80px',  render: (_: any, r: CreateOrderItemData) => editCell(r, 'grade') },
+    {
+      key: 'discountMark', title: '折扣標', width: '90px', align: 'center',
+      render: (_: any, r: CreateOrderItemData) => selectCell(r, 'discountMark', [
+        { value: 'Y', label: 'Y' }, { value: 'N', label: 'N' },
+      ]),
+    },
+    { key: 'reserver',         title: '保留者', width: '110px', render: (_: any, r: CreateOrderItemData) => editCell(r, 'reserver') },
+    { key: 'shipWarehouse',    title: '出貨倉', width: '100px', render: (_: any, r: CreateOrderItemData) => editCell(r, 'shipWarehouse') },
+    { key: 'bookShowLocation', title: '書展儲位', width: '100px', render: (_: any, r: CreateOrderItemData) => editCell(r, 'bookShowLocation') },
   ];
 
   const otherCols: CwTableColumn<CreateOrderItemData>[] = [
     ...fixedCols,
-    { key: 'autoRenew', title: '自動續訂', width: '90px',  align: 'center' },
-    { key: 'planCode',  title: '方案代碼', width: '120px' },
-    { key: 'planName',  title: '方案名稱', width: '200px' },
+    {
+      key: 'autoRenew', title: '自動續訂', width: '110px',
+      render: (_: any, r: CreateOrderItemData) => selectCell(r, 'autoRenew', [
+        { value: 'Y', label: 'Y' }, { value: 'N', label: 'N' },
+      ]),
+    },
+    { key: 'planCode', title: '方案代碼', width: '120px', render: (_: any, r: CreateOrderItemData) => editCell(r, 'planCode') },
+    { key: 'planName', title: '方案名稱', width: '200px', render: (_: any, r: CreateOrderItemData) => editCell(r, 'planName') },
   ];
 
-  const tabs = [
-    { key: 'pricing'  as const, label: '定價' },
-    { key: 'shipping' as const, label: '出貨' },
-    { key: 'other'    as const, label: '其他' },
-  ];
 
   // ── Render ────────────────────────────────────────────────
 
@@ -450,7 +356,7 @@ export function CreateOrderItems() {
     <div className="space-y-[12px]">
 
       {/* 工具列 */}
-      <div className="flex items-center gap-[8px]">
+      <div className="flex items-center justify-between">
         <button
           onClick={openModal}
           className="flex items-center gap-[6px] px-[14px] py-[8px] bg-[#0078d4] text-white rounded-[6px] text-[14px] font-[500] font-['Noto_Sans_TC',_sans-serif] hover:bg-[#106ebe] transition-colors"
@@ -458,13 +364,15 @@ export function CreateOrderItems() {
           <Plus size={16} />
           新增明細
         </button>
-        <button
-          onClick={() => { setPromoAddKeyword(''); setShowPromoAddPopup(true); }}
-          className="flex items-center gap-[6px] px-[14px] py-[8px] bg-white border border-[#0078d4] text-[#0078d4] rounded-[6px] text-[14px] font-[500] font-['Noto_Sans_TC',_sans-serif] hover:bg-[#e8f3fb] transition-colors"
-        >
-          <Plus size={16} />
-          以方案新增明細
-        </button>
+        <div className="flex items-center gap-[8px]">
+          <label className="font-['Noto_Sans_TC',_sans-serif] text-[14px] text-[#1c1c1c] whitespace-nowrap" style={{ fontWeight: 350 }}>搜尋：</label>
+          <CwInput
+            placeholder="輸入關鍵字過濾"
+            value={searchKeyword}
+            onChange={(e) => setSearchKeyword(e.target.value)}
+            width="240px"
+          />
+        </div>
       </div>
 
       {/* 定價、出貨、其他表格：有明細才顯示 */}
@@ -501,7 +409,7 @@ export function CreateOrderItems() {
       ════════════════════════════════════════════════════════ */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 z-[1300] flex items-center justify-center p-[20px]">
-          <div className="bg-white rounded-[10px] shadow-[0_12px_32px_rgba(0,0,0,0.18)] w-full max-w-[760px] max-h-[90vh] flex flex-col">
+          <div className="bg-white rounded-[10px] shadow-[0_12px_32px_rgba(0,0,0,0.18)] w-full max-w-[480px] flex flex-col">
 
             {/* Modal 標題列 */}
             <div className="flex items-center justify-between px-[24px] py-[18px] border-b border-[#e5e7eb] shrink-0">
@@ -511,258 +419,20 @@ export function CreateOrderItems() {
               </button>
             </div>
 
-            {/* Tab 列 */}
-            <div className="flex border-b border-[#e5e7eb] shrink-0 px-[24px]">
-              {tabs.map(t => (
-                <button
-                  key={t.key}
-                  onClick={() => setActiveTab(t.key)}
-                  className={`px-[16px] py-[12px] text-[14px] font-['Noto_Sans_TC',_sans-serif] border-b-[2px] transition-colors ${
-                    activeTab === t.key
-                      ? 'border-[#0078d4] text-[#0078d4] font-[600]'
-                      : 'border-transparent text-[#7c808c] hover:text-[#1c1c1c]'
-                  }`}
-                  style={{ fontWeight: activeTab === t.key ? 600 : 350 }}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Tab 內容：可捲動 */}
-            <div className="flex-1 overflow-y-auto px-[24px] py-[20px]">
-
-              {/* ── 定價 Tab ── */}
-              {activeTab === 'pricing' && (
-                <div className="space-y-[16px]">
-                  <div className="grid grid-cols-2 gap-x-[20px] gap-y-[16px]">
-                    {/* 產品料號：Popup 搜尋 */}
-                    <PopupSearchInput
-                      label="產品料號"
-                      required
-                      value={form.productCode}
-                      error={formErrors.productCode}
-                      onChange={(v) => setF('productCode', v)}
-                      onOpen={() => { setShowProductPopup(true); setProductKeyword(''); }}
-                      onClear={() => { setForm(prev => ({ ...prev, productCode: '', productName: '' })); setFormErrors(p => { const n = {...p}; delete n.productCode; return n; }); }}
-                    />
-                    {/* 產品名稱：選產品後自動帶入，唯讀 */}
-                    <CwInput label="產品名稱" value={form.productName} disabled readOnly />
-
-                    {/* 訂閱起期：訂閱類必填 */}
-                    <div className="flex flex-col gap-[6px]">
-                      <label className="text-[#1c1c1c] text-[12px] font-[500] font-['Noto_Sans_TC',_sans-serif]">
-                        訂閱起期{isSubscription && <span style={{ color: '#E53E3E' }}> *</span>}
-                      </label>
-                      <CwInput
-                        value={form.startPeriod}
-                        placeholder="例：782"
-                        error={formErrors.startPeriod}
-                        onChange={(e) => setF('startPeriod', e.target.value)}
-                      />
-                    </div>
-
-                    {/* 訂閱迄期：訂閱類必填 */}
-                    <div className="flex flex-col gap-[6px]">
-                      <label className="text-[#1c1c1c] text-[12px] font-[500] font-['Noto_Sans_TC',_sans-serif]">
-                        訂閱迄期{isSubscription && <span style={{ color: '#E53E3E' }}> *</span>}
-                      </label>
-                      <CwInput
-                        value={form.endPeriod}
-                        placeholder="例：807"
-                        error={formErrors.endPeriod}
-                        onChange={(e) => setF('endPeriod', e.target.value)}
-                      />
-                    </div>
-
-                    {/* 數量：預設 1 */}
-                    <CwInput
-                      label="數量"
-                      value={String(form.quantity)}
-                      disabled={isShipped}
-                      readOnly={isShipped}
-                      onChange={(e) => setF('quantity', parseInt(e.target.value, 10) || 0)}
-                    />
-                    {/* 單位定價 */}
-                    <CwInput
-                      label="單位定價"
-                      value={String(form.unitPrice)}
-                      onChange={(e) => setF('unitPrice', parseFloat(e.target.value) || 0)}
-                    />
-                    {/* 折扣 */}
-                    <CwInput
-                      label="折扣（%）"
-                      value={form.discount}
-                      placeholder="輸入數字，如 10 代表 10%"
-                      onChange={(e) => setF('discount', e.target.value)}
-                    />
-                    {/* 單位售價：自動計算 */}
-                    <CwInput label="單位售價" value={`NT$ ${form.sellPrice.toLocaleString()}`} disabled readOnly />
-                    {/* 實際銷售金額：自動計算 */}
-                    <div className="col-span-2">
-                      <CwInput label="實際銷售金額" value={`NT$ ${form.actualAmount.toLocaleString()}`} disabled readOnly />
-                    </div>
-                    {/* 交易型態：由料號自動帶出預設值 */}
-                    <CwSelect
-                      label="交易型態"
-                      value={form.transactionType}
-                      options={[
-                        { value: '訂閱', label: '訂閱' },
-                        { value: '新訂', label: '新訂' },
-                        { value: '續訂', label: '續訂' },
-                        { value: '加訂', label: '加訂' },
-                      ]}
-                      placeholder="請選擇"
-                      onChange={(v) => setF('transactionType', Array.isArray(v) ? v[0] ?? '' : v)}
-                    />
-                    {/* 稅別：由交易型態自動帶出 */}
-                    <CwSelect
-                      label="稅別"
-                      value={form.taxType}
-                      options={[
-                        { value: '內含稅', label: '內含稅' },
-                        { value: '外加稅', label: '外加稅' },
-                        { value: '免稅',   label: '免稅' },
-                      ]}
-                      placeholder="請選擇"
-                      onChange={(v) => setF('taxType', Array.isArray(v) ? v[0] ?? '' : v)}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* ── 出貨 Tab ── */}
-              {activeTab === 'shipping' && (
-                <div className="space-y-[16px]">
-                  {form.productCode && (
-                    <div className="grid grid-cols-2 gap-x-[20px] gap-y-[16px] p-[12px] bg-[#f5f7fa] rounded-[6px]">
-                      <CwInput label="產品料號" value={form.productCode} disabled readOnly />
-                      <CwInput label="產品名稱" value={form.productName} disabled readOnly />
-                    </div>
-                  )}
-                  <div className="grid grid-cols-2 gap-x-[20px] gap-y-[16px]">
-
-                    {/* 需求日：預設當日 */}
-                    <div className="flex flex-col gap-[6px]">
-                      <RequiredLabel>需求日</RequiredLabel>
-                      <CwDatePicker
-                        value={form.requireDate ? new Date(form.requireDate) : null}
-                        onChange={(d) => setF('requireDate', d ? d.toISOString().slice(0, 10) : '')}
-                      />
-                      {formErrors.requireDate && <p className="text-[12px]" style={{ color: '#E53E3E' }}>{formErrors.requireDate}</p>}
-                    </div>
-
-                    {/* 同意行銷：預設從表頭同步 */}
-                    <CwSelect
-                      label="同意行銷"
-                      value={form.agreeMarketing}
-                      options={[
-                        { value: '1', label: '1 同意' },
-                        { value: '2', label: '2 不同意' },
-                        { value: 'A', label: 'A 不確定' },
-                      ]}
-                      onChange={(v) => setF('agreeMarketing', Array.isArray(v) ? v[0] ?? '' : v)}
-                    />
-                    {/* 同意行銷日期 */}
-                    <CwDatePicker
-                      label="同意行銷日期"
-                      disabled={form.agreeMarketing !== '1'}
-                      onChange={(d) => setF('agreeMarketingDate', d ? d.toISOString().slice(0, 10) : '')}
-                    />
-
-                    {/* 出貨客戶編號：預設從表頭同步，可修改 */}
-                    <PopupSearchInput
-                      label="出貨客戶編號"
-                      required
-                      value={form.shipCustomerCode}
-                      error={formErrors.shipCustomerCode}
-                      onChange={(v) => setF('shipCustomerCode', v)}
-                      onOpen={() => { setShowCustomerPopup(true); setCustomerKeyword(''); }}
-                      onClear={() => { setForm(prev => ({ ...prev, shipCustomerCode: '', shipCustomerName: '', shipAddress: '' })); setFormErrors(p => { const n = {...p}; delete n.shipCustomerCode; return n; }); }}
-                    />
-                    {/* 出貨客戶名稱：自動帶入，唯讀 */}
-                    <CwInput label="出貨客戶名稱" value={form.shipCustomerName} disabled readOnly />
-                    {/* 出貨地址 */}
-                    <div className="col-span-2">
-                      <CwInput label="出貨地址" value={form.shipAddress} error={formErrors.shipAddress} onChange={(e) => setF('shipAddress', e.target.value)} />
-                    </div>
-                    {/* 出貨收件人 */}
-                    <CwInput label="出貨收件人" value={form.shipRecipient} error={formErrors.shipRecipient} onChange={(e) => setF('shipRecipient', e.target.value)} />
-                    {/* 出貨方式：從表頭同步 */}
-                    <PopupSearchInput
-                      label="出貨方式"
-                      required
-                      value={form.shipMethod}
-                      error={formErrors.shipMethod}
-                      onChange={(v) => setF('shipMethod', v)}
-                      onOpen={() => { setShowShippingPopup(true); setShippingKeyword(''); }}
-                      onClear={() => setF('shipMethod', '')}
-                    />
-                    {/* 品級 */}
-                    <CwInput label="品級" value={form.grade} onChange={(e) => setF('grade', e.target.value)} />
-                    {/* 折扣標 */}
-                    <CwSelect
-                      label="折扣標"
-                      value={form.discountMark}
-                      options={[{ value: 'Y', label: 'Y' }, { value: 'N', label: 'N' }]}
-                      onChange={(v) => setF('discountMark', Array.isArray(v) ? v[0] ?? '' : v)}
-                    />
-                    {/* 保留者 */}
-                    <CwInput label="保留者" value={form.reserver} onChange={(e) => setF('reserver', e.target.value)} />
-                    {/* 出貨倉：已出貨時 disabled */}
-                    <CwInput
-                      label="出貨倉"
-                      value={form.shipWarehouse}
-                      error={formErrors.shipWarehouse}
-                      disabled={isShipped}
-                      readOnly={isShipped}
-                      onChange={(e) => setF('shipWarehouse', e.target.value)}
-                    />
-                    {/* 書展儲位：已出貨時 disabled */}
-                    <CwInput
-                      label="書展儲位"
-                      value={form.bookShowLocation}
-                      disabled={isShipped}
-                      readOnly={isShipped}
-                      onChange={(e) => setF('bookShowLocation', e.target.value)}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* ── 其他 Tab ── */}
-              {activeTab === 'other' && (
-                <div className="space-y-[16px]">
-                  {form.productCode && (
-                    <div className="grid grid-cols-2 gap-x-[20px] gap-y-[16px] p-[12px] bg-[#f5f7fa] rounded-[6px]">
-                      <CwInput label="產品料號" value={form.productCode} disabled readOnly />
-                      <CwInput label="產品名稱" value={form.productName} disabled readOnly />
-                    </div>
-                  )}
-                  <div className="grid grid-cols-2 gap-x-[20px] gap-y-[16px]">
-                    {/* 自動續訂 */}
-                    <CwSelect
-                      label="自動續訂"
-                      value={form.autoRenew}
-                      options={[{ value: 'Y', label: '是' }, { value: 'N', label: '否' }]}
-                      onChange={(v) => setF('autoRenew', Array.isArray(v) ? v[0] ?? '' : v)}
-                    />
-                    {/* 方案代碼：Popup 搜尋，選取後自動帶入方案名稱 */}
-                    <PopupSearchInput
-                      label="方案代碼"
-                      value={form.planCode}
-                      onChange={(v) => setF('planCode', v)}
-                      onOpen={() => { setShowPlanPopup(true); setPlanKeyword(''); }}
-                      onClear={() => setForm(prev => ({ ...prev, planCode: '', planName: '' }))}
-                    />
-                    {/* 方案名稱：依方案代碼自動帶出，唯讀 */}
-                    <div className="col-span-2">
-                      <CwInput label="方案名稱" value={form.planName} disabled readOnly />
-                    </div>
-                  </div>
-                </div>
-              )}
-
+            {/* 內容 */}
+            <div className="px-[24px] py-[20px]">
+              <div className="grid grid-cols-2 gap-x-[20px] gap-y-[16px]">
+                <PopupSearchInput
+                  label="產品料號"
+                  required
+                  value={form.productCode}
+                  error={formErrors.productCode}
+                  onChange={(v) => setF('productCode', v)}
+                  onOpen={() => { setShowProductPopup(true); setProductKeyword(''); }}
+                  onClear={() => { setForm(prev => ({ ...prev, productCode: '', productName: '' })); setFormErrors(p => { const n = {...p}; delete n.productCode; return n; }); }}
+                />
+                <CwInput label="產品名稱" value={form.productName} disabled readOnly />
+              </div>
             </div>
 
             {/* Modal 底部按鈕 */}
@@ -785,9 +455,7 @@ export function CreateOrderItems() {
         </div>
       )}
 
-      {/* ═══════════════════════════════════════════════════════
-          產品搜尋 Popup
-      ════════════════════════════════════════════════════════ */}
+      {/* 產品搜尋 Popup */}
       {showProductPopup && (
         <div className="fixed inset-0 bg-black/40 z-[1400] flex items-center justify-center" onClick={() => { setShowProductPopup(false); setProductKeyword(''); }}>
           <div ref={productPopupRef} className="bg-white rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.16)] w-[560px] max-h-[520px] flex flex-col" onClick={(e) => e.stopPropagation()}>
@@ -819,189 +487,6 @@ export function CreateOrderItems() {
                     </tr>
                   )) : (
                     <tr><td colSpan={3} className="px-[16px] py-[32px] text-center text-[#7c808c]">查無符合資料</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ═══════════════════════════════════════════════════════
-          客戶搜尋 Popup
-      ════════════════════════════════════════════════════════ */}
-      {showCustomerPopup && (
-        <div className="fixed inset-0 bg-black/40 z-[1400] flex items-center justify-center" onClick={() => { setShowCustomerPopup(false); setCustomerKeyword(''); }}>
-          <div ref={customerPopupRef} className="bg-white rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.16)] w-[640px] max-h-[520px] flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-[20px] py-[16px] border-b border-[#e5e7eb]">
-              <h3 className="text-[16px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 600 }}>選擇出貨客戶</h3>
-              <button onClick={() => { setShowCustomerPopup(false); setCustomerKeyword(''); }} className="w-[32px] h-[32px] rounded-[4px] flex items-center justify-center hover:bg-[#f5f7fa] text-[#7c808c]"><X size={20} /></button>
-            </div>
-            <div className="px-[20px] py-[12px] border-b border-[#e5e7eb]">
-              <input type="text" placeholder="搜尋客編或名稱" value={customerKeyword} onChange={(e) => setCustomerKeyword(e.target.value)} autoFocus
-                className="w-full h-[36px] px-[12px] border border-[#c4c9d3] rounded-[4px] text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }} />
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              <table className="w-full border-collapse text-[14px] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>
-                <thead className="sticky top-0 bg-[#f5f7fa] border-b border-[#e5e7eb]">
-                  <tr>
-                    <th className="px-[16px] py-[12px] text-left text-[#7c808c] font-[500]">客編</th>
-                    <th className="px-[16px] py-[12px] text-left text-[#7c808c] font-[500]">名稱</th>
-                    <th className="px-[16px] py-[12px] text-left text-[#7c808c] font-[500]">地址</th>
-                    <th className="px-[16px] py-[12px] text-center text-[#7c808c] font-[500]">動作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredCustomers.length > 0 ? filteredCustomers.map(c => (
-                    <tr key={c.id} className="border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors">
-                      <td className="px-[16px] py-[12px] text-[#1c1c1c] font-[500]">{c.code}</td>
-                      <td className="px-[16px] py-[12px] text-[#1c1c1c]">{c.name}</td>
-                      <td className="px-[16px] py-[12px] text-[#7c808c] truncate max-w-[180px]" title={c.address}>{c.address}</td>
-                      <td className="px-[16px] py-[12px] text-center">
-                        <button onClick={() => handleSelectCustomer(c.code, c.name, c.address)} className="px-[12px] py-[6px] bg-[#0078d4] text-white rounded-[4px] font-[500] hover:bg-[#106ebe] transition-colors">選擇</button>
-                      </td>
-                    </tr>
-                  )) : (
-                    <tr><td colSpan={4} className="px-[16px] py-[32px] text-center text-[#7c808c]">查無符合資料</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ═══════════════════════════════════════════════════════
-          出貨方式搜尋 Popup
-      ════════════════════════════════════════════════════════ */}
-      {showShippingPopup && (
-        <div className="fixed inset-0 bg-black/40 z-[1400] flex items-center justify-center" onClick={() => { setShowShippingPopup(false); setShippingKeyword(''); }}>
-          <div ref={shippingPopupRef} className="bg-white rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.16)] w-[420px] max-h-[480px] flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-[20px] py-[16px] border-b border-[#e5e7eb]">
-              <h3 className="text-[16px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 600 }}>選擇出貨方式</h3>
-              <button onClick={() => { setShowShippingPopup(false); setShippingKeyword(''); }} className="w-[32px] h-[32px] rounded-[4px] flex items-center justify-center hover:bg-[#f5f7fa] text-[#7c808c]"><X size={20} /></button>
-            </div>
-            <div className="px-[20px] py-[12px] border-b border-[#e5e7eb]">
-              <input type="text" placeholder="搜尋代碼或名稱" value={shippingKeyword} onChange={(e) => setShippingKeyword(e.target.value)} autoFocus
-                className="w-full h-[36px] px-[12px] border border-[#c4c9d3] rounded-[4px] text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }} />
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              <table className="w-full border-collapse text-[14px] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>
-                <thead className="sticky top-0 bg-[#f5f7fa] border-b border-[#e5e7eb]">
-                  <tr>
-                    <th className="px-[16px] py-[12px] text-left text-[#7c808c] font-[500]">代碼</th>
-                    <th className="px-[16px] py-[12px] text-left text-[#7c808c] font-[500]">名稱</th>
-                    <th className="px-[16px] py-[12px] text-center text-[#7c808c] font-[500]">動作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredShipping.length > 0 ? filteredShipping.map(s => (
-                    <tr key={s.id} className="border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors">
-                      <td className="px-[16px] py-[12px] text-[#1c1c1c] font-[500]">{s.code}</td>
-                      <td className="px-[16px] py-[12px] text-[#1c1c1c]">{s.name}</td>
-                      <td className="px-[16px] py-[12px] text-center">
-                        <button onClick={() => handleSelectShipping(s.code, s.name)} className="px-[12px] py-[6px] bg-[#0078d4] text-white rounded-[4px] font-[500] hover:bg-[#106ebe] transition-colors">選擇</button>
-                      </td>
-                    </tr>
-                  )) : (
-                    <tr><td colSpan={3} className="px-[16px] py-[32px] text-center text-[#7c808c]">查無符合資料</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ═══════════════════════════════════════════════════════
-          方案搜尋 Popup
-      ════════════════════════════════════════════════════════ */}
-      {showPlanPopup && (
-        <div className="fixed inset-0 bg-black/40 z-[1400] flex items-center justify-center" onClick={() => { setShowPlanPopup(false); setPlanKeyword(''); }}>
-          <div ref={planPopupRef} className="bg-white rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.16)] w-[620px] max-h-[560px] flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-[20px] py-[16px] border-b border-[#e5e7eb]">
-              <h3 className="text-[16px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 600 }}>選擇方案</h3>
-              <button onClick={() => { setShowPlanPopup(false); setPlanKeyword(''); }} className="w-[32px] h-[32px] rounded-[4px] flex items-center justify-center hover:bg-[#f5f7fa] text-[#7c808c]"><X size={20} /></button>
-            </div>
-            <div className="px-[20px] py-[12px] border-b border-[#e5e7eb]">
-              <input type="text" placeholder="搜尋方案代碼或名稱" value={planKeyword} onChange={(e) => setPlanKeyword(e.target.value)} autoFocus
-                className="w-full h-[36px] px-[12px] border border-[#c4c9d3] rounded-[4px] text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }} />
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              <table className="w-full border-collapse text-[14px] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>
-                <thead className="sticky top-0 bg-[#f5f7fa] border-b border-[#e5e7eb]">
-                  <tr>
-                    <th className="px-[16px] py-[12px] text-left text-[#7c808c] font-[500]">方案代碼</th>
-                    <th className="px-[16px] py-[12px] text-left text-[#7c808c] font-[500]">方案名稱</th>
-                    <th className="px-[16px] py-[12px] text-center text-[#7c808c] font-[500]">折扣</th>
-                    <th className="px-[16px] py-[12px] text-center text-[#7c808c] font-[500]">有效期</th>
-                    <th className="px-[16px] py-[12px] text-center text-[#7c808c] font-[500]">動作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredPlans.length > 0 ? filteredPlans.map(p => (
-                    <tr key={p.id} className="border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors">
-                      <td className="px-[16px] py-[12px] text-[#1c1c1c] font-[500]">{p.code}</td>
-                      <td className="px-[16px] py-[12px] text-[#1c1c1c]">{p.name}</td>
-                      <td className="px-[16px] py-[12px] text-center text-[#0078d4]">{p.discount}</td>
-                      <td className="px-[16px] py-[12px] text-center text-[#7c808c]">{p.startDate} ~ {p.endDate}</td>
-                      <td className="px-[16px] py-[12px] text-center">
-                        <button onClick={() => handleSelectPlan(p.code, p.name)} className="px-[12px] py-[6px] bg-[#0078d4] text-white rounded-[4px] font-[500] hover:bg-[#106ebe] transition-colors">選擇</button>
-                      </td>
-                    </tr>
-                  )) : (
-                    <tr><td colSpan={5} className="px-[16px] py-[32px] text-center text-[#7c808c]">查無符合資料</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ═══════════════════════════════════════════════════════
-          以方案新增明細 Popup
-      ════════════════════════════════════════════════════════ */}
-      {showPromoAddPopup && (
-        <div className="fixed inset-0 bg-black/40 z-[1200] flex items-center justify-center" onClick={() => { setShowPromoAddPopup(false); setPromoAddKeyword(''); }}>
-          <div ref={promoAddPopupRef} className="bg-white rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.16)] w-[640px] max-h-[520px] flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-[20px] py-[16px] border-b border-[#e5e7eb]">
-              <h3 className="text-[16px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 600 }}>以方案新增明細</h3>
-              <button onClick={() => { setShowPromoAddPopup(false); setPromoAddKeyword(''); }} className="w-[32px] h-[32px] rounded-[4px] flex items-center justify-center hover:bg-[#f5f7fa] text-[#7c808c] transition-colors"><X size={20} /></button>
-            </div>
-            <div className="px-[20px] py-[12px] border-b border-[#e5e7eb]">
-              <input
-                type="text"
-                placeholder="搜尋方案代碼或方案描述"
-                value={promoAddKeyword}
-                onChange={(e) => setPromoAddKeyword(e.target.value)}
-                autoFocus
-                className="w-full h-[36px] px-[12px] border border-[#c4c9d3] rounded-[4px] text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]"
-                style={{ fontWeight: 350 }}
-              />
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              <table className="w-full border-collapse text-[14px] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>
-                <thead className="sticky top-0 bg-[#f5f7fa] border-b border-[#e5e7eb]">
-                  <tr>
-                    <th className="px-[16px] py-[12px] text-left text-[#7c808c] font-[500]">方案代碼</th>
-                    <th className="px-[16px] py-[12px] text-left text-[#7c808c] font-[500]">方案描述</th>
-                    <th className="px-[16px] py-[12px] text-right text-[#7c808c] font-[500]">方案總金額</th>
-                    <th className="px-[16px] py-[12px] text-center text-[#7c808c] font-[500]">動作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredPromoPlans.length > 0 ? filteredPromoPlans.map(p => (
-                    <tr key={p.code} className="border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors">
-                      <td className="px-[16px] py-[12px] text-[#1c1c1c] font-[500]">{p.code}</td>
-                      <td className="px-[16px] py-[12px] text-[#1c1c1c]">{p.description}</td>
-                      <td className="px-[16px] py-[12px] text-right text-[#1c1c1c]">{p.totalAmount.toLocaleString()}</td>
-                      <td className="px-[16px] py-[12px] text-center">
-                        <button onClick={() => handleSelectPromoAdd(p)} className="px-[12px] py-[6px] bg-[#0078d4] text-white rounded-[4px] font-[500] hover:bg-[#106ebe] transition-colors">選擇</button>
-                      </td>
-                    </tr>
-                  )) : (
-                    <tr><td colSpan={4} className="px-[16px] py-[32px] text-center text-[#7c808c]">查無符合資料</td></tr>
                   )}
                 </tbody>
               </table>

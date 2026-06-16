@@ -1124,9 +1124,14 @@ export function PMOrderDetail({ orderId: _orderId, orderType = 'erp', orderTypes
               </CwButton>
             )}
             <div className="flex items-center gap-[8px]">
-              <CwButton variant="primary" appearance="filled" disabled>核單</CwButton>
-              <CwButton variant="primary" appearance="outlined" disabled={!isEditMode} onClick={() => { headerRef.current?.validate(); }}>儲存</CwButton>
-              <CwButton variant="destructive" appearance="outlined" disabled>刪除</CwButton>
+              {orderHeaderInfo?.omgStatus === '輸入' ? (
+                <>
+                  <CwButton variant="primary" appearance="outlined">暫存</CwButton>
+                  <CwButton variant="primary" appearance="filled">建立訂單(核單)</CwButton>
+                </>
+              ) : (
+                <CwButton variant="primary" appearance="outlined" disabled={!isEditMode} onClick={() => { headerRef.current?.validate(); }}>儲存</CwButton>
+              )}
             </div>
           </div>
         </div>
