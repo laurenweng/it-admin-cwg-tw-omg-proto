@@ -73,6 +73,14 @@ interface CwSelectProps {
    * 自訂選項渲染（下拉列表用）
    */
   renderOption?: (option: CwSelectOption) => ReactNode;
+  /**
+   * Label 與 select 的排列方向；預設 vertical（label 在上），horizontal 為 label 在左
+   */
+  layout?: 'vertical' | 'horizontal';
+  /**
+   * 水平模式下 label 的固定寬度，例如 '96px'
+   */
+  labelWidth?: string;
 }
 
 /**
@@ -128,6 +136,8 @@ export function CwSelect({
   clearable = false,
   width = '100%',
   renderOption,
+  layout = 'vertical',
+  labelWidth,
 }: CwSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -263,24 +273,39 @@ export function CwSelect({
   const hasValue = multiple ? selectedOptions.length > 0 : !!value;
   const showClearButton = clearable && hasValue && !disabled;
 
-  return (
-    <div className="flex flex-col gap-1" style={{ width }}>
-      {/* Label */}
-      {label && (
-        <label
-          className="text-foreground"
-          style={{
-            fontFamily: 'var(--font-noto-sans-tc)',
-            fontSize: 'var(--text-base)',
-            fontWeight: 350,
-          }}
-        >
-          {label}
-        </label>
-      )}
+  const labelEl = label ? (
+    layout === 'horizontal' ? (
+      <label
+        className="shrink-0 text-[#7c808c]"
+        style={{ fontFamily: 'var(--font-noto-sans-tc)', fontSize: '12px', fontWeight: 400, ...(labelWidth ? { width: labelWidth } : {}) }}
+      >
+        {label}
+      </label>
+    ) : (
+      <label
+        className="text-foreground"
+        style={{ fontFamily: 'var(--font-noto-sans-tc)', fontSize: 'var(--text-base)', fontWeight: 350 }}
+      >
+        {label}
+      </label>
+    )
+  ) : null;
 
-      {/* Select Container */}
-      <div className="relative" ref={containerRef}>
+  const errorEl = error && errorMessage ? (
+    <p className="text-[#c00000]" style={{ fontFamily: 'var(--font-noto-sans-tc)', fontSize: '12px', fontWeight: 'normal' }}>
+      {errorMessage}
+    </p>
+  ) : null;
+
+  return (
+    <div
+      className={layout === 'horizontal' ? 'flex flex-row items-center gap-[8px]' : 'flex flex-col gap-1'}
+      style={{ width }}
+    >
+      {labelEl}
+      <div className={layout === 'horizontal' ? 'flex flex-col gap-1 flex-1 min-w-0' : 'flex flex-col gap-1 w-full'}>
+        {/* Select Container */}
+        <div className="relative" ref={containerRef}>
         {/* Input Box */}
         <div
           className={`box-border h-[35px] rounded-[var(--radius)] transition-colors ${
@@ -494,21 +519,9 @@ export function CwSelect({
             )}
           </div>
         )}
+        </div>
+        {errorEl}
       </div>
-
-      {/* Error Message */}
-      {error && errorMessage && (
-        <p
-          className="text-[#c00000]"
-          style={{
-            fontFamily: 'var(--font-noto-sans-tc)',
-            fontSize: '12px',
-            fontWeight: 'normal',
-          }}
-        >
-          {errorMessage}
-        </p>
-      )}
     </div>
   );
 }

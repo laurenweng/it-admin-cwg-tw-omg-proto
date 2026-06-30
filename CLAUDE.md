@@ -6,6 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 實作完任何欄位的規則變更（預設值、可編輯性、驗證、顯示格式、BU 邏輯等）後，**必須呼叫 `record-field-rule` skill** 將規則更新到 `FIELD_RULES.md`。
 
+## 異動單規則
+
+各異動單的業務邏輯、按鈕規則、欄位結構、選項清單記錄在 `CHANGE_ORDER_RULES.md`。
+實作或修改任何異動單功能前請先閱讀，完成後同步更新。
+
 ## Commands
 
 ```bash
@@ -31,6 +36,47 @@ React 18 + TypeScript + Tailwind CSS v4 + Vite. No React Router — routing is c
 - Business page components (NewPMOrderManagement, PMOrderDetail, MemberSearch, etc.) compose `Cw*` components.
 - `*Examples.tsx` files are demo/storybook pages only — not used in production flows.
 - `src/imports/` contains **auto-generated Figma exports** (SVG paths, layout frames). Do not edit manually — reference `svgPaths` objects from these files when building UI.
+
+### PopupSelectField — 輸入＋彈窗選取欄位
+
+`src/components/PopupSelectField.tsx` — 同時支援直接輸入文字與從彈窗清單選取的複合欄位。
+
+**何時使用：** 表單中需要「可手打 + 可選清單」的欄位，例如業務員名、追蹤碼、方案代碼等。**不要**拆成 `PopupSearchInput` + 另一個 modal，一律用此元件。
+
+```tsx
+import { PopupSelectField } from '../components/PopupSelectField';
+
+<PopupSelectField
+  label="業務員名"
+  value={salesperson}
+  onChange={(value) => setSalesperson(value)}
+  options={[
+    { code: '001001', name: '林業務' },
+    { code: '001002', name: '張業務' },
+  ]}
+/>
+```
+
+**Props：**
+| Prop | 型別 | 必填 | 說明 |
+|---|---|---|---|
+| `label` | `string` | ✅ | 欄位標籤，也當 popup 標題與 placeholder 預設值 |
+| `value` | `string` | ✅ | 目前值（可以是代碼或自由輸入文字） |
+| `onChange` | `(value: string) => void` | ✅ | 值變動時觸發（輸入或選取皆會呼叫） |
+| `options` | `{ code: string; name: string }[]` | ✅ | 彈窗中的選項清單 |
+| `onClear` | `() => void` | | 清除按鈕點擊時；未傳則預設 `onChange('')` |
+| `disabled` | `boolean` | | 禁用狀態 |
+| `required` | `boolean` | | 顯示必填紅色星號 |
+| `popupTitle` | `string` | | 彈窗標題，預設為 `選擇{label}` |
+| `searchPlaceholder` | `string` | | 彈窗搜尋框 placeholder，預設為 `搜尋{label}` |
+| `placeholder` | `string` | | input placeholder，預設為 `label` |
+
+**行為：**
+- 直接在 input 打字 → `onChange` 更新值
+- 點右側放大鏡 → 開啟彈窗
+- 彈窗內可搜尋（同時比對 code 和 name）
+- 點「選擇」→ `onChange(option.code)`，彈窗關閉
+- 點 ✕ 清除 → `onClear?.()` 或 `onChange('')`
 
 ### Key Design System Patterns
 

@@ -5,6 +5,7 @@ import { CwSelect } from "./CwSelect";
 import { CwDatePicker } from "./CwDatePicker";
 import { CwTooltip } from "./CwTooltip";
 import { CwToast } from "./CwToast";
+import { SalespersonSelectModal } from "./SalespersonSelectModal";
 
 // ── Mock 資料 ───────────────────────────────────────────────
 
@@ -152,13 +153,6 @@ const mockPlans = [
   { id: 8, code: 'GCV-Y',      name: '天下雜誌年訂方案',    discount: '0%',  startDate: '2025-01-01', endDate: '2025-12-31' },
 ];
 
-const mockEmployees = [
-  { code: '001001', name: '林業務' },
-  { code: '001002', name: '張業務' },
-  { code: '001003', name: '王業務' },
-  { code: '001004', name: '陳業務' },
-  { code: '001005', name: '郭業務' },
-];
 
 const mockTrackingCodes = [
   { code: '102', name: '康健快速結帳頁' },
@@ -581,7 +575,7 @@ const emptyOrderHeader: OMGOrderHeaderData = {
 
 // ── PopupSearchInput（與 NewPMOrderManagement 一致的 UI）────────
 
-function PopupSearchInput({
+export function PopupSearchInput({
   label, value, onChange, onOpen, onClear, onBlur, disabled,
 }: {
   label: string;
@@ -738,8 +732,7 @@ export const OMGOrderHeader = forwardRef<OMGOrderHeaderRef, {
   const trackingCodePopupRef = useRef<HTMLDivElement>(null);
 
   const [showSalespersonPopup, setShowSalespersonPopup] = useState(false);
-  const [salespersonKeyword, setSalespersonKeyword] = useState('');
-  const salespersonPopupRef = useRef<HTMLDivElement>(null);
+
 
   const [toast, setToast] = useState<{ type: 'error' | 'warning'; message: string } | null>(null);
 
@@ -748,12 +741,12 @@ export const OMGOrderHeader = forwardRef<OMGOrderHeaderRef, {
   useEffect(() => {
     const anyOpen = !!activeCustomerPopup || showAddressPopup || showInvoiceAddressPopup ||
       showContactPopup || showInvoiceContactPopup || showShippingPopup ||
-      showPlanPopup || showTrackingCodePopup || showSalespersonPopup;
+      showPlanPopup || showTrackingCodePopup;
     document.body.style.overflow = anyOpen ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [activeCustomerPopup, showAddressPopup, showInvoiceAddressPopup,
       showContactPopup, showInvoiceContactPopup, showShippingPopup,
-      showPlanPopup, showTrackingCodePopup, showSalespersonPopup]);
+      showPlanPopup, showTrackingCodePopup]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -768,9 +761,6 @@ export const OMGOrderHeader = forwardRef<OMGOrderHeaderRef, {
       }
       if (showTrackingCodePopup && trackingCodePopupRef.current && !trackingCodePopupRef.current.contains(e.target as Node)) {
         setShowTrackingCodePopup(false); setTrackingCodeKeyword('');
-      }
-      if (showSalespersonPopup && salespersonPopupRef.current && !salespersonPopupRef.current.contains(e.target as Node)) {
-        setShowSalespersonPopup(false); setSalespersonKeyword('');
       }
       if (showAddressPopup && addressPopupRef.current && !addressPopupRef.current.contains(e.target as Node)) {
         setShowAddressPopup(false); setShowNewAddressForm(false); setNewAddr(emptyNewAddress);
@@ -787,7 +777,7 @@ export const OMGOrderHeader = forwardRef<OMGOrderHeaderRef, {
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [activeCustomerPopup, showShippingPopup, showPlanPopup, showTrackingCodePopup, showSalespersonPopup, showAddressPopup, showContactPopup, showInvoiceAddressPopup, showInvoiceContactPopup]);
+  }, [activeCustomerPopup, showShippingPopup, showPlanPopup, showTrackingCodePopup, showAddressPopup, showContactPopup, showInvoiceAddressPopup, showInvoiceContactPopup]);
 
   // ── 過濾清單 ──
   const filteredCustomers = customerKeyword
@@ -1031,19 +1021,6 @@ export const OMGOrderHeader = forwardRef<OMGOrderHeaderRef, {
     setTrackingCodeKeyword('');
   };
 
-  const filteredEmployees = salespersonKeyword
-    ? mockEmployees.filter(
-        (e) =>
-          e.code.includes(salespersonKeyword) ||
-          e.name.toLowerCase().includes(salespersonKeyword.toLowerCase())
-      )
-    : mockEmployees;
-
-  const handleSelectSalesperson = (code: string) => {
-    setField('salesperson', code);
-    setShowSalespersonPopup(false);
-    setSalespersonKeyword('');
-  };
 
   // ── 開啟 customer popup 的 helper ──
   const openCustomerPopup = (codeKey: keyof OMGOrderHeaderData, nameKey: keyof OMGOrderHeaderData, title: string) => {
@@ -1419,7 +1396,7 @@ export const OMGOrderHeader = forwardRef<OMGOrderHeaderRef, {
                 <SelectField label="OMG 訂單類型" fKey="omgOrderType" options={OMG_ORDER_TYPE_OPTIONS} required readOnlyInEdit />
                 <SelectField label="通路代碼" fKey="channelCode" options={CHANNEL_CODE_OPTIONS} required searchable readOnlyInEdit />
                 <PopupField label="行銷追蹤碼" fKey="trackingCode" onOpen={() => { setShowTrackingCodePopup(true); setTrackingCodeKeyword(''); }} readOnlyInEdit />
-                <PopupField label="業務員名" fKey="salesperson" onOpen={() => { setShowSalespersonPopup(true); setSalespersonKeyword(''); }} />
+                <PopupField label="業務員名" fKey="salesperson" onOpen={() => setShowSalespersonPopup(true)} />
               </div>
             </div>
           )}
@@ -1901,43 +1878,11 @@ export const OMGOrderHeader = forwardRef<OMGOrderHeaderRef, {
         </div>
       )}
 
-      {showSalespersonPopup && (
-        <div className="fixed inset-0 bg-black/40 z-[1200] flex items-center justify-center" onClick={() => { setShowSalespersonPopup(false); setSalespersonKeyword(''); }}>
-          <div ref={salespersonPopupRef} className="bg-white rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.16)] w-[480px] max-h-[520px] flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-[20px] py-[16px] border-b border-[#e5e7eb]">
-              <h3 className="text-[16px] font-[600] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]">選擇業務員</h3>
-              <button onClick={() => { setShowSalespersonPopup(false); setSalespersonKeyword(''); }} className="w-[32px] h-[32px] rounded-[4px] flex items-center justify-center hover:bg-[#f5f7fa] text-[#7c808c] transition-colors"><X size={20} /></button>
-            </div>
-            <div className="px-[20px] py-[12px] border-b border-[#e5e7eb]">
-              <input type="text" placeholder="搜尋員工編號或姓名" value={salespersonKeyword} onChange={(e) => setSalespersonKeyword(e.target.value)} autoFocus className="w-full h-[36px] px-[12px] border border-[#c4c9d3] rounded-[4px] text-[14px] text-[#1c1c1c] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }} />
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              <table className="w-full border-collapse text-[14px] font-['Noto_Sans_TC',_sans-serif]" style={{ fontWeight: 350 }}>
-                <thead className="sticky top-0 bg-[#f5f7fa] border-b border-[#e5e7eb]">
-                  <tr>
-                    <th className="px-[16px] py-[12px] text-left text-[#7c808c] font-[500]">員工編號</th>
-                    <th className="px-[16px] py-[12px] text-left text-[#7c808c] font-[500]">姓名</th>
-                    <th className="px-[16px] py-[12px] text-center text-[#7c808c] font-[500]">動作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredEmployees.length > 0 ? filteredEmployees.map((e) => (
-                    <tr key={e.code} className="border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors">
-                      <td className="px-[16px] py-[12px] text-[#1c1c1c] font-[500]">{e.code}</td>
-                      <td className="px-[16px] py-[12px] text-[#1c1c1c]">{e.name}</td>
-                      <td className="px-[16px] py-[12px] text-center">
-                        <button onClick={() => handleSelectSalesperson(e.code)} className="px-[12px] py-[6px] bg-[#0078d4] text-white rounded-[4px] font-[500] hover:bg-[#106ebe] transition-colors">選擇</button>
-                      </td>
-                    </tr>
-                  )) : (
-                    <tr><td colSpan={3} className="px-[16px] py-[32px] text-center text-[#7c808c]">查無符合資料</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
+      <SalespersonSelectModal
+        open={showSalespersonPopup}
+        onClose={() => setShowSalespersonPopup(false)}
+        onSelect={(code) => setField('salesperson', code)}
+      />
 
       {/* ── 出貨地址 Popup ── */}
       {showAddressPopup && (

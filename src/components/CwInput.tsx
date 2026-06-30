@@ -23,6 +23,12 @@ export interface CwInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>
   width?: string;
   /** 是否為搜尋狀態（會在 placeholder 左邊顯示搜尋 icon） */
   isSearch?: boolean;
+  /** Label 與 input 的排列方向；預設 vertical（label 在上），horizontal 為 label 在左 */
+  layout?: 'vertical' | 'horizontal';
+  /** 水平模式下 label 的固定寬度，例如 '96px' */
+  labelWidth?: string;
+  /** 高亮黃底（用於需要特別注意的可編輯欄位） */
+  highlight?: boolean;
 }
 
 // 搜尋圖標
@@ -112,6 +118,9 @@ export const CwInput = forwardRef<HTMLInputElement, CwInputProps>(
       width = '100%',
       className = '',
       isSearch = false,
+      layout = 'vertical',
+      labelWidth,
+      highlight = false,
       ...props
     },
     ref
@@ -121,18 +130,18 @@ export const CwInput = forwardRef<HTMLInputElement, CwInputProps>(
     const showClearButton = clearable && hasValue && !disabled;
 
     // 決定背景顏色
-    const bgColor = disabled ? 'bg-[#e9ebf2]' : error ? 'bg-[#fff6f4]' : 'bg-white';
-    
+    const bgColor = disabled ? 'bg-[#e9ebf2]' : error ? 'bg-[#fff6f4]' : highlight ? 'bg-[#fffce8]' : 'bg-white';
+
     // 決定邊框顏色和陰影
     const borderStyle = error
       ? 'border-[#c00000]'
       : isFocused
       ? 'border-[#0078d4] shadow-[0px_0px_4px_0px_#01579b]'
-      : 'border-[#c4c9d3]'; // 改為淡灰色，與 table 外框線一致
-    
+      : 'border-[#c4c9d3]';
+
     // 決定文字顏色
     const textColor = disabled ? 'text-[#7c808c]' : 'text-[#1c1c1c]';
-    
+
     // placeholder 顏色
     const placeholderColor = 'placeholder:text-[#cdcdcd]';
 
@@ -148,60 +157,71 @@ export const CwInput = forwardRef<HTMLInputElement, CwInputProps>(
       }
     };
 
-    return (
-      <div className="content-stretch flex flex-col gap-1 items-start" style={{ width }}>
-        {/* 標籤 */}
-        {label && (
-          <label className="block text-foreground" style={{
-            fontFamily: 'var(--font-noto-sans-tc)',
-            fontSize: 'var(--text-base)',
-            fontWeight: 350
-          }}>
-            {label}{required && <span className="text-[#c00000] ml-[2px]">*</span>}
-          </label>
-        )}
-        
-        {/* 輸入框容器 */}
-        <div className={`${bgColor} box-border content-stretch flex gap-[10px] h-[35px] items-center justify-center px-[12px] py-0 relative rounded-[4px] w-full ${className}`}>
-          <div aria-hidden="true" className={`absolute ${borderStyle} border border-solid inset-0 pointer-events-none rounded-[4px] transition-all`} />
-          
-          {/* 內容區域 */}
-          <div className="basis-0 content-stretch flex gap-[4px] grow items-center min-h-px min-w-px relative shrink-0">
-            {/* 左側圖標 */}
-            {displayLeftIcon && <div className="shrink-0">{displayLeftIcon}</div>}
-            
-            {/* 輸入框 */}
-            <input
-              ref={ref}
-              disabled={disabled}
-              placeholder={placeholder}
-              value={value}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
-              className={`basis-0 font-['Noto_Sans_TC',_sans-serif] font-[350] grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] bg-transparent border-0 outline-none ${textColor} ${placeholderColor} ${textAlignClass} ${disabled ? 'cursor-not-allowed' : ''}`}
-              {...props}
-            />
-            
-            {/* 右側清除按鈕 */}
-            {showClearButton && <CloseIcon onClick={handleClear} />}
-            
-            {/* 右側圖標 */}
-            {rightIcon && <div className="shrink-0">{rightIcon}</div>}
+    const labelEl = label ? (
+      layout === 'horizontal' ? (
+        <label
+          className="shrink-0 text-[#7c808c]"
+          style={{ fontFamily: 'var(--font-noto-sans-tc)', fontSize: '12px', fontWeight: 400, ...(labelWidth ? { width: labelWidth } : {}) }}
+        >
+          {label}{required && <span className="text-[#c00000] ml-[2px]">*</span>}
+        </label>
+      ) : (
+        <label className="block text-foreground" style={{ fontFamily: 'var(--font-noto-sans-tc)', fontSize: 'var(--text-base)', fontWeight: 350 }}>
+          {label}{required && <span className="text-[#c00000] ml-[2px]">*</span>}
+        </label>
+      )
+    ) : null;
+
+    const inputBoxEl = (
+      <div className={`${bgColor} box-border content-stretch flex gap-[10px] h-[35px] items-center justify-center px-[12px] py-0 relative rounded-[4px] w-full ${className}`}>
+        <div aria-hidden="true" className={`absolute ${borderStyle} border border-solid inset-0 pointer-events-none rounded-[4px] transition-all`} />
+        <div className="basis-0 content-stretch flex gap-[4px] grow items-center min-h-px min-w-px relative shrink-0">
+          {displayLeftIcon && <div className="shrink-0">{displayLeftIcon}</div>}
+          <input
+            ref={ref}
+            disabled={disabled}
+            placeholder={placeholder}
+            value={value}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            className={`basis-0 font-['Noto_Sans_TC',_sans-serif] font-[350] grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] bg-transparent border-0 outline-none ${textColor} ${placeholderColor} ${textAlignClass} ${disabled ? 'cursor-not-allowed' : ''}`}
+            {...props}
+          />
+          {showClearButton && <CloseIcon onClick={handleClear} />}
+          {rightIcon && <div className="shrink-0">{rightIcon}</div>}
+        </div>
+      </div>
+    );
+
+    const errorEl = error ? (
+      <div className="relative shrink-0 w-full">
+        <div className="flex flex-row items-center justify-center size-full">
+          <div className="box-border content-stretch flex gap-[10px] items-center justify-center px-[2px] py-0 relative w-full">
+            <p className="basis-0 font-['Noto_Sans_TC',_sans-serif] font-[350] grow h-[16.8px] leading-[16.8px] min-h-px min-w-px relative shrink-0 text-[#c00000] text-[12px]">
+              {error}
+            </p>
           </div>
         </div>
-        
-        {/* 錯誤訊息 */}
-        {error && (
-          <div className="relative shrink-0 w-full">
-            <div className="flex flex-row items-center justify-center size-full">
-              <div className="box-border content-stretch flex gap-[10px] items-center justify-center px-[2px] py-0 relative w-full">
-                <p className="basis-0 font-['Noto_Sans_TC',_sans-serif] font-[350] grow h-[16.8px] leading-[16.8px] min-h-px min-w-px relative shrink-0 text-[#c00000] text-[12px]">
-                  {error}
-                </p>
-              </div>
-            </div>
+      </div>
+    ) : null;
+
+    if (layout === 'horizontal') {
+      return (
+        <div className="flex flex-row items-center gap-[8px]" style={{ width }}>
+          {labelEl}
+          <div className="flex flex-col gap-1 flex-1 min-w-0">
+            {inputBoxEl}
+            {errorEl}
           </div>
-        )}
+        </div>
+      );
+    }
+
+    return (
+      <div className="content-stretch flex flex-col gap-1 items-start" style={{ width }}>
+        {labelEl}
+        {inputBoxEl}
+        {errorEl}
       </div>
     );
   }
